@@ -1,0 +1,16 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Ka7",
+  "kindVideo": "Vidéo",
+  "kindPlaylist": "Playlist",
+  "kindMix": "Mix · 50 max",
+  "kindVideoInPlaylist": "Vidéo + playlist",
+  "kindChannel": "Chaîne",
+  "kindDuplicate": "Doublon",
+  "kindInvalid": "Ignorée",
+  "reasonNotYouTube": "Seul YouTube est pris en charge",
+  "reasonNoVideoOrPlaylist": "Lien YouTube sans vidéo ni playlist",
+  "reasonFreeText": "Texte libre : la recherche n'est pas encore disponible",
+  "detailDuplicate": "Déjà présent plus haut",
+  "detailVideoInPlaylist": "Choix à l'aperçu : cette vidéo ou toute la playlist"
+}
