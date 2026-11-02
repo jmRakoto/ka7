@@ -15,6 +15,9 @@ final class FakeRun {
 
   final Map<String, String> onPath;
 
+  /// Exit code of every other program.
+  var exitCode = 0;
+
   /// Runs instead of `tar`, to lay down what it would extract.
   final void Function(List<String> arguments)? onTar;
   final calls = <List<String>>[];
@@ -26,7 +29,7 @@ final class FakeRun {
       return ProcessResult(1, path == null ? 1 : 0, path ?? '', '');
     }
     if (executable == 'tar') onTar?.call(arguments);
-    return ProcessResult(1, 0, '', '');
+    return ProcessResult(1, exitCode, '', '');
   }
 }
 
@@ -172,6 +175,36 @@ void main() {
       );
 
       expect(folder.listSync(), isEmpty);
+    });
+  });
+
+  group('updateYtDlp', () {
+    test('self-updates the copy the app installed', () async {
+      File('${folder.path}/yt-dlp').createSync();
+      final run = FakeRun();
+
+      final updated = await binaries(run).updateYtDlp();
+
+      expect(updated, isTrue);
+      expect(run.calls, [
+        ['${folder.path}/yt-dlp', '-U'],
+      ]);
+    });
+
+    test('leaves a yt-dlp from the PATH alone', () async {
+      final run = FakeRun(onPath: {'yt-dlp': '/usr/bin/yt-dlp\n'});
+
+      final updated = await binaries(run).updateYtDlp();
+
+      expect(updated, isFalse);
+      expect(run.calls, isEmpty);
+    });
+
+    test('reports a failed update', () async {
+      File('${folder.path}/yt-dlp').createSync();
+      final run = FakeRun()..exitCode = 1;
+
+      expect(await binaries(run).updateYtDlp(), isFalse);
     });
   });
 }

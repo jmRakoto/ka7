@@ -32,11 +32,20 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
   final home = Platform.environment['HOME'] ?? support.path;
   Future<String> folder(UserFolder kind) =>
       userFolder(kind, run: Process.run, home: home);
+  final binaries = EngineBinaries(
+    folder: '${support.path}/bin',
+    run: Process.run,
+    fetch: httpFetch,
+  );
   return Ka7App(
-    engineSetup: EngineBinaries(
-      folder: '${support.path}/bin',
-      run: Process.run,
-      fetch: httpFetch,
+    engineSetup: DailyUpdate(
+      binaries,
+      update: binaries.updateYtDlp,
+      lastUpdate: () async =>
+          DateTime.tryParse(await store.setting(_ytDlpUpdatedKey) ?? ''),
+      saveUpdate: (at) =>
+          store.setSetting(_ytDlpUpdatedKey, at.toUtc().toIso8601String()),
+      now: DateTime.now,
     ),
     enginesFor: (status) => (
       extractor: YtDlpExtractor(run: Process.run, executable: status!.ytDlp!),
@@ -105,3 +114,6 @@ Future<Ka7App> _mobile(Ka7Store store) async {
     pickFolder: FilePicker.getDirectoryPath,
   );
 }
+
+/// When the app's own yt-dlp last updated itself (ISO 8601, UTC).
+const _ytDlpUpdatedKey = 'ytdlp.updated';

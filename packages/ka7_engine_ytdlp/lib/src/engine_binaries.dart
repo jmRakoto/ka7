@@ -144,6 +144,15 @@ final class EngineBinaries implements EngineSetup {
     if (chmod.exitCode != 0) throw InstallFailure('chmod: ${chmod.stderr}');
   }
 
+  /// Self-updates the copy of yt-dlp the app installed; true when it ran
+  /// without error. A yt-dlp from the PATH belongs to the system: left alone.
+  Future<bool> updateYtDlp() async {
+    final managed = File('$folder/yt-dlp');
+    if (!managed.existsSync()) return false;
+    final update = await run(managed.path, ['-U']);
+    return update.exitCode == 0;
+  }
+
   Future<String?> _find(String name) async {
     final managed = File('$folder/$name');
     if (managed.existsSync()) return managed.path;
