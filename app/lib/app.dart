@@ -133,7 +133,12 @@ class _Ka7AppState extends State<Ka7App> {
         supportedLocales: AppLocalizations.supportedLocales,
         localeResolutionCallback: _resolveLocale,
         home: !settings.onboarded
-            ? OnboardingScreen(onDone: settings.completeOnboarding)
+            ? OnboardingScreen(
+                onDone: settings.completeOnboarding,
+                settings: settings,
+                canDrop: widget.acceptDrops,
+                canShare: widget.sharedLinks != null,
+              )
             : switch (widget.engineSetup) {
                 final setup? => EngineGate(
                   setup: setup,

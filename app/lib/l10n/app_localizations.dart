@@ -695,31 +695,31 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeBody1.
   ///
   /// In fr, this message translates to:
-  /// **'Des liens YouTube deviennent des fichiers MP3 ou MP4 propres : bien nommés, tagués, rangés par playlist.'**
+  /// **'Ka7 enregistre YouTube comme on enregistrait une cassette : des liens deviennent des fichiers MP3 ou MP4 propres.'**
   String get welcomeBody1;
 
   /// No description provided for @welcomeTitle2.
   ///
   /// In fr, this message translates to:
-  /// **'Colle, vérifie, télécharge'**
+  /// **'Ajoute de toutes les façons'**
   String get welcomeTitle2;
 
   /// No description provided for @welcomeBody2.
   ///
   /// In fr, this message translates to:
-  /// **'Colle un lien, une playlist ou un fichier de liens. L\'aperçu montre chaque titre : décoche ce que tu ne veux pas, choisis le format, c\'est parti.'**
+  /// **'Une vidéo, une playlist, une chaîne, ou juste quelques mots.'**
   String get welcomeBody2;
 
   /// No description provided for @welcomeTitle3.
   ///
   /// In fr, this message translates to:
-  /// **'Tout est rangé'**
+  /// **'Vérifie avant de télécharger'**
   String get welcomeTitle3;
 
   /// No description provided for @welcomeBody3.
   ///
   /// In fr, this message translates to:
-  /// **'La Bibliothèque garde tout ce que tu as téléchargé. Une playlist s\'enrichit ? Mets-la à jour : seuls les nouveaux titres sont récupérés.'**
+  /// **'L\'aperçu montre chaque titre avant que rien ne parte.'**
   String get welcomeBody3;
 
   /// No description provided for @welcomeSkip.
@@ -883,6 +883,138 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ne plus suivre'**
   String get unfollow;
+
+  /// No description provided for @welcomePoint1a.
+  ///
+  /// In fr, this message translates to:
+  /// **'MP3 tagués : titre, artiste, album, numéro de piste'**
+  String get welcomePoint1a;
+
+  /// No description provided for @welcomePoint1b.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rangés par playlist ou par artiste, bien nommés'**
+  String get welcomePoint1b;
+
+  /// No description provided for @welcomePoint1c.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout reste sur ton appareil : aucun compte, aucun suivi'**
+  String get welcomePoint1c;
+
+  /// No description provided for @welcomePoint2a.
+  ///
+  /// In fr, this message translates to:
+  /// **'Colle un ou plusieurs liens, même au milieu d\'un texte'**
+  String get welcomePoint2a;
+
+  /// No description provided for @welcomePoint2b.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cherche sur YouTube et coche les résultats'**
+  String get welcomePoint2b;
+
+  /// No description provided for @welcomePoint2c.
+  ///
+  /// In fr, this message translates to:
+  /// **'Importe un fichier de liens (.txt)'**
+  String get welcomePoint2c;
+
+  /// No description provided for @welcomePoint2d.
+  ///
+  /// In fr, this message translates to:
+  /// **'Glisse un lien ou un fichier sur la fenêtre'**
+  String get welcomePoint2d;
+
+  /// No description provided for @welcomePoint2e.
+  ///
+  /// In fr, this message translates to:
+  /// **'Partage depuis l\'app YouTube vers Ka7'**
+  String get welcomePoint2e;
+
+  /// No description provided for @welcomePoint3a.
+  ///
+  /// In fr, this message translates to:
+  /// **'Décoche ce que tu ne veux pas, ou tout d\'un coup'**
+  String get welcomePoint3a;
+
+  /// No description provided for @welcomePoint3b.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce que tu as déjà est repéré : « Déjà là »'**
+  String get welcomePoint3b;
+
+  /// No description provided for @welcomePoint3c.
+  ///
+  /// In fr, this message translates to:
+  /// **'MP3 ou MP4, plusieurs téléchargements à la fois'**
+  String get welcomePoint3c;
+
+  /// No description provided for @welcomePoint3d.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annule un titre ou toute la file, à tout moment'**
+  String get welcomePoint3d;
+
+  /// No description provided for @welcomeTitle4.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien ne se perd'**
+  String get welcomeTitle4;
+
+  /// No description provided for @welcomeBody4.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ka7 garde la trace de tout ce qui passe.'**
+  String get welcomeBody4;
+
+  /// No description provided for @welcomePoint4a.
+  ///
+  /// In fr, this message translates to:
+  /// **'La Bibliothèque retrouve chaque fichier et son dossier'**
+  String get welcomePoint4a;
+
+  /// No description provided for @welcomePoint4b.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suis une playlist : ses nouveautés te sont proposées'**
+  String get welcomePoint4b;
+
+  /// No description provided for @welcomePoint4c.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une file coupée reprend au lancement suivant'**
+  String get welcomePoint4c;
+
+  /// No description provided for @welcomePoint4d.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les échecs se relancent en un clic'**
+  String get welcomePoint4d;
+
+  /// No description provided for @welcomePrevious.
+  ///
+  /// In fr, this message translates to:
+  /// **'Précédent'**
+  String get welcomePrevious;
+
+  /// No description provided for @welcomeSetupTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Avant de commencer'**
+  String get welcomeSetupTitle;
+
+  /// No description provided for @welcomeSetupBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisis ta langue et l\'apparence de Ka7.'**
+  String get welcomeSetupBody;
+
+  /// No description provided for @welcomeSetupLater.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu pourras changer ça plus tard dans Réglages.'**
+  String get welcomeSetupLater;
 }
 
 class _AppLocalizationsDelegate

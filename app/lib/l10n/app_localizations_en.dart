@@ -375,21 +375,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomeBody1 =>
-      'YouTube links become clean MP3 or MP4 files: well named, tagged, sorted by playlist.';
+      'Ka7 records YouTube the way we once recorded tapes: links become clean MP3 or MP4 files.';
 
   @override
-  String get welcomeTitle2 => 'Paste, check, download';
+  String get welcomeTitle2 => 'Add things any way you like';
 
   @override
   String get welcomeBody2 =>
-      'Paste a link, a playlist or a file of links. The preview lists every track: uncheck what you don\'t want, pick the format, and go.';
+      'A video, a playlist, a channel, or just a few words.';
 
   @override
-  String get welcomeTitle3 => 'Everything in its place';
+  String get welcomeTitle3 => 'Check before you download';
 
   @override
   String get welcomeBody3 =>
-      'The Library keeps everything you downloaded. A playlist grew? Update it: only the new tracks are fetched.';
+      'The preview lists every track before anything starts.';
 
   @override
   String get welcomeSkip => 'Skip';
@@ -487,4 +487,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unfollow => 'Unfollow';
+
+  @override
+  String get welcomePoint1a =>
+      'Tagged MP3s: title, artist, album, track number';
+
+  @override
+  String get welcomePoint1b => 'Sorted by playlist or by artist, well named';
+
+  @override
+  String get welcomePoint1c =>
+      'Everything stays on your device: no account, no tracking';
+
+  @override
+  String get welcomePoint2a => 'Paste one or many links, even inside some text';
+
+  @override
+  String get welcomePoint2b => 'Search YouTube and tick the results';
+
+  @override
+  String get welcomePoint2c => 'Import a file of links (.txt)';
+
+  @override
+  String get welcomePoint2d => 'Drop a link or a file on the window';
+
+  @override
+  String get welcomePoint2e => 'Share from the YouTube app to Ka7';
+
+  @override
+  String get welcomePoint3a =>
+      'Uncheck what you don\'t want, or everything at once';
+
+  @override
+  String get welcomePoint3b =>
+      'What you already have is spotted: “Already there”';
+
+  @override
+  String get welcomePoint3c => 'MP3 or MP4, several downloads at once';
+
+  @override
+  String get welcomePoint3d => 'Cancel one track or the whole queue, anytime';
+
+  @override
+  String get welcomeTitle4 => 'Nothing gets lost';
+
+  @override
+  String get welcomeBody4 => 'Ka7 keeps track of everything that goes through.';
+
+  @override
+  String get welcomePoint4a => 'The Library finds every file and its folder';
+
+  @override
+  String get welcomePoint4b =>
+      'Follow a playlist: its new tracks are offered to you';
+
+  @override
+  String get welcomePoint4c =>
+      'An interrupted queue resumes at the next launch';
+
+  @override
+  String get welcomePoint4d => 'Failures retry in one click';
+
+  @override
+  String get welcomePrevious => 'Back';
+
+  @override
+  String get welcomeSetupTitle => 'Before we start';
+
+  @override
+  String get welcomeSetupBody => 'Pick your language and how Ka7 looks.';
+
+  @override
+  String get welcomeSetupLater => 'You can change this later in Settings.';
 }

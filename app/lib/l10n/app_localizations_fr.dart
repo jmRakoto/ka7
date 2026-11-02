@@ -388,21 +388,21 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get welcomeBody1 =>
-      'Des liens YouTube deviennent des fichiers MP3 ou MP4 propres : bien nommés, tagués, rangés par playlist.';
+      'Ka7 enregistre YouTube comme on enregistrait une cassette : des liens deviennent des fichiers MP3 ou MP4 propres.';
 
   @override
-  String get welcomeTitle2 => 'Colle, vérifie, télécharge';
+  String get welcomeTitle2 => 'Ajoute de toutes les façons';
 
   @override
   String get welcomeBody2 =>
-      'Colle un lien, une playlist ou un fichier de liens. L\'aperçu montre chaque titre : décoche ce que tu ne veux pas, choisis le format, c\'est parti.';
+      'Une vidéo, une playlist, une chaîne, ou juste quelques mots.';
 
   @override
-  String get welcomeTitle3 => 'Tout est rangé';
+  String get welcomeTitle3 => 'Vérifie avant de télécharger';
 
   @override
   String get welcomeBody3 =>
-      'La Bibliothèque garde tout ce que tu as téléchargé. Une playlist s\'enrichit ? Mets-la à jour : seuls les nouveaux titres sont récupérés.';
+      'L\'aperçu montre chaque titre avant que rien ne parte.';
 
   @override
   String get welcomeSkip => 'Passer';
@@ -500,4 +500,80 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get unfollow => 'Ne plus suivre';
+
+  @override
+  String get welcomePoint1a =>
+      'MP3 tagués : titre, artiste, album, numéro de piste';
+
+  @override
+  String get welcomePoint1b =>
+      'Rangés par playlist ou par artiste, bien nommés';
+
+  @override
+  String get welcomePoint1c =>
+      'Tout reste sur ton appareil : aucun compte, aucun suivi';
+
+  @override
+  String get welcomePoint2a =>
+      'Colle un ou plusieurs liens, même au milieu d\'un texte';
+
+  @override
+  String get welcomePoint2b => 'Cherche sur YouTube et coche les résultats';
+
+  @override
+  String get welcomePoint2c => 'Importe un fichier de liens (.txt)';
+
+  @override
+  String get welcomePoint2d => 'Glisse un lien ou un fichier sur la fenêtre';
+
+  @override
+  String get welcomePoint2e => 'Partage depuis l\'app YouTube vers Ka7';
+
+  @override
+  String get welcomePoint3a =>
+      'Décoche ce que tu ne veux pas, ou tout d\'un coup';
+
+  @override
+  String get welcomePoint3b => 'Ce que tu as déjà est repéré : « Déjà là »';
+
+  @override
+  String get welcomePoint3c =>
+      'MP3 ou MP4, plusieurs téléchargements à la fois';
+
+  @override
+  String get welcomePoint3d =>
+      'Annule un titre ou toute la file, à tout moment';
+
+  @override
+  String get welcomeTitle4 => 'Rien ne se perd';
+
+  @override
+  String get welcomeBody4 => 'Ka7 garde la trace de tout ce qui passe.';
+
+  @override
+  String get welcomePoint4a =>
+      'La Bibliothèque retrouve chaque fichier et son dossier';
+
+  @override
+  String get welcomePoint4b =>
+      'Suis une playlist : ses nouveautés te sont proposées';
+
+  @override
+  String get welcomePoint4c => 'Une file coupée reprend au lancement suivant';
+
+  @override
+  String get welcomePoint4d => 'Les échecs se relancent en un clic';
+
+  @override
+  String get welcomePrevious => 'Précédent';
+
+  @override
+  String get welcomeSetupTitle => 'Avant de commencer';
+
+  @override
+  String get welcomeSetupBody => 'Choisis ta langue et l\'apparence de Ka7.';
+
+  @override
+  String get welcomeSetupLater =>
+      'Tu pourras changer ça plus tard dans Réglages.';
 }

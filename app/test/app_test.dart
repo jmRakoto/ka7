@@ -116,18 +116,74 @@ void main() {
       await store.setSetting('onboarding.done', null);
       await pumpKa7(tester);
 
-      expect(find.text('Bienvenue dans Ka7'), findsOneWidget);
-      await tester.tap(find.text('Suivant'));
-      await tester.pumpAndSettle();
-      expect(find.text('Colle, vérifie, télécharge'), findsOneWidget);
-      await tester.tap(find.text('Suivant'));
-      await tester.pumpAndSettle();
-      expect(find.text('Tout est rangé'), findsOneWidget);
+      for (final title in [
+        'Avant de commencer',
+        'Bienvenue dans Ka7',
+        'Ajoute de toutes les façons',
+        'Vérifie avant de télécharger',
+      ]) {
+        expect(find.text(title), findsOneWidget);
+        await tester.tap(find.text('Suivant'));
+        await tester.pumpAndSettle();
+      }
+      expect(find.text('Rien ne se perd'), findsOneWidget);
       await tester.tap(find.text('Commencer'));
       await tester.pumpAndSettle();
 
       expect(find.byType(AddLinksScreen), findsOneWidget);
       expect(await store.setting('onboarding.done'), '1');
+    });
+
+    testWidgets('tells how links come in, on this kind of device', (
+      tester,
+    ) async {
+      await store.setSetting('onboarding.done', null);
+      await pumpKa7(tester, acceptDrops: true);
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.text('Suivant'));
+        await tester.pumpAndSettle();
+      }
+
+      expect(
+        find.text('Cherche sur YouTube et coche les résultats'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Glisse un lien ou un fichier sur la fenêtre'),
+        findsOneWidget,
+      );
+      expect(find.text("Partage depuis l'app YouTube vers Ka7"), findsNothing);
+    });
+
+    testWidgets('goes back a page with Previous', (tester) async {
+      await store.setSetting('onboarding.done', null);
+      await pumpKa7(tester);
+      await tester.tap(find.text('Suivant'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Précédent'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Avant de commencer'), findsOneWidget);
+    });
+
+    testWidgets('starts with the language and the theme, applied at once', (
+      tester,
+    ) async {
+      await store.setSetting('onboarding.done', null);
+      await pumpKa7(tester);
+      ThemeMode mode() =>
+          tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode!;
+
+      await tester.tap(find.text('English'));
+      await tester.pumpAndSettle();
+      expect(find.text('Before we start'), findsOneWidget);
+      await tester.tap(find.text('Dark'));
+      await tester.pumpAndSettle();
+
+      expect(mode(), ThemeMode.dark);
+      expect(await store.setting('language'), 'en');
+      expect(await store.setting('theme'), 'dark');
     });
 
     testWidgets('can be skipped at once', (tester) async {

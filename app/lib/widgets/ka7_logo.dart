@@ -4,23 +4,58 @@ import 'package:flutter/material.dart';
 
 /// The cassette of the Ka7 logo (`../ka7-brand/ka7-mark.svg`), drawn in the
 /// theme's colours: light and dark logos come out of the same drawing.
-class Ka7Logo extends StatelessWidget {
-  const Ka7Logo({super.key, this.width = 48});
+class Ka7Logo extends StatefulWidget {
+  const Ka7Logo({super.key, this.width = 48, this.spin = false});
 
   final double width;
+
+  /// The reels turn, then slow down to a stop, as a tape being wound.
+  final bool spin;
+
+  @override
+  State<Ka7Logo> createState() => _Ka7LogoState();
+}
+
+class _Ka7LogoState extends State<Ka7Logo> with SingleTickerProviderStateMixin {
+  late final _wind = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.spin && !MediaQuery.disableAnimationsOf(context)) {
+      _wind.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _wind.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final turns = CurvedAnimation(parent: _wind, curve: Curves.easeOutCubic);
     return Semantics(
       label: 'Ka7',
       image: true,
-      child: CustomPaint(
-        size: Size(width, width * _viewBox.height / _viewBox.width),
-        painter: _CassettePainter(
-          body: scheme.primary,
-          window: scheme.surface,
-          reels: scheme.secondary,
+      child: AnimatedBuilder(
+        animation: turns,
+        builder: (context, _) => CustomPaint(
+          size: Size(
+            widget.width,
+            widget.width * _viewBox.height / _viewBox.width,
+          ),
+          painter: _CassettePainter(
+            body: scheme.primary,
+            window: scheme.surface,
+            reels: scheme.secondary,
+            angle: turns.value * 4 * pi,
+          ),
         ),
       ),
     );
@@ -34,11 +69,15 @@ class _CassettePainter extends CustomPainter {
     required this.body,
     required this.window,
     required this.reels,
+    this.angle = 0,
   });
 
   final Color body;
   final Color window;
   final Color reels;
+
+  /// How far the reels have turned, in radians.
+  final double angle;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -70,7 +109,7 @@ class _CassettePainter extends CustomPainter {
       for (var a = 0.0; a < 2 * pi - dash; a += dash + gap) {
         canvas.drawArc(
           Rect.fromCircle(center: center, radius: radius),
-          a,
+          a + angle,
           dash,
           false,
           teeth,
@@ -93,5 +132,8 @@ class _CassettePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_CassettePainter old) =>
-      old.body != body || old.window != window || old.reels != reels;
+      old.body != body ||
+      old.window != window ||
+      old.reels != reels ||
+      old.angle != angle;
 }

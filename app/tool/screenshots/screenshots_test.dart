@@ -106,11 +106,15 @@ void main() {
             ),
           ),
         );
+        await shot('00-welcome-0');
+        await tester.tap(find.text('Suivant'));
         await shot('00-welcome-1');
         await tester.tap(find.text('Suivant'));
         await shot('00-welcome-2');
         await tester.tap(find.text('Suivant'));
         await shot('00-welcome-3');
+        await tester.tap(find.text('Suivant'));
+        await shot('00-welcome-4');
         await tester.tap(find.text('Commencer'));
         await shot('0-engine');
         await tester.tap(find.text('Installer'));
