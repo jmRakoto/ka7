@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ka7_store/ka7_store.dart' show Subscription;
 import 'package:ka7_core/ka7_core.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -11,7 +12,13 @@ class SettingsScreen extends StatelessWidget {
     super.key,
     required this.settings,
     required this.pickFolder,
+    this.subscriptions = const [],
+    this.onUnfollow,
   });
+
+  /// Followed playlists and channels.
+  final List<Subscription> subscriptions;
+  final void Function(Subscription subscription)? onUnfollow;
 
   final AppSettings settings;
 
@@ -134,6 +141,28 @@ class SettingsScreen extends StatelessWidget {
                   icon: const Icon(Icons.drive_folder_upload),
                 ),
               ),
+          const SizedBox(height: 16),
+          SectionTitle(l10n.settingsSubscriptions),
+          if (subscriptions.isEmpty)
+            Text(
+              l10n.subscriptionsEmpty,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          for (final subscription in subscriptions)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.notifications_active_outlined),
+              title: Text(subscription.title),
+              trailing: IconButton(
+                tooltip: l10n.unfollow,
+                onPressed: onUnfollow == null
+                    ? null
+                    : () => onUnfollow!(subscription),
+                icon: const Icon(Icons.close),
+              ),
+            ),
         ],
       ),
     );

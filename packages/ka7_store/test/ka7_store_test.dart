@@ -225,6 +225,41 @@ void main() {
     },
   );
 
+  group('subscriptions', () {
+    test('follows playlists and channels until told to stop', () async {
+      await store.follow('PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy', 'Mahaleo');
+      await store.follow(
+        'https://www.youtube.com/channel/UCmahaleo0000000000000000',
+        'Mahaleo official',
+      );
+      await store.follow('PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy', 'Mahaleo 2026');
+
+      expect((await store.subscriptions()).map((s) => '${s.link} ${s.title}'), [
+        'PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy Mahaleo 2026',
+        'https://www.youtube.com/channel/UCmahaleo0000000000000000 Mahaleo official',
+      ]);
+
+      await store.unfollow('PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy');
+      expect(await store.subscriptions(), hasLength(1));
+    });
+  });
+
+  test('upgrades a store from before subscriptions', () async {
+    final folder = Directory.systemTemp.createTempSync('ka7_store_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}/ka7.sqlite');
+    sqlite3.open(file.path)
+      ..execute(File('test/fixtures/schema_v4.sql').readAsStringSync())
+      ..close();
+
+    final upgraded = Ka7Store.open(file);
+    addTearDown(upgraded.close);
+
+    expect(await upgraded.contains('jNQXAC9IVRw', MediaFormat.mp3), isTrue);
+    await upgraded.follow('PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy', 'Mahaleo');
+    expect(await upgraded.subscriptions(), hasLength(1));
+  });
+
   group('pending downloads', () {
     test('keeps queued videos, with their source, until they end', () async {
       final ids = await store.keepPending(

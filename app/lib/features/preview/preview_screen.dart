@@ -16,7 +16,15 @@ class PreviewScreen extends StatefulWidget {
     required this.onDownload,
     this.formats = const [MediaFormat.mp3, MediaFormat.mp4],
     this.archive,
+    this.isFollowed,
+    this.onFollow,
   });
+
+  /// Whether the link of a playlist or channel is followed.
+  final bool Function(String link)? isFollowed;
+
+  /// Follows, or stops following, what [probe] shows.
+  final Future<void> Function(Probe probe, bool follow)? onFollow;
 
   /// Videos already downloaded: shown, unchecked.
   final Archive? archive;
@@ -241,6 +249,16 @@ class _PreviewScreenState extends State<PreviewScreen> {
               probe: probe,
               selected: _selected,
               present: _present,
+              followed: switch ((followLinkOf(probe), widget.isFollowed)) {
+                (final link?, final isFollowed?) => isFollowed(link),
+                _ => null,
+              },
+              onFollow: widget.onFollow == null
+                  ? null
+                  : (follow) async {
+                      await widget.onFollow!(probe, follow);
+                      if (mounted) setState(() {});
+                    },
               onToggle: (id, keep) => setState(
                 () => keep ? _selected.add(id) : _selected.remove(id),
               ),
@@ -276,7 +294,13 @@ class _ProbeGroup extends StatelessWidget {
     required this.present,
     required this.onToggle,
     required this.onToggleAll,
+    required this.followed,
+    required this.onFollow,
   });
+
+  /// Null when this cannot be followed (video, search, mix).
+  final bool? followed;
+  final void Function(bool follow)? onFollow;
 
   /// Every available video of the playlist, checked or not.
   final void Function(bool keep) onToggleAll;
@@ -319,6 +343,21 @@ class _ProbeGroup extends StatelessWidget {
           probe.isSearch ? l10n.searchResults(probe.title) : probe.title,
           trailing: l10n.trackCount(probe.items.length),
         ),
+        if (followed case final followed? when onFollow != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: followed
+                ? FilledButton.tonalIcon(
+                    onPressed: () => onFollow!(false),
+                    icon: const Icon(Icons.notifications_active_outlined),
+                    label: Text(l10n.following),
+                  )
+                : OutlinedButton.icon(
+                    onPressed: () => onFollow!(true),
+                    icon: const Icon(Icons.notifications_none),
+                    label: Text(l10n.follow),
+                  ),
+          ),
         if (available.length > 1)
           CheckboxListTile(
             tristate: true,

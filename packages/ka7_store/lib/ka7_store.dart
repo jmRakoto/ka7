@@ -2,4 +2,4 @@
 library;
 
 export 'src/ka7_store.dart'
-    show HistoryItem, HistoryStatus, Ka7Store, PendingDownload;
+    show HistoryItem, HistoryStatus, Ka7Store, PendingDownload, Subscription;

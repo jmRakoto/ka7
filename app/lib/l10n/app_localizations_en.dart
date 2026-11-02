@@ -451,4 +451,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchAgain => 'New search';
+
+  @override
+  String get follow => 'Follow';
+
+  @override
+  String get following => 'Following';
+
+  @override
+  String get newsTitle => 'New videos';
+
+  @override
+  String get newsShow => 'Show';
+
+  @override
+  String get newsLater => 'Later';
+
+  @override
+  String newTracks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new tracks',
+      one: '1 new track',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsSubscriptions => 'Subscriptions';
+
+  @override
+  String get subscriptionsEmpty =>
+      'No subscriptions. Follow a playlist or a channel from the preview: its new tracks will be offered at launch.';
+
+  @override
+  String get unfollow => 'Unfollow';
 }

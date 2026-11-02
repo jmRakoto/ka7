@@ -204,5 +204,14 @@
   "searchButton": "Search",
   "searchHint": "Artist, title, album…",
   "searchFooter": "20 results, to tick in the preview",
-  "searchAgain": "New search"
+  "searchAgain": "New search",
+  "follow": "Follow",
+  "following": "Following",
+  "newsTitle": "New videos",
+  "newsShow": "Show",
+  "newsLater": "Later",
+  "newTracks": "{count, plural, =1{1 new track} other{{count} new tracks}}",
+  "settingsSubscriptions": "Subscriptions",
+  "subscriptionsEmpty": "No subscriptions. Follow a playlist or a channel from the preview: its new tracks will be offered at launch.",
+  "unfollow": "Unfollow"
 }

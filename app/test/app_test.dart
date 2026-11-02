@@ -554,6 +554,83 @@ void main() {
     });
   });
 
+  group('subscriptions', () {
+    Future<void> openPreview(WidgetTester tester, String links) async {
+      await tester.enterText(find.byType(TextField), links);
+      await tester.pump();
+      await tester.tap(find.text("Voir l'aperçu"));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('follows a playlist from its preview, stops in Settings', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await openPreview(tester, 'PLe7rK2mErickManana01');
+
+      await tester.tap(find.text('Suivre'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Suivi'), findsOneWidget);
+      expect(
+        (await store.subscriptions()).single.title,
+        'Erick Manana · Sélection',
+      );
+      await tester.tap(find.text('Réglages'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byTooltip('Ne plus suivre'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(find.text('Erick Manana · Sélection'), findsOneWidget);
+      await tester.tap(find.byTooltip('Ne plus suivre'));
+      await tester.pumpAndSettle();
+      expect(await store.subscriptions(), isEmpty);
+      expect(find.text('Erick Manana · Sélection'), findsNothing);
+    });
+
+    testWidgets('offers no following for a single video', (tester) async {
+      await pumpKa7(tester);
+      await openPreview(tester, 'Qm7tR2vLx9A');
+
+      expect(find.text('Suivre'), findsNothing);
+    });
+
+    testWidgets('offers the new videos of what is followed, at launch', (
+      tester,
+    ) async {
+      await store.follow('PLe7rK2mErickManana01', 'Erick Manana · Sélection');
+      await store.add('aB3dE5fG7hI', MediaFormat.mp3);
+      await pumpKa7(tester);
+
+      expect(find.text('Nouveautés'), findsOneWidget);
+      expect(
+        find.text('1 nouveau titre · Erick Manana · Sélection'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Voir'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PreviewScreen), findsOneWidget);
+      expect(find.text('Déjà là'), findsOneWidget);
+      await tester.tap(find.text('Télécharger'));
+      await tester.pumpAndSettle();
+      expect(downloader.requests.map((r) => r.videoId), ['jK9lM1nO3pQ']);
+    });
+
+    testWidgets('says nothing when the followed have nothing new', (
+      tester,
+    ) async {
+      await store.follow('PLe7rK2mErickManana01', 'Erick Manana · Sélection');
+      await store.add('aB3dE5fG7hI', MediaFormat.mp3);
+      await store.add('jK9lM1nO3pQ', MediaFormat.mp3);
+      await pumpKa7(tester);
+
+      expect(find.text('Nouveautés'), findsNothing);
+    });
+  });
+
   group('end notification', () {
     tearDown(
       () => TestWidgetsFlutterBinding.instance.handleAppLifecycleStateChanged(

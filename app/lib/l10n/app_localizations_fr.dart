@@ -464,4 +464,40 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get searchAgain => 'Nouvelle recherche';
+
+  @override
+  String get follow => 'Suivre';
+
+  @override
+  String get following => 'Suivi';
+
+  @override
+  String get newsTitle => 'Nouveautés';
+
+  @override
+  String get newsShow => 'Voir';
+
+  @override
+  String get newsLater => 'Plus tard';
+
+  @override
+  String newTracks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count nouveaux titres',
+      one: '$count nouveau titre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsSubscriptions => 'Abonnements';
+
+  @override
+  String get subscriptionsEmpty =>
+      'Aucun abonnement. Suis une playlist ou une chaîne depuis l\'aperçu : ses nouveaux titres te seront proposés au démarrage.';
+
+  @override
+  String get unfollow => 'Ne plus suivre';
 }

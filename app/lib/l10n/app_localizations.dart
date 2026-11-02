@@ -829,6 +829,60 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Nouvelle recherche'**
   String get searchAgain;
+
+  /// No description provided for @follow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivre'**
+  String get follow;
+
+  /// No description provided for @following.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivi'**
+  String get following;
+
+  /// No description provided for @newsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveautés'**
+  String get newsTitle;
+
+  /// No description provided for @newsShow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir'**
+  String get newsShow;
+
+  /// No description provided for @newsLater.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus tard'**
+  String get newsLater;
+
+  /// No description provided for @newTracks.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} nouveau titre} other{{count} nouveaux titres}}'**
+  String newTracks(int count);
+
+  /// No description provided for @settingsSubscriptions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Abonnements'**
+  String get settingsSubscriptions;
+
+  /// No description provided for @subscriptionsEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun abonnement. Suis une playlist ou une chaîne depuis l\'aperçu : ses nouveaux titres te seront proposés au démarrage.'**
+  String get subscriptionsEmpty;
+
+  /// No description provided for @unfollow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ne plus suivre'**
+  String get unfollow;
 }
 
 class _AppLocalizationsDelegate

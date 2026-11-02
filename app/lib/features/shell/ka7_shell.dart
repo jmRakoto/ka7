@@ -83,6 +83,10 @@ class _Ka7ShellState extends State<Ka7Shell> {
   /// Something dragged over the window, not dropped yet.
   var _dragging = false;
 
+  /// Followed playlists and channels, and their new videos found at launch.
+  var _followed = <Subscription>[];
+  final _news = ValueNotifier(<News>[]);
+
   /// Videos a previous launch left unfinished, until resumed or discarded.
   var _interrupted = <PendingDownload>[];
 
@@ -93,6 +97,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
   void initState() {
     super.initState();
     _shared = widget.sharedLinks?.listen(_receive);
+    _loadSubscriptions().then((_) => _checkNews());
     widget.store.pending().then((pending) {
       if (!mounted || pending.isEmpty) return;
       setState(() {
@@ -138,6 +143,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
     }
     widget.background?.release();
     _historyChanges.dispose();
+    _news.dispose();
     _shared?.cancel();
     _links.dispose();
     super.dispose();
@@ -273,6 +279,47 @@ class _Ka7ShellState extends State<Ka7Shell> {
     );
   }
 
+  Future<void> _loadSubscriptions() async {
+    final subscriptions = await widget.store.subscriptions();
+    if (mounted) setState(() => _followed = subscriptions);
+  }
+
+  /// Read in the background: the app is usable meanwhile.
+  Future<void> _checkNews() async {
+    if (_followed.isEmpty) return;
+    final news = await findNews(
+      [for (final s in _followed) (link: s.link, title: s.title)],
+      extractor: widget.extractor,
+      archive: widget.store,
+      format: widget.formats.first,
+    );
+    if (mounted) _news.value = news;
+  }
+
+  bool _isFollowed(String link) => _followed.any((s) => s.link == link);
+
+  Future<void> _follow(Probe probe, bool follow) async {
+    final link = followLinkOf(probe)!;
+    follow
+        ? await widget.store.follow(link, probe.title)
+        : await widget.store.unfollow(link);
+    await _loadSubscriptions();
+  }
+
+  Future<void> _unfollow(Subscription subscription) async {
+    await widget.store.unfollow(subscription.link);
+    await _loadSubscriptions();
+  }
+
+  void _showNews() {
+    final entries = [
+      for (final news in _news.value)
+        if (parseEntry(news.link) case final MediaEntry entry) entry,
+    ];
+    _news.value = const [];
+    _preview(entries);
+  }
+
   /// A playlist from the Library: its preview, with what is there unchecked.
   void _updatePlaylist(String playlistId) {
     _addNavigator.currentState?.popUntil((route) => route.isFirst);
@@ -287,6 +334,8 @@ class _Ka7ShellState extends State<Ka7Shell> {
         extractor: widget.extractor,
         formats: widget.formats,
         archive: widget.store,
+        isFollowed: _isFollowed,
+        onFollow: _follow,
         onDownload: (downloads, format) {
           Navigator.of(context).pop();
           unawaited(_download(downloads, format));
@@ -339,12 +388,15 @@ class _Ka7ShellState extends State<Ka7Shell> {
           key: _addNavigator,
           onGenerateRoute: (_) => MaterialPageRoute<void>(
             builder: (_) => ListenableBuilder(
-              listenable: widget.settings,
+              listenable: Listenable.merge([widget.settings, _news]),
               builder: (_, _) => AddLinksScreen(
                 onPreview: _preview,
                 links: _links,
                 pickLinksFile: widget.pickLinksFile,
                 mixLimit: widget.settings.mixLimit,
+                news: _news.value,
+                onShowNews: _showNews,
+                onDismissNews: () => _news.value = const [],
               ),
             ),
           ),
@@ -366,6 +418,8 @@ class _Ka7ShellState extends State<Ka7Shell> {
         SettingsScreen(
           settings: widget.settings,
           pickFolder: widget.pickFolder,
+          subscriptions: _followed,
+          onUnfollow: _unfollow,
         ),
       ],
     );

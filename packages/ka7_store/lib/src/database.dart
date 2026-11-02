@@ -69,14 +69,30 @@ class PendingDownloads extends Table {
   IntColumn get position => integer()();
 }
 
+/// Playlists and channels followed: their new videos are offered at launch.
+@DataClassName('SubscriptionRow')
+class Subscriptions extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// A playlist id or a channel URL, as `parseEntry` reads it.
+  TextColumn get link => text().unique()();
+  TextColumn get title => text()();
+}
+
 @DriftDatabase(
-  tables: [ArchiveEntries, HistoryEntries, Settings, PendingDownloads],
+  tables: [
+    ArchiveEntries,
+    HistoryEntries,
+    Settings,
+    PendingDownloads,
+    Subscriptions,
+  ],
 )
 class Ka7Database extends _$Ka7Database {
   Ka7Database(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -86,6 +102,7 @@ class Ka7Database extends _$Ka7Database {
       if (from < 4) {
         await migrator.addColumn(historyEntries, historyEntries.playlistId);
       }
+      if (from < 5) await migrator.createTable(subscriptions);
     },
   );
 }

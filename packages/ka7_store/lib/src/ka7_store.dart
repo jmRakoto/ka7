@@ -56,6 +56,15 @@ final class PendingDownload {
   final String folder;
 }
 
+/// A playlist or a channel whose new videos are offered at launch.
+final class Subscription {
+  const Subscription({required this.link, required this.title});
+
+  /// What [parseEntry] reads back: a playlist id or a channel URL.
+  final String link;
+  final String title;
+}
+
 /// Ka7's memory between two launches: archive and history, in one SQLite file.
 final class Ka7Store implements Archive {
   Ka7Store._(this._db);
@@ -198,6 +207,30 @@ final class Ka7Store implements Archive {
     final query = _db.select(_db.pendingDownloads)
       ..orderBy([(p) => OrderingTerm.asc(p.id)]);
     return [for (final row in await query.get()) _pendingOf(row)];
+  }
+
+  /// Follows [link]; following it again renames it.
+  Future<void> follow(String link, String title) => _db
+      .into(_db.subscriptions)
+      .insert(
+        SubscriptionsCompanion.insert(link: link, title: title),
+        onConflict: DoUpdate(
+          (_) => SubscriptionsCompanion(title: Value(title)),
+          target: [_db.subscriptions.link],
+        ),
+      );
+
+  Future<void> unfollow(String link) =>
+      (_db.delete(_db.subscriptions)..where((s) => s.link.equals(link))).go();
+
+  /// Oldest first.
+  Future<List<Subscription>> subscriptions() async {
+    final query = _db.select(_db.subscriptions)
+      ..orderBy([(s) => OrderingTerm.asc(s.id)]);
+    return [
+      for (final row in await query.get())
+        Subscription(link: row.link, title: row.title),
+    ];
   }
 
   Future<void> close() => _db.close();

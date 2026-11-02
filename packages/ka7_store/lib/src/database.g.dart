@@ -1745,6 +1745,256 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
   }
 }
 
+class $SubscriptionsTable extends Subscriptions
+    with TableInfo<$SubscriptionsTable, SubscriptionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SubscriptionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _linkMeta = const VerificationMeta('link');
+  @override
+  late final GeneratedColumn<String> link = GeneratedColumn<String>(
+    'link',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, link, title];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'subscriptions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SubscriptionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('link')) {
+      context.handle(
+        _linkMeta,
+        link.isAcceptableOrUnknown(data['link']!, _linkMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_linkMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SubscriptionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SubscriptionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      link: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}link'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+    );
+  }
+
+  @override
+  $SubscriptionsTable createAlias(String alias) {
+    return $SubscriptionsTable(attachedDatabase, alias);
+  }
+}
+
+class SubscriptionRow extends DataClass implements Insertable<SubscriptionRow> {
+  final int id;
+
+  /// A playlist id or a channel URL, as `parseEntry` reads it.
+  final String link;
+  final String title;
+  const SubscriptionRow({
+    required this.id,
+    required this.link,
+    required this.title,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['link'] = Variable<String>(link);
+    map['title'] = Variable<String>(title);
+    return map;
+  }
+
+  SubscriptionsCompanion toCompanion(bool nullToAbsent) {
+    return SubscriptionsCompanion(
+      id: Value(id),
+      link: Value(link),
+      title: Value(title),
+    );
+  }
+
+  factory SubscriptionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SubscriptionRow(
+      id: serializer.fromJson<int>(json['id']),
+      link: serializer.fromJson<String>(json['link']),
+      title: serializer.fromJson<String>(json['title']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'link': serializer.toJson<String>(link),
+      'title': serializer.toJson<String>(title),
+    };
+  }
+
+  SubscriptionRow copyWith({int? id, String? link, String? title}) =>
+      SubscriptionRow(
+        id: id ?? this.id,
+        link: link ?? this.link,
+        title: title ?? this.title,
+      );
+  SubscriptionRow copyWithCompanion(SubscriptionsCompanion data) {
+    return SubscriptionRow(
+      id: data.id.present ? data.id.value : this.id,
+      link: data.link.present ? data.link.value : this.link,
+      title: data.title.present ? data.title.value : this.title,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SubscriptionRow(')
+          ..write('id: $id, ')
+          ..write('link: $link, ')
+          ..write('title: $title')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, link, title);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SubscriptionRow &&
+          other.id == this.id &&
+          other.link == this.link &&
+          other.title == this.title);
+}
+
+class SubscriptionsCompanion extends UpdateCompanion<SubscriptionRow> {
+  final Value<int> id;
+  final Value<String> link;
+  final Value<String> title;
+  const SubscriptionsCompanion({
+    this.id = const Value.absent(),
+    this.link = const Value.absent(),
+    this.title = const Value.absent(),
+  });
+  SubscriptionsCompanion.insert({
+    this.id = const Value.absent(),
+    required String link,
+    required String title,
+  }) : link = Value(link),
+       title = Value(title);
+  static Insertable<SubscriptionRow> custom({
+    Expression<int>? id,
+    Expression<String>? link,
+    Expression<String>? title,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (link != null) 'link': link,
+      if (title != null) 'title': title,
+    });
+  }
+
+  SubscriptionsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? link,
+    Value<String>? title,
+  }) {
+    return SubscriptionsCompanion(
+      id: id ?? this.id,
+      link: link ?? this.link,
+      title: title ?? this.title,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (link.present) {
+      map['link'] = Variable<String>(link.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SubscriptionsCompanion(')
+          ..write('id: $id, ')
+          ..write('link: $link, ')
+          ..write('title: $title')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Ka7Database extends GeneratedDatabase {
   _$Ka7Database(QueryExecutor e) : super(e);
   $Ka7DatabaseManager get managers => $Ka7DatabaseManager(this);
@@ -1754,6 +2004,7 @@ abstract class _$Ka7Database extends GeneratedDatabase {
   late final $PendingDownloadsTable pendingDownloads = $PendingDownloadsTable(
     this,
   );
+  late final $SubscriptionsTable subscriptions = $SubscriptionsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1763,6 +2014,7 @@ abstract class _$Ka7Database extends GeneratedDatabase {
     historyEntries,
     settings,
     pendingDownloads,
+    subscriptions,
   ];
 }
 
@@ -2674,6 +2926,158 @@ typedef $$PendingDownloadsTableProcessedTableManager =
       PendingRow,
       PrefetchHooks Function()
     >;
+typedef $$SubscriptionsTableCreateCompanionBuilder =
+    SubscriptionsCompanion Function({
+      Value<int> id,
+      required String link,
+      required String title,
+    });
+typedef $$SubscriptionsTableUpdateCompanionBuilder =
+    SubscriptionsCompanion Function({
+      Value<int> id,
+      Value<String> link,
+      Value<String> title,
+    });
+
+class $$SubscriptionsTableFilterComposer
+    extends Composer<_$Ka7Database, $SubscriptionsTable> {
+  $$SubscriptionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get link => $composableBuilder(
+    column: $table.link,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SubscriptionsTableOrderingComposer
+    extends Composer<_$Ka7Database, $SubscriptionsTable> {
+  $$SubscriptionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get link => $composableBuilder(
+    column: $table.link,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SubscriptionsTableAnnotationComposer
+    extends Composer<_$Ka7Database, $SubscriptionsTable> {
+  $$SubscriptionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get link =>
+      $composableBuilder(column: $table.link, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+}
+
+class $$SubscriptionsTableTableManager
+    extends
+        RootTableManager<
+          _$Ka7Database,
+          $SubscriptionsTable,
+          SubscriptionRow,
+          $$SubscriptionsTableFilterComposer,
+          $$SubscriptionsTableOrderingComposer,
+          $$SubscriptionsTableAnnotationComposer,
+          $$SubscriptionsTableCreateCompanionBuilder,
+          $$SubscriptionsTableUpdateCompanionBuilder,
+          (
+            SubscriptionRow,
+            BaseReferences<_$Ka7Database, $SubscriptionsTable, SubscriptionRow>,
+          ),
+          SubscriptionRow,
+          PrefetchHooks Function()
+        > {
+  $$SubscriptionsTableTableManager(_$Ka7Database db, $SubscriptionsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SubscriptionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SubscriptionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SubscriptionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> link = const Value.absent(),
+                Value<String> title = const Value.absent(),
+              }) => SubscriptionsCompanion(id: id, link: link, title: title),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String link,
+                required String title,
+              }) => SubscriptionsCompanion.insert(
+                id: id,
+                link: link,
+                title: title,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SubscriptionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Ka7Database,
+      $SubscriptionsTable,
+      SubscriptionRow,
+      $$SubscriptionsTableFilterComposer,
+      $$SubscriptionsTableOrderingComposer,
+      $$SubscriptionsTableAnnotationComposer,
+      $$SubscriptionsTableCreateCompanionBuilder,
+      $$SubscriptionsTableUpdateCompanionBuilder,
+      (
+        SubscriptionRow,
+        BaseReferences<_$Ka7Database, $SubscriptionsTable, SubscriptionRow>,
+      ),
+      SubscriptionRow,
+      PrefetchHooks Function()
+    >;
 
 class $Ka7DatabaseManager {
   final _$Ka7Database _db;
@@ -2686,4 +3090,6 @@ class $Ka7DatabaseManager {
       $$SettingsTableTableManager(_db, _db.settings);
   $$PendingDownloadsTableTableManager get pendingDownloads =>
       $$PendingDownloadsTableTableManager(_db, _db.pendingDownloads);
+  $$SubscriptionsTableTableManager get subscriptions =>
+      $$SubscriptionsTableTableManager(_db, _db.subscriptions);
 }

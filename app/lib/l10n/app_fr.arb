@@ -242,5 +242,21 @@
   "searchButton": "Rechercher",
   "searchHint": "Artiste, titre, album…",
   "searchFooter": "20 résultats, à cocher dans l'aperçu",
-  "searchAgain": "Nouvelle recherche"
+  "searchAgain": "Nouvelle recherche",
+  "follow": "Suivre",
+  "following": "Suivi",
+  "newsTitle": "Nouveautés",
+  "newsShow": "Voir",
+  "newsLater": "Plus tard",
+  "newTracks": "{count, plural, one{{count} nouveau titre} other{{count} nouveaux titres}}",
+  "settingsSubscriptions": "Abonnements",
+  "subscriptionsEmpty": "Aucun abonnement. Suis une playlist ou une chaîne depuis l'aperçu : ses nouveaux titres te seront proposés au démarrage.",
+  "unfollow": "Ne plus suivre",
+  "@newTracks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

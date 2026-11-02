@@ -14,7 +14,15 @@ class AddLinksScreen extends StatefulWidget {
     this.links,
     this.pickLinksFile,
     this.mixLimit = 50,
+    this.news = const [],
+    this.onShowNews,
+    this.onDismissNews,
   });
+
+  /// New videos in followed playlists and channels, found at launch.
+  final List<News> news;
+  final VoidCallback? onShowNews;
+  final VoidCallback? onDismissNews;
 
   /// Videos of a mix read in the preview (settings).
   final int mixLimit;
@@ -171,6 +179,12 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
         ],
       ),
       children: [
+        if (widget.news.isNotEmpty)
+          _NewsCard(
+            news: widget.news,
+            onShow: widget.onShowNews,
+            onDismiss: widget.onDismissNews,
+          ),
         mode,
         const SizedBox(height: 16),
         TextField(
@@ -229,6 +243,67 @@ class _RecognizedRow extends StatelessWidget {
       leading: StatusPill(label, tone: tone),
       title: Text(entry.source, overflow: TextOverflow.ellipsis),
       subtitle: Text(detail),
+    );
+  }
+}
+
+/// Flow 0: followed playlists and channels have new videos.
+class _NewsCard extends StatelessWidget {
+  const _NewsCard({
+    required this.news,
+    required this.onShow,
+    required this.onDismiss,
+  });
+
+  final List<News> news;
+  final VoidCallback? onShow;
+  final VoidCallback? onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final count = news.fold(0, (sum, n) => sum + n.count);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.notifications_active_outlined,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.newsTitle,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l10n.newsLater,
+                    onPressed: onDismiss,
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              Text(
+                '${l10n.newTracks(count)} · '
+                '${news.map((n) => n.title).join(', ')}',
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: onShow, child: Text(l10n.newsShow)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
