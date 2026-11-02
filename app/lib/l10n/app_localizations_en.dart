@@ -559,4 +559,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomeSetupLater => 'You can change this later in Settings.';
+
+  @override
+  String get welcomePoint4e =>
+      'A notification tells you when everything is done';
+
+  @override
+  String get engineChecking => 'Getting the engine ready…';
 }

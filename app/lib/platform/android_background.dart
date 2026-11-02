@@ -41,6 +41,9 @@ class AndroidRunNotifier implements RunNotifier {
 
   final MethodChannel _channel;
 
+  /// Android 13+: asks once for notifications (progress and end).
+  void askPermission() => _channel.invokeMethod<void>('askNotifications');
+
   @override
   void finished({required String title, required String body}) =>
       _channel.invokeMethod<void>('finished', {'title': title, 'body': body});

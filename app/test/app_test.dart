@@ -67,6 +67,7 @@ void main() {
     RunNotifier? notifier,
     void Function(AppSettings settings)? onEngines,
     String Function(MediaFormat format)? shownFolder,
+    VoidCallback? askNotifications,
     Size size = const Size(1280, 900),
   }) async {
     tester.view
@@ -82,6 +83,7 @@ void main() {
         acceptDrops: acceptDrops,
         notifier: notifier,
         shownFolder: shownFolder,
+        askNotifications: askNotifications,
         enginesFor: (status, settings) {
           onEngines?.call(settings);
           return (extractor: _extractor, downloader: downloader);
@@ -155,6 +157,41 @@ void main() {
         findsOneWidget,
       );
       expect(find.text("Partage depuis l'app YouTube vers Ka7"), findsNothing);
+    });
+
+    testWidgets('says a notification tells when downloads end', (tester) async {
+      await store.setSetting('onboarding.done', null);
+      await pumpKa7(tester);
+      for (var i = 0; i < 4; i++) {
+        await tester.tap(find.text('Suivant'));
+        await tester.pumpAndSettle();
+      }
+
+      expect(
+        find.text('Une notification te prévient quand tout est fini'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('asks for notifications as soon as the pages are done', (
+      tester,
+    ) async {
+      var asked = 0;
+      await store.setSetting('onboarding.done', null);
+      await pumpKa7(tester, askNotifications: () => asked++);
+      expect(asked, 0);
+
+      await tester.tap(find.text('Passer'));
+      await tester.pumpAndSettle();
+
+      expect(asked, 1);
+    });
+
+    testWidgets('does not ask again on later launches', (tester) async {
+      var asked = 0;
+      await pumpKa7(tester, askNotifications: () => asked++);
+
+      expect(asked, 0);
     });
 
     testWidgets('goes back a page with Previous', (tester) async {

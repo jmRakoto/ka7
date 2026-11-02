@@ -576,4 +576,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get welcomeSetupLater =>
       'Tu pourras changer ça plus tard dans Réglages.';
+
+  @override
+  String get welcomePoint4e =>
+      'Une notification te prévient quand tout est fini';
+
+  @override
+  String get engineChecking => 'Préparation du moteur…';
 }

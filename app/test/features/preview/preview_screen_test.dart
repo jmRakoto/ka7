@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ka7/features/preview/preview_screen.dart';
@@ -368,5 +370,169 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TextField), findsNothing);
+  });
+
+  group('thumbnails', () {
+    /// A 1×1 transparent PNG: no network in tests.
+    final pixel = Uint8List.fromList(const [
+      0x89,
+      0x50,
+      0x4E,
+      0x47,
+      0x0D,
+      0x0A,
+      0x1A,
+      0x0A,
+      0x00,
+      0x00,
+      0x00,
+      0x0D,
+      0x49,
+      0x48,
+      0x44,
+      0x52,
+      0x00,
+      0x00,
+      0x00,
+      0x01,
+      0x00,
+      0x00,
+      0x00,
+      0x01,
+      0x08,
+      0x06,
+      0x00,
+      0x00,
+      0x00,
+      0x1F,
+      0x15,
+      0xC4,
+      0x89,
+      0x00,
+      0x00,
+      0x00,
+      0x0D,
+      0x49,
+      0x44,
+      0x41,
+      0x54,
+      0x78,
+      0x9C,
+      0x63,
+      0x00,
+      0x01,
+      0x00,
+      0x00,
+      0x05,
+      0x00,
+      0x01,
+      0x0D,
+      0x0A,
+      0x2D,
+      0xB4,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x49,
+      0x45,
+      0x4E,
+      0x44,
+      0xAE,
+      0x42,
+      0x60,
+      0x82,
+    ]);
+
+    testWidgets('shows each available video with its thumbnail', (
+      tester,
+    ) async {
+      final asked = <String>[];
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [playlist],
+          extractor: extractor,
+          thumbnail: (videoId) {
+            asked.add(videoId);
+            return MemoryImage(pixel);
+          },
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(asked, ['aB3dE5fG7hI', 'jK9lM1nO3pQ']);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(CheckboxListTile, 'Tsy Ferana'),
+          matching: find.byType(Image),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('shows none where no thumbnail is given', (tester) async {
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [playlist],
+          extractor: extractor,
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Image), findsNothing);
+    });
+  });
+
+  group('long titles', () {
+    const long =
+        "SAO DIA ATAON'IALAHY HOE Mahaleo Live @ Olympia, Paris, 19 novembre "
+        '2011, version intégrale avec le public';
+    final entry = entryOf('Xy7zA9bC1dE');
+
+    Future<void> pumpLong(WidgetTester tester) async {
+      tester.view
+        ..physicalSize = const Size(400, 800)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [entry],
+          extractor: FakeExtractor({
+            entry.url: const Probe(
+              title: 'Olympia',
+              items: [ProbeItem(videoId: 'Xy7zA9bC1dE', title: long)],
+            ),
+          }),
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('cuts a long title at two lines', (tester) async {
+      await pumpLong(tester);
+
+      final title = tester.widget<Text>(find.text(long));
+      expect(title.maxLines, 2);
+      expect(title.overflow, TextOverflow.ellipsis);
+    });
+
+    testWidgets('shows the whole title on a long press', (tester) async {
+      await pumpLong(tester);
+
+      await tester.longPress(find.text(long));
+      await tester.pumpAndSettle();
+
+      expect(find.text(long), findsNWidgets(2));
+      final box = tester.widget<CheckboxListTile>(
+        find.byType(CheckboxListTile),
+      );
+      expect(box.value, isTrue, reason: 'a long press does not uncheck');
+    });
   });
 }

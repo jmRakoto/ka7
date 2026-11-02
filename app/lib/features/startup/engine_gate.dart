@@ -3,6 +3,7 @@ import 'package:ka7_engine_ytdlp/ka7_engine_ytdlp.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../widgets/ka7_logo.dart';
+import '../../widgets/ka7_splash.dart';
 import '../../widgets/ka7_wordmark.dart';
 
 /// Flow 0: makes sure yt-dlp and ffmpeg are there before the app opens.
@@ -59,7 +60,7 @@ class _EngineGateState extends State<EngineGate> {
   Widget build(BuildContext context) {
     final status = _status;
     if (status == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Ka7Splash(message: AppLocalizations.of(context).engineChecking);
     }
     if (status.isReady) return widget.builder(context, status);
 

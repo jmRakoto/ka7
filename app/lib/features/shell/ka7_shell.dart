@@ -40,7 +40,11 @@ class Ka7Shell extends StatefulWidget {
     this.pickLinksFile,
     this.notifier,
     this.shownFolder,
+    this.thumbnail,
   });
+
+  /// Picture of a video in the preview, by id; none when null (tests).
+  final ImageProvider Function(String videoId)? thumbnail;
 
   /// Where the user finds a format's files, when not the download folder.
   final String Function(MediaFormat format)? shownFolder;
@@ -339,6 +343,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
         formats: widget.formats,
         archive: widget.store,
         isFollowed: _isFollowed,
+        thumbnail: widget.thumbnail,
         onFollow: _follow,
         onDownload: (downloads, format) {
           Navigator.of(context).pop();

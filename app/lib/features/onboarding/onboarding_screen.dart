@@ -95,6 +95,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       points: [
         (Icons.manage_search, l10n.welcomePoint4a),
         (Icons.notifications_active_outlined, l10n.welcomePoint4b),
+        (Icons.notifications_outlined, l10n.welcomePoint4e),
         (Icons.history, l10n.welcomePoint4c),
         (Icons.refresh, l10n.welcomePoint4d),
       ],

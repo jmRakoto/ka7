@@ -17,6 +17,10 @@ import 'platform/media_store.dart';
 import 'platform/shared_links.dart';
 import 'platform/user_folders.dart';
 
+/// YouTube's own picture of a video, 320×180.
+ImageProvider _thumbnail(String videoId) =>
+    NetworkImage('https://i.ytimg.com/vi/$videoId/mqdefault.jpg');
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Same folder as the CLI on desktop: one archive, one history.
@@ -40,6 +44,7 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
     fetch: httpFetch,
   );
   return Ka7App(
+    thumbnail: _thumbnail,
     engineSetup: DailyUpdate(
       binaries,
       update: binaries.updateYtDlp,
@@ -87,7 +92,9 @@ Future<Ka7App> _mobile(Ka7Store store) async {
     final ytDlp = AndroidYtDlp();
     // youtube_explode takes over when yt-dlp breaks (m4a and mp4 only).
     final explode = ExplodeEngine(source: YoutubeExplodeSource());
+    final notifier = AndroidRunNotifier();
     return Ka7App(
+      thumbnail: _thumbnail,
       engineSetup: AndroidEngineSetup(ytDlp),
       enginesFor: (_, settings) => (
         extractor: FallbackExtractor([YtDlpExtractor(run: ytDlp.run), explode]),
@@ -106,7 +113,8 @@ Future<Ka7App> _mobile(Ka7Store store) async {
       formats: const [MediaFormat.mp3, MediaFormat.m4a, MediaFormat.mp4],
       sharedLinks: sharedLinks(),
       background: AndroidBackgroundWork(),
-      notifier: AndroidRunNotifier(),
+      notifier: notifier,
+      askNotifications: notifier.askPermission,
       // Downloaded to the app's own folder, then moved by MediaStore.
       shownFolder: (format) =>
           format == MediaFormat.mp4 ? 'Movies/Ka7' : 'Music/Ka7',
@@ -117,6 +125,7 @@ Future<Ka7App> _mobile(Ka7Store store) async {
   }
   final engine = ExplodeEngine(source: YoutubeExplodeSource());
   return Ka7App(
+    thumbnail: _thumbnail,
     enginesFor: (_, settings) => (extractor: engine, downloader: engine),
     store: store,
     formats: const [MediaFormat.m4a, MediaFormat.mp4],

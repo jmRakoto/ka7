@@ -18,7 +18,11 @@ class PreviewScreen extends StatefulWidget {
     this.archive,
     this.isFollowed,
     this.onFollow,
+    this.thumbnail,
   });
+
+  /// Picture of a video, by id (YouTube's thumbnail); none when null.
+  final ImageProvider Function(String videoId)? thumbnail;
 
   /// Whether the link of a playlist or channel is followed.
   final bool Function(String link)? isFollowed;
@@ -249,6 +253,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
               probe: probe,
               selected: _selected,
               present: _present,
+              thumbnail: widget.thumbnail,
               followed: switch ((followLinkOf(probe), widget.isFollowed)) {
                 (final link?, final isFollowed?) => isFollowed(link),
                 _ => null,
@@ -296,7 +301,10 @@ class _ProbeGroup extends StatelessWidget {
     required this.onToggleAll,
     required this.followed,
     required this.onFollow,
+    required this.thumbnail,
   });
+
+  final ImageProvider Function(String videoId)? thumbnail;
 
   /// Null when this cannot be followed (video, search, mix).
   final bool? followed;
@@ -378,8 +386,12 @@ class _ProbeGroup extends StatelessWidget {
             CheckboxListTile(
               value: selected.contains(item.videoId),
               onChanged: (keep) => onToggle(item.videoId, keep ?? false),
-              title: Text(item.title),
+              title: _Title(item.title),
               subtitle: _details(context, item),
+              secondary: switch (thumbnail) {
+                final thumbnail? => _Thumbnail(image: thumbnail(item.videoId)),
+                null => null,
+              },
             )
           else
             CheckboxListTile(
@@ -394,4 +406,54 @@ class _ProbeGroup extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The video's picture, 16:9; a neutral tile when it cannot load.
+class _Thumbnail extends StatelessWidget {
+  const _Thumbnail({required this.image});
+
+  final ImageProvider image;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final placeholder = ColoredBox(
+      color: scheme.surfaceContainerHighest,
+      child: Icon(Icons.music_video_outlined, color: scheme.onSurfaceVariant),
+    );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        width: 96,
+        height: 54,
+        child: Image(
+          image: image,
+          fit: BoxFit.cover,
+          excludeFromSemantics: true,
+          frameBuilder: (context, child, frame, _) =>
+              frame == null ? placeholder : child,
+          errorBuilder: (context, _, _) => placeholder,
+        ),
+      ),
+    );
+  }
+}
+
+/// Two lines at most; the whole title on a long press (phone) or under the
+/// pointer (desktop). Screen readers read it whole either way.
+class _Title extends StatelessWidget {
+  const _Title(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: text,
+    triggerMode: TooltipTriggerMode.longPress,
+    waitDuration: const Duration(milliseconds: 500),
+    // Long titles take a moment to read once the finger is lifted.
+    showDuration: const Duration(seconds: 4),
+    excludeFromSemantics: true,
+    child: Text(text, maxLines: 2, overflow: TextOverflow.ellipsis),
+  );
 }

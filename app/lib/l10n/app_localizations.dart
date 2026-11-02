@@ -1015,6 +1015,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Tu pourras changer ça plus tard dans Réglages.'**
   String get welcomeSetupLater;
+
+  /// No description provided for @welcomePoint4e.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une notification te prévient quand tout est fini'**
+  String get welcomePoint4e;
+
+  /// No description provided for @engineChecking.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préparation du moteur…'**
+  String get engineChecking;
 }
 
 class _AppLocalizationsDelegate

@@ -29,11 +29,16 @@ class MainActivity : FlutterActivity() {
             }
         }
         pending = sharedText(intent)
+        if (pending != null) ShareShortcut.reportUsed(applicationContext)
+        ShareShortcut.publish(applicationContext)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        sharedText(intent)?.let { share?.invokeMethod("shared", it) }
+        sharedText(intent)?.let {
+            ShareShortcut.reportUsed(applicationContext)
+            share?.invokeMethod("shared", it)
+        }
     }
 
     /** "Share → Ka7" from YouTube or a browser sends the link as text. */

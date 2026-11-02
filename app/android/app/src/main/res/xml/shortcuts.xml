@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ka7 as a direct-share target for text (YouTube links): the share sheet
+     shows it in its top row, ranked by use (ShareShortcut.kt publishes it). -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <share-target android:targetClass="mg.rakoto.ka7.MainActivity">
+        <data android:mimeType="text/plain" />
+        <category android:name="mg.rakoto.ka7.category.SHARE_TARGET" />
+    </share-target>
+</shortcuts>

@@ -58,4 +58,11 @@ void main() {
       'body': '2 réussis',
     });
   });
+
+  test('asks Android for the notification permission', () async {
+    AndroidRunNotifier().askPermission();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(calls.single.method, 'askNotifications');
+  });
 }

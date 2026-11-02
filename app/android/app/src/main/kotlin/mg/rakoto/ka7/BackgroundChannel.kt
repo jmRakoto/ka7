@@ -32,6 +32,10 @@ class BackgroundChannel(private val activity: Activity, messenger: BinaryMesseng
                     DownloadService.release(activity.applicationContext)
                     result.success(null)
                 }
+                "askNotifications" -> {
+                    askNotifications()
+                    result.success(null)
+                }
                 "finished" -> {
                     DownloadService.finished(
                         activity.applicationContext,
@@ -50,6 +54,16 @@ class BackgroundChannel(private val activity: Activity, messenger: BinaryMesseng
      * them the progress stays hidden, downloads still run). Android 7 to 9:
      * storage, to file music in Music (MediaStoreChannel).
      */
+    /** Android 13+, right after the welcome pages: before any download. */
+    private fun askNotifications() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        askedForNotifications = true
+        val permission = Manifest.permission.POST_NOTIFICATIONS
+        if (activity.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+            activity.requestPermissions(arrayOf(permission), 0)
+        }
+    }
+
     private fun askForNotificationsOnce() {
         if (askedForNotifications) return
         askedForNotifications = true

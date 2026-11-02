@@ -11,6 +11,7 @@ import 'platform/background_work.dart';
 import 'platform/run_notifier.dart';
 import 'settings/app_settings.dart';
 import 'theme/ka7_theme.dart';
+import 'widgets/ka7_splash.dart';
 
 /// The engines built once yt-dlp and ffmpeg are found.
 typedef Engines = ({Extractor extractor, Downloader downloader});
@@ -32,8 +33,13 @@ class Ka7App extends StatefulWidget {
     this.pickLinksFile,
     this.notifier,
     this.shownFolder,
+    this.askNotifications,
+    this.thumbnail,
     this.now = DateTime.now,
   });
+
+  /// Picture of a video in the preview, by id; none when null (tests).
+  final ImageProvider Function(String videoId)? thumbnail;
 
   /// Finds yt-dlp and ffmpeg, or installs them (flow 0); null when the
   /// engine is built into the app (mobile).
@@ -48,6 +54,10 @@ class Ka7App extends StatefulWidget {
   /// Where the user finds a format's files, when not the download folder
   /// (Android: moved to Music/Ka7 or Movies/Ka7 afterwards).
   final String Function(MediaFormat format)? shownFolder;
+
+  /// Asks the system for notifications, once the welcome pages are done
+  /// (Android 13+), rather than in the middle of a first download.
+  final VoidCallback? askNotifications;
 
   /// Keeps downloads going with the screen off (Android).
   final BackgroundWork? background;
@@ -113,6 +123,7 @@ class _Ka7AppState extends State<Ka7App> {
       pickLinksFile: widget.pickLinksFile,
       notifier: widget.notifier,
       shownFolder: widget.shownFolder,
+      thumbnail: widget.thumbnail,
       pickFolder: widget.pickFolder,
       openFolder: widget.openFolder,
       now: widget.now,
@@ -122,7 +133,15 @@ class _Ka7AppState extends State<Ka7App> {
   @override
   Widget build(BuildContext context) {
     final settings = _settings;
-    if (settings == null) return const SizedBox.shrink();
+    // A moment, while the saved choices load: the splash, in system colours.
+    if (settings == null) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ka7Theme(Brightness.light),
+        darkTheme: ka7Theme(Brightness.dark),
+        home: const Ka7Splash(),
+      );
+    }
     return ListenableBuilder(
       listenable: settings,
       builder: (context, _) => MaterialApp(
@@ -140,7 +159,10 @@ class _Ka7AppState extends State<Ka7App> {
         localeResolutionCallback: _resolveLocale,
         home: !settings.onboarded
             ? OnboardingScreen(
-                onDone: settings.completeOnboarding,
+                onDone: () {
+                  settings.completeOnboarding();
+                  widget.askNotifications?.call();
+                },
                 settings: settings,
                 canDrop: widget.acceptDrops,
                 canShare: widget.sharedLinks != null,

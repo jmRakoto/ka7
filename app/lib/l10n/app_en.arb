@@ -235,5 +235,7 @@
   "welcomePrevious": "Back",
   "welcomeSetupTitle": "Before we start",
   "welcomeSetupBody": "Pick your language and how Ka7 looks.",
-  "welcomeSetupLater": "You can change this later in Settings."
+  "welcomeSetupLater": "You can change this later in Settings.",
+  "welcomePoint4e": "A notification tells you when everything is done",
+  "engineChecking": "Getting the engine ready…"
 }

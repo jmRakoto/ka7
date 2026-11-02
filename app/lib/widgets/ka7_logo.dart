@@ -5,12 +5,20 @@ import 'package:flutter/material.dart';
 /// The cassette of the Ka7 logo (`../ka7-brand/ka7-mark.svg`), drawn in the
 /// theme's colours: light and dark logos come out of the same drawing.
 class Ka7Logo extends StatefulWidget {
-  const Ka7Logo({super.key, this.width = 48, this.spin = false});
+  const Ka7Logo({
+    super.key,
+    this.width = 48,
+    this.spin = false,
+    this.loading = false,
+  });
 
   final double width;
 
   /// The reels turn, then slow down to a stop, as a tape being wound.
   final bool spin;
+
+  /// The reels keep turning, as a tape playing, until the widget goes.
+  final bool loading;
 
   @override
   State<Ka7Logo> createState() => _Ka7LogoState();
@@ -25,7 +33,10 @@ class _Ka7LogoState extends State<Ka7Logo> with SingleTickerProviderStateMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.spin && !MediaQuery.disableAnimationsOf(context)) {
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    if (widget.loading) {
+      _wind.repeat();
+    } else if (widget.spin) {
       _wind.forward(from: 0);
     }
   }
@@ -39,7 +50,9 @@ class _Ka7LogoState extends State<Ka7Logo> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final turns = CurvedAnimation(parent: _wind, curve: Curves.easeOutCubic);
+    final turns = widget.loading
+        ? _wind
+        : CurvedAnimation(parent: _wind, curve: Curves.easeOutCubic);
     return Semantics(
       label: 'Ka7',
       image: true,
@@ -54,7 +67,7 @@ class _Ka7LogoState extends State<Ka7Logo> with SingleTickerProviderStateMixin {
             body: scheme.primary,
             window: scheme.surface,
             reels: scheme.secondary,
-            angle: turns.value * 4 * pi,
+            angle: turns.value * (widget.loading ? 2 : 4) * pi,
           ),
         ),
       ),
