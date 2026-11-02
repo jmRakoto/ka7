@@ -19,6 +19,10 @@ import '../../l10n/app_localizations.dart';
     detail: l10n.detailVideoInPlaylist,
   ),
   ChannelEntry() => (label: l10n.kindChannel, detail: entry.url),
+  SearchEntry(:final query) => (
+    label: l10n.kindSearch,
+    detail: l10n.detailSearch(query),
+  ),
   DuplicateEntry() => (label: l10n.kindDuplicate, detail: l10n.detailDuplicate),
   InvalidEntry(:final reason) => (
     label: l10n.kindInvalid,

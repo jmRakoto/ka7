@@ -157,7 +157,7 @@
   "folderVideos": "Dossier des vidéos (MP4)",
   "changeMusicFolder": "Changer le dossier de la musique",
   "changeVideosFolder": "Changer le dossier des vidéos",
-  "addTitle": "Ajouter des liens",
+  "addTitle": "Ajouter",
   "addHint": "Colle des liens, des ID ou une liste : un par ligne, ou séparés par des espaces.",
   "previewTitle": "Aperçu",
   "engineSize": "Environ 180 Mo à télécharger, une seule fois.",
@@ -194,5 +194,53 @@
   "themeLight": "Clair",
   "themeDark": "Sombre",
   "settingsMixLimitHelp": "Un mix (lien qui contient « list=RD ») est une playlist sans fin que YouTube compose à partir d'une vidéo. Ka7 n'en lit que les premiers titres, ce nombre-ci.",
-  "selectAll": "Tout sélectionner"
+  "selectAll": "Tout sélectionner",
+  "welcomeTitle1": "Bienvenue dans Ka7",
+  "welcomeBody1": "Des liens YouTube deviennent des fichiers MP3 ou MP4 propres : bien nommés, tagués, rangés par playlist.",
+  "welcomeTitle2": "Colle, vérifie, télécharge",
+  "welcomeBody2": "Colle un lien, une playlist ou un fichier de liens. L'aperçu montre chaque titre : décoche ce que tu ne veux pas, choisis le format, c'est parti.",
+  "welcomeTitle3": "Tout est rangé",
+  "welcomeBody3": "La Bibliothèque garde tout ce que tu as téléchargé. Une playlist s'enrichit ? Mets-la à jour : seuls les nouveaux titres sont récupérés.",
+  "welcomeSkip": "Passer",
+  "welcomeNext": "Suivant",
+  "welcomeStart": "Commencer",
+  "welcomePage": "Page {page} sur {count}",
+  "@welcomePage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "kindSearch": "Recherche",
+  "detailSearch": "Résultats YouTube pour « {query} »",
+  "searchResults": "Recherche : {query}",
+  "settingsLayout": "Rangement des fichiers",
+  "layoutPlaylist": "Par playlist",
+  "layoutArtist": "Par artiste",
+  "@detailSearch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "@searchResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsLayoutHelp": "Par playlist : un dossier par playlist, titres numérotés. Par artiste : un dossier par chaîne YouTube qui a publié la vidéo.",
+  "cancelOne": "Annuler ce titre",
+  "modeLinks": "Liens",
+  "modeSearch": "Recherche YouTube",
+  "searchButton": "Rechercher",
+  "searchHint": "Artiste, titre, album…",
+  "searchFooter": "20 résultats, à cocher dans l'aperçu",
+  "searchAgain": "Nouvelle recherche"
 }

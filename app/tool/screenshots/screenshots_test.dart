@@ -44,6 +44,11 @@ final _extractor = FakeExtractor({
   'https://www.youtube.com/watch?v=Qm7tR2vLx9A': hafatraVideo,
   'https://www.youtube.com/playlist?list=PLe7rK2mErickManana01':
       ericMananaPlaylist,
+  'https://www.youtube.com/results?search_query=Erick+Manana': Probe(
+    title: 'Erick Manana',
+    isSearch: true,
+    items: ericMananaPlaylist.items.take(2).toList(),
+  ),
 });
 
 void main() {
@@ -101,6 +106,12 @@ void main() {
             ),
           ),
         );
+        await shot('00-welcome-1');
+        await tester.tap(find.text('Suivant'));
+        await shot('00-welcome-2');
+        await tester.tap(find.text('Suivant'));
+        await shot('00-welcome-3');
+        await tester.tap(find.text('Commencer'));
         await shot('0-engine');
         await tester.tap(find.text('Installer'));
         await tester.pump();
@@ -130,6 +141,16 @@ void main() {
           ),
           (_) {},
         );
+        await tester.tap(find.text('Recherche YouTube'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'Erick Manana');
+        await shot('1-add-search');
+        await tester.tap(find.text('Rechercher'));
+        await shot('2-preview-search');
+        await tester.tap(find.byIcon(Icons.arrow_back));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Liens'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text("Voir l'aperçu"));
         await shot('2-preview');
         await tester.tap(find.text('Télécharger'));
@@ -152,6 +173,7 @@ void main() {
         final relaunched = Ka7Store.inMemory();
         addTearDown(relaunched.close);
         await relaunched.setSetting('language', 'fr');
+        await relaunched.setSetting('onboarding.done', '1');
         await relaunched.keepPending(
           [
             for (final (i, item) in ericMananaPlaylist.items.take(2).indexed)

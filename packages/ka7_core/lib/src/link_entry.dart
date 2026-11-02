@@ -16,6 +16,17 @@ sealed class MediaEntry extends LinkEntry {
 
 const _base = 'https://www.youtube.com';
 
+/// Plain words: a YouTube search, the user picks among the results.
+final class SearchEntry extends MediaEntry {
+  const SearchEntry(super.source, {required this.query});
+
+  final String query;
+
+  @override
+  String get url =>
+      '$_base/results?search_query=${Uri.encodeQueryComponent(query)}';
+}
+
 /// A single video.
 final class VideoEntry extends MediaEntry {
   const VideoEntry(super.source, {required this.videoId});
@@ -28,6 +39,9 @@ final class VideoEntry extends MediaEntry {
 
 /// How many videos of a mix are read until the user picks another number.
 int defaultMixLimit() => 50;
+
+/// Results shown for a search.
+const searchLimit = 20;
 
 /// A playlist: every video in it.
 final class PlaylistEntry extends MediaEntry {
@@ -147,15 +161,28 @@ List<LinkEntry> parseLinks(String text) {
   return [
     for (final line in text.split('\n'))
       if (!line.trimLeft().startsWith('#'))
-        for (final word in line.split(_spaces))
-          if (word.isNotEmpty)
-            switch (parseEntry(word)) {
-              MediaEntry media when firstByUrl.containsKey(media.url) =>
-                DuplicateEntry(media.source, of: firstByUrl[media.url]!),
-              MediaEntry media => firstByUrl[media.url] = media,
-              final other => other,
-            },
+        for (final entry in _entriesOf(line))
+          switch (entry) {
+            MediaEntry media when firstByUrl.containsKey(media.url) =>
+              DuplicateEntry(media.source, of: firstByUrl[media.url]!),
+            MediaEntry media => firstByUrl[media.url] = media,
+            final other => other,
+          },
   ];
+}
+
+/// Each word of [line] on its own; a line of plain words only is a search.
+List<LinkEntry> _entriesOf(String line) {
+  final entries = [
+    for (final word in line.split(_spaces))
+      if (word.isNotEmpty) parseEntry(word),
+  ];
+  final plainWords = entries.every(
+    (e) => e is InvalidEntry && e.reason == InvalidReason.freeText,
+  );
+  if (entries.isEmpty || !plainWords) return entries;
+  final query = line.trim().replaceAll(_spaces, ' ');
+  return [SearchEntry(query, query: query)];
 }
 
 final _spaces = RegExp(r'\s+');

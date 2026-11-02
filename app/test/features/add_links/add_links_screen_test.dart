@@ -170,4 +170,76 @@ void main() {
 
     expect(find.text('Mix · 100 max'), findsOneWidget);
   });
+
+  testWidgets('treats a line of plain words as a YouTube search', (
+    tester,
+  ) async {
+    await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
+
+    await tester.enterText(find.byType(TextField), 'Erick Manana');
+    await tester.pump();
+
+    expect(find.text('Recherche'), findsOneWidget);
+    expect(
+      find.text('Résultats YouTube pour « Erick Manana »'),
+      findsOneWidget,
+    );
+    expect(find.text('1 entrée reconnue'), findsOneWidget);
+  });
+
+  group('search mode', () {
+    testWidgets('searches YouTube for what the user types', (tester) async {
+      List<MediaEntry>? handedOver;
+      await pumpApp(
+        tester,
+        AddLinksScreen(onPreview: (entries) => handedOver = entries),
+      );
+
+      await tester.tap(find.text('Recherche YouTube'));
+      await tester.pumpAndSettle();
+      expect(find.text('Importer un fichier'), findsNothing);
+      await tester.enterText(find.byType(TextField), '  Erick Manana ');
+      await tester.pump();
+      await tester.tap(find.text('Rechercher'));
+
+      final search = handedOver!.single as SearchEntry;
+      expect(search.query, 'Erick Manana');
+    });
+
+    testWidgets('searches only once something is typed', (tester) async {
+      await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
+      await tester.tap(find.text('Recherche YouTube'));
+      await tester.pumpAndSettle();
+
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Rechercher'),
+      );
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('keeps the pasted links when switching back', (tester) async {
+      await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
+      await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
+      await tester.tap(find.text('Recherche YouTube'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Liens'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Qm7tR2vLx9A',
+      );
+      expect(find.text('Vidéo'), findsOneWidget);
+    });
+  });
+
+  testWidgets('is titled Add, whatever the mode', (tester) async {
+    await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
+
+    expect(find.text('Ajouter'), findsOneWidget);
+    await tester.tap(find.text('Recherche YouTube'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ajouter'), findsOneWidget);
+  });
 }

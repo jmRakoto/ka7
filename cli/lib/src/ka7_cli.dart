@@ -85,7 +85,14 @@ final class Ka7Cli {
       out.writeln(say.missingFile(path));
       return ExitCode.noInput;
     }
-    final entries = parseLinks(await links.readAsString());
+    // Searches need someone to pick results: left to the app.
+    final entries = [
+      for (final entry in parseLinks(await links.readAsString()))
+        if (entry is SearchEntry)
+          InvalidEntry(entry.source, reason: InvalidReason.freeText)
+        else
+          entry,
+    ];
     final media = entries.whereType<MediaEntry>().toList();
     out.writeln(
       say.readLinks(

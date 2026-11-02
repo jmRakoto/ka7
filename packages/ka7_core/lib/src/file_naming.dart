@@ -13,6 +13,15 @@ enum MediaFormat {
   final String extension;
 }
 
+/// How downloads are sorted into folders.
+enum FolderLayout {
+  /// One folder per playlist or channel, numbered tracks.
+  playlist,
+
+  /// One folder per artist (the video's channel).
+  artist,
+}
+
 /// Readable stand-ins for characters some system forbids in file names.
 const _replacements = {
   '/': '-',
@@ -54,8 +63,16 @@ String safeFileName(String name) {
 }
 
 /// Where [download] lands, relative to the download folder.
-String relativePathOf(PlannedDownload download, MediaFormat format) {
+String relativePathOf(
+  PlannedDownload download,
+  MediaFormat format, {
+  FolderLayout layout = FolderLayout.playlist,
+}) {
   final title = safeFileName(download.item.title);
+  final artist = download.item.channel?.trim();
+  if (layout == FolderLayout.artist && artist != null && artist.isNotEmpty) {
+    return '${safeFileName(artist)}/$title.${format.extension}';
+  }
   final source = download.source;
   if (source.playlistId == null) return '$title.${format.extension}';
   final folder = safeFileName(source.title);

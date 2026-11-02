@@ -46,6 +46,13 @@ final class YoutubeExplodeSource implements ExplodeSource {
   });
 
   @override
+  Future<List<SourceVideo>> search(String query, {required int limit}) =>
+      _reading(() async {
+        final found = await _client.search.search(query);
+        return [for (final video in found.take(limit)) _video(video)];
+      });
+
+  @override
   Future<List<SourceStream>> streams(String videoId) async {
     try {
       final manifest = await _client.videos.streamsClient.getManifest(videoId);

@@ -41,7 +41,11 @@ final class YtDlpExtractor implements Extractor {
         '${mixLimit()}',
       ],
       // Long videos only: a channel's root also lists its shorts and lives.
-      if (entry is ChannelEntry) '${entry.url}/videos' else entry.url,
+      switch (entry) {
+        ChannelEntry() => '${entry.url}/videos',
+        SearchEntry(:final query) => 'ytsearch$searchLimit:$query',
+        _ => entry.url,
+      },
     ]);
     if (result.exitCode != 0) {
       final message = (result.stderr as String).trim();

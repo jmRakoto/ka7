@@ -63,6 +63,31 @@ class SettingsScreen extends StatelessWidget {
             onSelectionChanged: (choice) => settings.setTheme(choice.single),
           ),
           const SizedBox(height: 16),
+          SectionTitle(l10n.settingsLayout),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              l10n.settingsLayoutHelp,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          SegmentedButton<FolderLayout>(
+            segments: [
+              ButtonSegment(
+                value: FolderLayout.playlist,
+                label: Text(l10n.layoutPlaylist),
+              ),
+              ButtonSegment(
+                value: FolderLayout.artist,
+                label: Text(l10n.layoutArtist),
+              ),
+            ],
+            selected: {settings.layout},
+            onSelectionChanged: (choice) => settings.setLayout(choice.single),
+          ),
+          const SizedBox(height: 16),
           SectionTitle(l10n.settingsConcurrency),
           const SizedBox(height: 4),
           SegmentedButton<int>(

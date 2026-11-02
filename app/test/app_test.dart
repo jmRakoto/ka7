@@ -19,7 +19,20 @@ import 'helpers/fake_engine_setup.dart';
 import 'helpers/fake_extractor.dart';
 import 'helpers/probes.dart';
 
+const _sungByErick = Probe(
+  title: 'Tsara',
+  items: [
+    ProbeItem(
+      videoId: 'Xy7zA9bC1dE',
+      title: 'Tsara',
+      channel: 'Erick Manana',
+      duration: Duration(minutes: 3),
+    ),
+  ],
+);
+
 final _extractor = FakeExtractor({
+  'https://www.youtube.com/watch?v=Xy7zA9bC1dE': _sungByErick,
   'https://www.youtube.com/watch?v=Qm7tR2vLx9A': hafatraVideo,
   'https://www.youtube.com/playlist?list=PLe7rK2mErickManana01':
       ericMananaPlaylist,
@@ -34,6 +47,7 @@ void main() {
   setUp(() async {
     store = Ka7Store.inMemory();
     await store.setSetting('language', 'fr');
+    await store.setSetting('onboarding.done', '1');
     downloader = ControlledDownloader();
     opened = [];
     picked = null;
@@ -85,7 +99,7 @@ void main() {
 
   /// Pastes [links], opens the preview, then starts the download.
   Future<void> download(WidgetTester tester, String links) async {
-    await tester.tap(find.text('Ajouter'));
+    await tester.tap(_nav('Ajouter'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), links);
     await tester.pump();
@@ -94,6 +108,59 @@ void main() {
     await tester.tap(find.text('Télécharger'));
     await tester.pumpAndSettle();
   }
+
+  group('welcome', () {
+    testWidgets('presents Ka7 on first launch, then opens on Add', (
+      tester,
+    ) async {
+      await store.setSetting('onboarding.done', null);
+      await pumpKa7(tester);
+
+      expect(find.text('Bienvenue dans Ka7'), findsOneWidget);
+      await tester.tap(find.text('Suivant'));
+      await tester.pumpAndSettle();
+      expect(find.text('Colle, vérifie, télécharge'), findsOneWidget);
+      await tester.tap(find.text('Suivant'));
+      await tester.pumpAndSettle();
+      expect(find.text('Tout est rangé'), findsOneWidget);
+      await tester.tap(find.text('Commencer'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AddLinksScreen), findsOneWidget);
+      expect(await store.setting('onboarding.done'), '1');
+    });
+
+    testWidgets('can be skipped at once', (tester) async {
+      await store.setSetting('onboarding.done', null);
+      await pumpKa7(tester);
+
+      await tester.tap(find.text('Passer'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AddLinksScreen), findsOneWidget);
+      expect(await store.setting('onboarding.done'), '1');
+    });
+
+    testWidgets('is not shown again', (tester) async {
+      await pumpKa7(tester);
+
+      expect(find.text('Bienvenue dans Ka7'), findsNothing);
+      expect(find.byType(AddLinksScreen), findsOneWidget);
+    });
+
+    testWidgets('comes before installing the missing tools', (tester) async {
+      await store.setSetting('onboarding.done', null);
+      await pumpKa7(
+        tester,
+        setup: FakeEngineSetup(missing: {EngineTool.ffmpeg}),
+      );
+
+      await tester.tap(find.text('Passer'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Il manque ffmpeg'), findsOneWidget);
+    });
+  });
 
   group('navigation', () {
     testWidgets('opens on Add, with every section in the sidebar', (
@@ -170,6 +237,34 @@ void main() {
 
       expect(downloader.requests, isEmpty);
       expect(find.text('1 déjà là'), findsOneWidget);
+    });
+
+    testWidgets('cancels one running video, the other goes on', (tester) async {
+      await pumpKa7(tester);
+      await download(tester, 'PLe7rK2mErickManana01');
+
+      await tester.tap(find.byTooltip('Annuler ce titre').first);
+      await tester.pumpAndSettle();
+      expect(downloader.stopped, ['aB3dE5fG7hI']);
+      downloader.finish('jK9lM1nO3pQ');
+      await tester.pumpAndSettle();
+
+      expect(find.text('1 réussi'), findsOneWidget);
+      expect(find.text('1 annulé'), findsOneWidget);
+    });
+
+    testWidgets('drops one waiting video before it starts', (tester) async {
+      await store.setSetting('downloads.concurrency', '1');
+      await pumpKa7(tester);
+      await download(tester, 'PLe7rK2mErickManana01');
+
+      await tester.tap(find.byTooltip('Annuler ce titre').last);
+      await tester.pumpAndSettle();
+      downloader.finish('aB3dE5fG7hI');
+      await tester.pumpAndSettle();
+
+      expect(downloader.requests.map((r) => r.videoId), ['aB3dE5fG7hI']);
+      expect(find.text('1 annulé'), findsOneWidget);
     });
 
     testWidgets('retries the failed videos', (tester) async {
@@ -414,6 +509,25 @@ void main() {
       expect(await store.setting('theme'), 'dark');
     });
 
+    testWidgets('files by artist when asked to', (tester) async {
+      await pumpKa7(tester);
+      await openSettings(tester);
+
+      expect(
+        find.textContaining('chaîne YouTube qui a publié'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Par artiste'));
+      await tester.pumpAndSettle();
+      await download(tester, 'Xy7zA9bC1dE');
+
+      expect(
+        downloader.requests.single.destination,
+        '/home/me/Musique/Erick Manana/Tsara.mp3',
+      );
+      expect(await store.setting('folders.layout'), 'artist');
+    });
+
     testWidgets('downloads two at a time by default', (tester) async {
       await pumpKa7(tester);
 
@@ -432,7 +546,7 @@ void main() {
 
       expect(seen.mixLimit, 100);
       expect(await store.setting('mix.limit'), '100');
-      await tester.tap(find.text('Ajouter'));
+      await tester.tap(_nav('Ajouter'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'RDHb8sJ1kP0wE');
       await tester.pump();
@@ -729,3 +843,9 @@ class _FakeNotifier implements RunNotifier {
   void finished({required String title, required String body}) =>
       log.add('$title | $body');
 }
+
+/// A section in the sidebar or the bottom bar, not a title that says the same.
+Finder _nav(String label) => find.descendant(
+  of: find.byWidgetPredicate((w) => w is NavigationRail || w is NavigationBar),
+  matching: find.text(label),
+);

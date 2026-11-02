@@ -289,7 +289,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changeVideosFolder => 'Change the videos folder';
 
   @override
-  String get addTitle => 'Add links';
+  String get addTitle => 'Add';
 
   @override
   String get addHint =>
@@ -369,4 +369,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectAll => 'Select all';
+
+  @override
+  String get welcomeTitle1 => 'Welcome to Ka7';
+
+  @override
+  String get welcomeBody1 =>
+      'YouTube links become clean MP3 or MP4 files: well named, tagged, sorted by playlist.';
+
+  @override
+  String get welcomeTitle2 => 'Paste, check, download';
+
+  @override
+  String get welcomeBody2 =>
+      'Paste a link, a playlist or a file of links. The preview lists every track: uncheck what you don\'t want, pick the format, and go.';
+
+  @override
+  String get welcomeTitle3 => 'Everything in its place';
+
+  @override
+  String get welcomeBody3 =>
+      'The Library keeps everything you downloaded. A playlist grew? Update it: only the new tracks are fetched.';
+
+  @override
+  String get welcomeSkip => 'Skip';
+
+  @override
+  String get welcomeNext => 'Next';
+
+  @override
+  String get welcomeStart => 'Get started';
+
+  @override
+  String welcomePage(int page, int count) {
+    return 'Page $page of $count';
+  }
+
+  @override
+  String get kindSearch => 'Search';
+
+  @override
+  String detailSearch(String query) {
+    return 'YouTube results for “$query”';
+  }
+
+  @override
+  String searchResults(String query) {
+    return 'Search: $query';
+  }
+
+  @override
+  String get settingsLayout => 'File layout';
+
+  @override
+  String get layoutPlaylist => 'By playlist';
+
+  @override
+  String get layoutArtist => 'By artist';
+
+  @override
+  String get settingsLayoutHelp =>
+      'By playlist: one folder per playlist, numbered tracks. By artist: one folder per YouTube channel that published the video.';
+
+  @override
+  String get cancelOne => 'Cancel this track';
+
+  @override
+  String get modeLinks => 'Links';
+
+  @override
+  String get modeSearch => 'YouTube search';
+
+  @override
+  String get searchButton => 'Search';
+
+  @override
+  String get searchHint => 'Artist, title, album…';
+
+  @override
+  String get searchFooter => '20 results, to tick in the preview';
+
+  @override
+  String get searchAgain => 'New search';
 }

@@ -76,6 +76,7 @@ class QueueScreen extends StatelessWidget {
           RunView(
             run: run.progress,
             onCancel: run.queue.cancel,
+            onCancelOne: run.queue.cancelOne,
             onRetry: (downloads) => onRetry(run, downloads),
           ),
           const SizedBox(height: 32),

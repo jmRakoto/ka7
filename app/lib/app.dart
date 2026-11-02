@@ -3,6 +3,7 @@ import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_engine_ytdlp/ka7_engine_ytdlp.dart';
 import 'package:ka7_store/ka7_store.dart';
 
+import 'features/onboarding/onboarding_screen.dart';
 import 'features/shell/ka7_shell.dart';
 import 'features/startup/engine_gate.dart';
 import 'l10n/app_localizations.dart';
@@ -131,13 +132,15 @@ class _Ka7AppState extends State<Ka7App> {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         localeResolutionCallback: _resolveLocale,
-        home: switch (widget.engineSetup) {
-          final setup? => EngineGate(
-            setup: setup,
-            builder: (context, status) => _shell(settings, status),
-          ),
-          null => _shell(settings, null),
-        },
+        home: !settings.onboarded
+            ? OnboardingScreen(onDone: settings.completeOnboarding)
+            : switch (widget.engineSetup) {
+                final setup? => EngineGate(
+                  setup: setup,
+                  builder: (context, status) => _shell(settings, status),
+                ),
+                null => _shell(settings, null),
+              },
       ),
     );
   }

@@ -36,6 +36,10 @@ class AddLinksScreen extends StatefulWidget {
 class _AddLinksScreenState extends State<AddLinksScreen> {
   late final _links = widget.links ?? TextEditingController();
   List<LinkEntry> _entries = const [];
+  final _query = TextEditingController();
+
+  /// Search mode: one field of plain words instead of links.
+  var _searching = false;
 
   @override
   void initState() {
@@ -46,13 +50,27 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
 
   void _parse() {
     final entries = parseLinks(_links.text);
-    if (mounted) setState(() => _entries = entries);
+    // Links only change here from outside while searching (shared, dropped):
+    // back to the links, so they are seen.
+    if (mounted) {
+      setState(() {
+        _entries = entries;
+        _searching = false;
+      });
+    }
+  }
+
+  void _search() {
+    final query = _query.text.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (query.isEmpty) return;
+    widget.onPreview([SearchEntry(query, query: query)]);
   }
 
   @override
   void dispose() {
     _links.removeListener(_parse);
     if (widget.links == null) _links.dispose();
+    _query.dispose();
     super.dispose();
   }
 
@@ -77,6 +95,61 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final mode = SegmentedButton<bool>(
+      segments: [
+        ButtonSegment(
+          value: false,
+          icon: const Icon(Icons.link),
+          label: Text(l10n.modeLinks),
+        ),
+        ButtonSegment(
+          value: true,
+          icon: const Icon(Icons.search),
+          label: Text(l10n.modeSearch),
+        ),
+      ],
+      selected: {_searching},
+      onSelectionChanged: (choice) =>
+          setState(() => _searching = choice.single),
+    );
+    if (_searching) {
+      return Ka7Page(
+        title: l10n.addTitle,
+        footer: Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.searchFooter,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            ListenableBuilder(
+              listenable: _query,
+              builder: (context, _) => FilledButton(
+                onPressed: _query.text.trim().isEmpty ? null : _search,
+                child: Text(l10n.searchButton),
+              ),
+            ),
+          ],
+        ),
+        children: [
+          mode,
+          const SizedBox(height: 16),
+          TextField(
+            controller: _query,
+            autofocus: true,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => _search(),
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: l10n.searchHint,
+            ),
+          ),
+        ],
+      );
+    }
     return Ka7Page(
       title: l10n.addTitle,
       footer: Row(
@@ -98,6 +171,8 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
         ],
       ),
       children: [
+        mode,
+        const SizedBox(height: 16),
         TextField(
           controller: _links,
           minLines: 4,

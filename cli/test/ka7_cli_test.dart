@@ -223,6 +223,16 @@ void main() {
     });
   });
 
+  test('leaves searches to the app: nothing to tick here', () async {
+    writeLinks('Erick Manana\n$_zooLink');
+
+    final code = await cli().run(['links.txt']);
+
+    expect(code, ExitCode.ok);
+    expect(out.toString(), contains('! Erick Manana: not a link'));
+    expect(downloader.requests, hasLength(1));
+  });
+
   test('reports invalid lines and goes on', () async {
     writeLinks('vimeo.com/123456\n$_zooLink\n$_zooLink');
 

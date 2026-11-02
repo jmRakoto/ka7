@@ -545,7 +545,7 @@ abstract class AppLocalizations {
   /// No description provided for @addTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Ajouter des liens'**
+  /// **'Ajouter'**
   String get addTitle;
 
   /// No description provided for @addHint.
@@ -685,6 +685,150 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Tout sélectionner'**
   String get selectAll;
+
+  /// No description provided for @welcomeTitle1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bienvenue dans Ka7'**
+  String get welcomeTitle1;
+
+  /// No description provided for @welcomeBody1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Des liens YouTube deviennent des fichiers MP3 ou MP4 propres : bien nommés, tagués, rangés par playlist.'**
+  String get welcomeBody1;
+
+  /// No description provided for @welcomeTitle2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Colle, vérifie, télécharge'**
+  String get welcomeTitle2;
+
+  /// No description provided for @welcomeBody2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Colle un lien, une playlist ou un fichier de liens. L\'aperçu montre chaque titre : décoche ce que tu ne veux pas, choisis le format, c\'est parti.'**
+  String get welcomeBody2;
+
+  /// No description provided for @welcomeTitle3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout est rangé'**
+  String get welcomeTitle3;
+
+  /// No description provided for @welcomeBody3.
+  ///
+  /// In fr, this message translates to:
+  /// **'La Bibliothèque garde tout ce que tu as téléchargé. Une playlist s\'enrichit ? Mets-la à jour : seuls les nouveaux titres sont récupérés.'**
+  String get welcomeBody3;
+
+  /// No description provided for @welcomeSkip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer'**
+  String get welcomeSkip;
+
+  /// No description provided for @welcomeNext.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivant'**
+  String get welcomeNext;
+
+  /// No description provided for @welcomeStart.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commencer'**
+  String get welcomeStart;
+
+  /// No description provided for @welcomePage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Page {page} sur {count}'**
+  String welcomePage(int page, int count);
+
+  /// No description provided for @kindSearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherche'**
+  String get kindSearch;
+
+  /// No description provided for @detailSearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Résultats YouTube pour « {query} »'**
+  String detailSearch(String query);
+
+  /// No description provided for @searchResults.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherche : {query}'**
+  String searchResults(String query);
+
+  /// No description provided for @settingsLayout.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rangement des fichiers'**
+  String get settingsLayout;
+
+  /// No description provided for @layoutPlaylist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par playlist'**
+  String get layoutPlaylist;
+
+  /// No description provided for @layoutArtist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par artiste'**
+  String get layoutArtist;
+
+  /// No description provided for @settingsLayoutHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par playlist : un dossier par playlist, titres numérotés. Par artiste : un dossier par chaîne YouTube qui a publié la vidéo.'**
+  String get settingsLayoutHelp;
+
+  /// No description provided for @cancelOne.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler ce titre'**
+  String get cancelOne;
+
+  /// No description provided for @modeLinks.
+  ///
+  /// In fr, this message translates to:
+  /// **'Liens'**
+  String get modeLinks;
+
+  /// No description provided for @modeSearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherche YouTube'**
+  String get modeSearch;
+
+  /// No description provided for @searchButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher'**
+  String get searchButton;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Artiste, titre, album…'**
+  String get searchHint;
+
+  /// No description provided for @searchFooter.
+  ///
+  /// In fr, this message translates to:
+  /// **'20 résultats, à cocher dans l\'aperçu'**
+  String get searchFooter;
+
+  /// No description provided for @searchAgain.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle recherche'**
+  String get searchAgain;
 }
 
 class _AppLocalizationsDelegate

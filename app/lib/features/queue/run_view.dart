@@ -15,13 +15,22 @@ class RunView extends StatelessWidget {
     required this.run,
     required this.onCancel,
     required this.onRetry,
+    this.onCancelOne,
   });
+
+  /// Stops one video, running or waiting; the others go on.
+  final ValueChanged<PlannedDownload>? onCancelOne;
 
   final RunProgress run;
   final VoidCallback onCancel;
 
   /// Called with the failed and cancelled videos to run them again.
   final ValueChanged<List<PlannedDownload>> onRetry;
+
+  VoidCallback? _cancelOf(RunItem item) => switch (onCancelOne) {
+    final cancel? => () => cancel(item.download),
+    null => null,
+  };
 
   List<RunItem> _ended(RunItemStatus status) => [
     for (final item in run.finished)
@@ -77,7 +86,8 @@ class RunView extends StatelessWidget {
           ),
         if (run.running.isNotEmpty) ...[
           SectionTitle(l10n.runRunning),
-          for (final item in run.running) _RunningTile(item: item),
+          for (final item in run.running)
+            _RunningTile(item: item, onCancel: _cancelOf(item)),
         ],
         if (run.waiting.isNotEmpty) ...[
           SectionTitle(l10n.runWaiting),
@@ -85,6 +95,7 @@ class RunView extends StatelessWidget {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(item.download.item.title),
+              trailing: _CancelOne(onPressed: _cancelOf(item)),
             ),
         ],
         if (run.finished.isNotEmpty) ...[
@@ -213,9 +224,10 @@ class _Summary extends StatelessWidget {
 }
 
 class _RunningTile extends StatelessWidget {
-  const _RunningTile({required this.item});
+  const _RunningTile({required this.item, required this.onCancel});
 
   final RunItem item;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -232,10 +244,33 @@ class _RunningTile extends StatelessWidget {
           semanticsValue: percent,
         ),
       ),
-      trailing: Text(
-        percent,
-        style: Theme.of(context).textTheme.bodyMedium?.merge(_tabular),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            percent,
+            style: Theme.of(context).textTheme.bodyMedium?.merge(_tabular),
+          ),
+          _CancelOne(onPressed: onCancel),
+        ],
       ),
+    );
+  }
+}
+
+/// ✕ on one video of the queue; nothing where it cannot be stopped.
+class _CancelOne extends StatelessWidget {
+  const _CancelOne({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (onPressed == null) return const SizedBox.shrink();
+    return IconButton(
+      tooltip: AppLocalizations.of(context).cancelOne,
+      onPressed: onPressed,
+      icon: const Icon(Icons.close),
     );
   }
 }

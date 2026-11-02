@@ -71,6 +71,12 @@ final class FakeSource implements ExplodeSource {
   }
 
   @override
+  Future<List<SourceVideo>> search(String query, {required int limit}) async {
+    asked.add('search $query limit $limit');
+    return [_zoo];
+  }
+
+  @override
   Future<List<SourceStream>> streams(String videoId) async => available;
 
   @override
@@ -154,6 +160,17 @@ void main() {
       ).probe(entryOf('RDHb8sJ1kP0wE'));
 
       expect(source.asked.single, 'playlist RDHb8sJ1kP0wE limit 200');
+    });
+
+    test('searches YouTube for plain words', () async {
+      final probe = await engine.probe(
+        const SearchEntry('me at the zoo', query: 'me at the zoo'),
+      );
+
+      expect(source.asked.single, 'search me at the zoo limit 20');
+      expect(probe.isSearch, isTrue);
+      expect(probe.playlistId, isNull);
+      expect(probe.items.single.videoId, 'jNQXAC9IVRw');
     });
 
     test('reads a video opened from a playlist as that video', () async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ka7_engine_ytdlp/ka7_engine_ytdlp.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../widgets/ka7_logo.dart';
 import '../../widgets/ka7_wordmark.dart';
 
 /// Flow 0: makes sure yt-dlp and ffmpeg are there before the app opens.
@@ -75,7 +76,14 @@ class _EngineGateState extends State<EngineGate> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Ka7Wordmark(),
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Ka7Logo(width: 48),
+                    SizedBox(width: 12),
+                    ExcludeSemantics(child: Ka7Wordmark()),
+                  ],
+                ),
                 const SizedBox(height: 24),
                 Text(
                   switch (status.missing) {

@@ -10,7 +10,7 @@ import '../../platform/background_work.dart';
 import '../../platform/link_drop.dart';
 import '../../platform/run_notifier.dart';
 import '../../settings/app_settings.dart';
-import '../../widgets/ka7_wordmark.dart';
+import '../../widgets/ka7_logo.dart';
 import '../add_links/add_links_screen.dart';
 import '../library/library_screen.dart';
 import '../preview/preview_screen.dart';
@@ -180,6 +180,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
         format: format,
         archive: widget.store,
         concurrency: widget.settings.concurrency,
+        layout: widget.settings.layout,
       ),
       progress: RunProgress(downloads),
       format: format,
@@ -394,7 +395,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
                 labelType: NavigationRailLabelType.all,
                 leading: const Padding(
                   padding: EdgeInsets.only(top: 12, bottom: 20),
-                  child: Ka7Wordmark(size: 20),
+                  child: Ka7Logo(width: 44),
                 ),
                 destinations: [
                   for (final (i, (data, label)) in sections.indexed)

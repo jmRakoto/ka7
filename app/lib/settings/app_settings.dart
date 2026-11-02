@@ -13,6 +13,8 @@ class AppSettings extends ChangeNotifier {
     this._concurrency,
     this._mixLimit,
     this._theme,
+    this._onboarded,
+    this._layout,
   );
 
   /// Reads the saved choices; [defaultFolders] fill what was never chosen.
@@ -31,6 +33,9 @@ class AppSettings extends ChangeNotifier {
     int.tryParse(await store.setting(_mixLimitKey) ?? '') ?? 50,
     ThemeMode.values.asNameMap()[await store.setting(_themeKey)] ??
         ThemeMode.system,
+    await store.setting(_onboardedKey) != null,
+    FolderLayout.values.asNameMap()[await store.setting(_layoutKey)] ??
+        FolderLayout.playlist,
   );
 
   final Ka7Store _store;
@@ -40,6 +45,29 @@ class AppSettings extends ChangeNotifier {
   int _concurrency;
   int _mixLimit;
   ThemeMode _theme;
+  bool _onboarded;
+  FolderLayout _layout;
+
+  /// Folders per playlist, or per artist.
+  FolderLayout get layout => _layout;
+
+  Future<void> setLayout(FolderLayout layout) async {
+    _layout = layout;
+    notifyListeners();
+    await _store.setSetting(
+      _layoutKey,
+      layout == FolderLayout.playlist ? null : layout.name,
+    );
+  }
+
+  /// The welcome pages were seen (or skipped) once.
+  bool get onboarded => _onboarded;
+
+  Future<void> completeOnboarding() async {
+    _onboarded = true;
+    notifyListeners();
+    await _store.setSetting(_onboardedKey, '1');
+  }
 
   /// Light, dark, or following the system.
   ThemeMode get theme => _theme;
@@ -98,6 +126,8 @@ const _languageKey = 'language';
 const _concurrencyKey = 'downloads.concurrency';
 const _mixLimitKey = 'mix.limit';
 const _themeKey = 'theme';
+const _onboardedKey = 'onboarding.done';
+const _layoutKey = 'folders.layout';
 
 /// Choices offered in Settings.
 const concurrencyChoices = [1, 2, 3, 4];

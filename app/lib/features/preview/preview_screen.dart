@@ -51,32 +51,58 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   late var _format = widget.formats.first;
 
+  /// The entries, then the searches made from here, newest first.
+  late final List<MediaEntry> _entries = [...widget.entries];
+  final _query = TextEditingController();
+
+  /// A search preview: more searches can be made without going back.
+  bool get _searching => widget.entries.any((e) => e is SearchEntry);
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  void _searchAgain() {
+    final query = _query.text.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (query.isEmpty) return;
+    final entry = SearchEntry(query, query: query);
+    _query.clear();
+    if (_entries.any((e) => e.url == entry.url)) return;
+    setState(() => _entries.insert(0, entry));
+    _read(entry);
+  }
+
   @override
   void initState() {
     super.initState();
-    for (final entry in widget.entries) {
-      widget.extractor
-          .probe(entry)
-          .then(
-            (probe) async {
-              final present = await _presentIn(probe);
-              if (!mounted) return;
-              setState(() {
-                _probes[entry] = probe;
-                _present.addAll(present);
-                _selected.addAll(_wanted(probe));
-              });
-            },
-            onError: (Object error) {
-              if (!mounted) return;
-              setState(
-                () => _failures[entry] = error is ProbeFailure
-                    ? error
-                    : ProbeFailure(FailureReason.unknown, '$error'),
-              );
-            },
-          );
-    }
+    widget.entries.forEach(_read);
+  }
+
+  void _read(MediaEntry entry) {
+    widget.extractor
+        .probe(entry)
+        .then(
+          (probe) async {
+            final present = await _presentIn(probe);
+            if (!mounted) return;
+            setState(() {
+              _probes[entry] = probe;
+              _present.addAll(present);
+              // Search results: the user picks, nothing is checked.
+              if (!probe.isSearch) _selected.addAll(_wanted(probe));
+            });
+          },
+          onError: (Object error) {
+            if (!mounted) return;
+            setState(
+              () => _failures[entry] = error is ProbeFailure
+                  ? error
+                  : ProbeFailure(FailureReason.unknown, '$error'),
+            );
+          },
+        );
   }
 
   /// Videos of [probe] already in the archive, in the chosen format.
@@ -111,13 +137,13 @@ class _PreviewScreenState extends State<PreviewScreen> {
         ..addAll(present);
       _selected
         ..clear()
-        ..addAll(_probes.values.expand(_wanted));
+        ..addAll(_probes.values.where((p) => !p.isSearch).expand(_wanted));
     });
   }
 
   /// Checked videos, in the order of the entries and of each playlist.
   List<PlannedDownload> get _planned => [
-    for (final entry in widget.entries)
+    for (final entry in _entries)
       if (_probes[entry] case final probe?)
         for (final (i, item) in probe.items.indexed)
           if (_selected.contains(item.videoId))
@@ -196,7 +222,20 @@ class _PreviewScreenState extends State<PreviewScreen> {
               ),
       ),
       children: [
-        for (final entry in widget.entries)
+        if (_searching)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: TextField(
+              controller: _query,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _searchAgain(),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: l10n.searchAgain,
+              ),
+            ),
+          ),
+        for (final entry in _entries)
           if (_probes[entry] case final probe?)
             _ProbeGroup(
               probe: probe,
@@ -277,7 +316,7 @@ class _ProbeGroup extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionTitle(
-          probe.title,
+          probe.isSearch ? l10n.searchResults(probe.title) : probe.title,
           trailing: l10n.trackCount(probe.items.length),
         ),
         if (available.length > 1)

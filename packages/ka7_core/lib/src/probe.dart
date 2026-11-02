@@ -38,7 +38,11 @@ final class Probe {
     required this.items,
     this.playlistId,
     this.isChannel = false,
+    this.isSearch = false,
   });
+
+  /// Results of a search: the user picks among them, none checked at first.
+  final bool isSearch;
 
   /// Playlist title, channel name, or the video title for a single video.
   final String title;

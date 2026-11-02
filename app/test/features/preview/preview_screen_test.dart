@@ -279,4 +279,94 @@ void main() {
     expect(checked('Tsy Ferana'), isTrue);
     expect(checked('Vidéo privée'), isFalse);
   });
+
+  testWidgets('lists search results unchecked, for the user to pick', (
+    tester,
+  ) async {
+    const search = SearchEntry('Hafatra', query: 'Hafatra');
+    await pumpApp(
+      tester,
+      PreviewScreen(
+        entries: const [search],
+        extractor: FakeExtractor({
+          search.url: Probe(
+            title: 'Hafatra',
+            isSearch: true,
+            items: [...hafatraVideo.items, ...ericMananaPlaylist.items.take(2)],
+          ),
+        }),
+        onDownload: (_, _) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recherche : Hafatra'), findsOneWidget);
+    expect(
+      tester
+          .widget<CheckboxListTile>(
+            find.widgetWithText(CheckboxListTile, 'Tsy Ferana'),
+          )
+          .value,
+      isFalse,
+    );
+    expect(find.textContaining('0 titre'), findsOneWidget);
+  });
+
+  testWidgets('searches again from the preview, keeping what is checked', (
+    tester,
+  ) async {
+    const first = SearchEntry('Hafatra', query: 'Hafatra');
+    const second = SearchEntry('Tsy Ferana', query: 'Tsy Ferana');
+    List<PlannedDownload>? planned;
+    await pumpApp(
+      tester,
+      PreviewScreen(
+        entries: const [first],
+        extractor: FakeExtractor({
+          first.url: Probe(
+            title: 'Hafatra',
+            isSearch: true,
+            items: hafatraVideo.items,
+          ),
+          second.url: Probe(
+            title: 'Tsy Ferana',
+            isSearch: true,
+            items: [ericMananaPlaylist.items[1]],
+          ),
+        }),
+        onDownload: (downloads, _) => planned = downloads,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Hafatra'));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'Tsy Ferana');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Tsy Ferana'));
+    await tester.pump();
+    await tester.tap(find.text('Télécharger'));
+
+    expect(find.text('Recherche : Tsy Ferana'), findsOneWidget);
+    expect(find.text('Recherche : Hafatra'), findsOneWidget);
+    expect(planned!.map((p) => p.item.videoId).toSet(), {
+      'Qm7tR2vLx9A',
+      'jK9lM1nO3pQ',
+    });
+  });
+
+  testWidgets('offers no search field when previewing links', (tester) async {
+    await pumpApp(
+      tester,
+      PreviewScreen(
+        entries: [playlist],
+        extractor: extractor,
+        onDownload: (_, _) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsNothing);
+  });
 }

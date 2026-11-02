@@ -167,4 +167,32 @@ Qm7tR2vLx9A
       expect((entries[1] as DuplicateEntry).of, same(entries[0]));
     });
   });
+
+  group('search', () {
+    test('turns a line of plain words into one search', () {
+      final [first, second] = parseLinks('Mahaleo\n  Erick Manana  ');
+
+      expect(first, isA<SearchEntry>());
+      expect((first as SearchEntry).query, 'Mahaleo');
+      expect((second as SearchEntry).query, 'Erick Manana');
+      expect(
+        second.url,
+        'https://www.youtube.com/results?search_query=Erick+Manana',
+      );
+    });
+
+    test('still ignores plain words next to links on the same line', () {
+      final entries = parseLinks('Qm7tR2vLx9A Mahaleo');
+
+      expect(entries.first, isA<VideoEntry>());
+      expect(entries.last, isA<InvalidEntry>());
+      expect((entries.last as InvalidEntry).reason, InvalidReason.freeText);
+    });
+
+    test('merges the same search typed twice', () {
+      final entries = parseLinks('Mahaleo\nMahaleo');
+
+      expect(entries.last, isA<DuplicateEntry>());
+    });
+  });
 }

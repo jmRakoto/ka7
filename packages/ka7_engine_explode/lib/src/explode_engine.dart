@@ -27,6 +27,14 @@ final class ExplodeEngine implements Extractor, Downloader {
       playlistId,
       await source.playlist(playlistId, limit: isMix ? mixLimit() : null),
     ),
+    SearchEntry(:final query) => Probe(
+      title: query,
+      isSearch: true,
+      items: [
+        for (final video in await source.search(query, limit: searchLimit))
+          _item(video),
+      ],
+    ),
     ChannelEntry(:final channel) => _list(
       channel,
       await source.channel(channel),

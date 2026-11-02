@@ -15,7 +15,10 @@ final class DownloadQueue {
     required this.format,
     this.archive,
     this.concurrency = 2,
+    this.layout = FolderLayout.playlist,
   });
+
+  final FolderLayout layout;
 
   final Downloader downloader;
 
@@ -90,6 +93,18 @@ final class DownloadQueue {
     }
   }
 
+  /// Stops [download] alone: running, or still waiting.
+  void cancelOne(PlannedDownload download) {
+    if (_waiting.remove(download)) {
+      _events?.add(JobCancelled(download));
+      return;
+    }
+    for (final job in _running.where((j) => identical(j.download, download))) {
+      job.subscription.cancel();
+      job.end(JobCancelled(download));
+    }
+  }
+
   Future<void> _runOne(
     PlannedDownload download,
     void Function(JobEvent) emit,
@@ -101,7 +116,8 @@ final class DownloadQueue {
     if (_cancelled) return emit(JobCancelled(download));
 
     emit(JobStarted(download));
-    final destination = '$folder/${relativePathOf(download, format)}';
+    final destination =
+        '$folder/${relativePathOf(download, format, layout: layout)}';
     final ended = Completer<JobEvent>();
     final job = _RunningJob(download, ended);
     job.subscription = downloader

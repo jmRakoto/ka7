@@ -1,0 +1,42 @@
+{
+ "_type": "playlist",
+ "id": "Mahaleo",
+ "title": "Mahaleo",
+ "extractor": "youtube:search",
+ "extractor_key": "YoutubeSearch",
+ "webpage_url": "ytsearch3:Mahaleo",
+ "entries": [
+  {
+   "_type": "url",
+   "ie_key": "YoutubeTab",
+   "id": "UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "url": "https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "title": "Mahaleo official ",
+   "channel": "Mahaleo official ",
+   "channel_id": "UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "uploader": "Mahaleo official "
+  },
+  {
+   "_type": "url",
+   "ie_key": "Youtube",
+   "id": "7MSYzO8Avzk",
+   "url": "https://www.youtube.com/watch?v=7MSYzO8Avzk",
+   "title": "SOMAMBISAMBY Mahaleo Live @ Olympia",
+   "duration": 181,
+   "channel": "Mahaleo official ",
+   "channel_id": "UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "uploader": "Mahaleo official "
+  },
+  {
+   "_type": "url",
+   "ie_key": "Youtube",
+   "id": "-ieWGHvs9xQ",
+   "url": "https://www.youtube.com/watch?v=-ieWGHvs9xQ",
+   "title": "Mahaleo Dadah & Fafah   Ny tena fitia",
+   "duration": 344,
+   "channel": "Vaovao Malagasy Madagasikara ",
+   "channel_id": "UClsWET8BmyoPbIvMxRVOIDA",
+   "uploader": "Vaovao Malagasy Madagasikara "
+  }
+ ]
+}

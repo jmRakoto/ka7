@@ -302,7 +302,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get changeVideosFolder => 'Changer le dossier des vidéos';
 
   @override
-  String get addTitle => 'Ajouter des liens';
+  String get addTitle => 'Ajouter';
 
   @override
   String get addHint =>
@@ -382,4 +382,86 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get selectAll => 'Tout sélectionner';
+
+  @override
+  String get welcomeTitle1 => 'Bienvenue dans Ka7';
+
+  @override
+  String get welcomeBody1 =>
+      'Des liens YouTube deviennent des fichiers MP3 ou MP4 propres : bien nommés, tagués, rangés par playlist.';
+
+  @override
+  String get welcomeTitle2 => 'Colle, vérifie, télécharge';
+
+  @override
+  String get welcomeBody2 =>
+      'Colle un lien, une playlist ou un fichier de liens. L\'aperçu montre chaque titre : décoche ce que tu ne veux pas, choisis le format, c\'est parti.';
+
+  @override
+  String get welcomeTitle3 => 'Tout est rangé';
+
+  @override
+  String get welcomeBody3 =>
+      'La Bibliothèque garde tout ce que tu as téléchargé. Une playlist s\'enrichit ? Mets-la à jour : seuls les nouveaux titres sont récupérés.';
+
+  @override
+  String get welcomeSkip => 'Passer';
+
+  @override
+  String get welcomeNext => 'Suivant';
+
+  @override
+  String get welcomeStart => 'Commencer';
+
+  @override
+  String welcomePage(int page, int count) {
+    return 'Page $page sur $count';
+  }
+
+  @override
+  String get kindSearch => 'Recherche';
+
+  @override
+  String detailSearch(String query) {
+    return 'Résultats YouTube pour « $query »';
+  }
+
+  @override
+  String searchResults(String query) {
+    return 'Recherche : $query';
+  }
+
+  @override
+  String get settingsLayout => 'Rangement des fichiers';
+
+  @override
+  String get layoutPlaylist => 'Par playlist';
+
+  @override
+  String get layoutArtist => 'Par artiste';
+
+  @override
+  String get settingsLayoutHelp =>
+      'Par playlist : un dossier par playlist, titres numérotés. Par artiste : un dossier par chaîne YouTube qui a publié la vidéo.';
+
+  @override
+  String get cancelOne => 'Annuler ce titre';
+
+  @override
+  String get modeLinks => 'Liens';
+
+  @override
+  String get modeSearch => 'Recherche YouTube';
+
+  @override
+  String get searchButton => 'Rechercher';
+
+  @override
+  String get searchHint => 'Artiste, titre, album…';
+
+  @override
+  String get searchFooter => '20 résultats, à cocher dans l\'aperçu';
+
+  @override
+  String get searchAgain => 'Nouvelle recherche';
 }

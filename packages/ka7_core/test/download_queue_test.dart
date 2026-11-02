@@ -81,7 +81,9 @@ DownloadQueue _queue(
   Downloader downloader, {
   Archive? archive,
   int concurrency = 1,
+  FolderLayout layout = FolderLayout.playlist,
 }) => DownloadQueue(
+  layout: layout,
   downloader: downloader,
   folder: '/music',
   format: MediaFormat.mp3,
@@ -128,6 +130,20 @@ void main() {
     expect(request.tags.artist, 'Erick Manana');
     expect(request.tags.album, 'Erick Manana · Sélection');
     expect(request.tags.trackNumber, 1);
+  });
+
+  test('files by artist when asked to', () async {
+    final downloader = FakeDownloader();
+
+    await _queue(
+      downloader,
+      layout: FolderLayout.artist,
+    ).run(_planned([_first])).drain<void>();
+
+    expect(
+      downloader.requests.single.destination,
+      "/music/Erick Manana/Tsara Ny Hiran' Ny Taniko.mp3",
+    );
   });
 
   test('leaves album and track number out for a single video', () async {
@@ -237,6 +253,49 @@ void main() {
     expect(events.whereType<JobCancelled>().map(_describe), [
       'JobCancelled aB3dE5fG7hI',
       'JobCancelled jK9lM1nO3pQ',
+    ]);
+  });
+
+  test('cancelOne stops one running video, the next ones go on', () async {
+    final downloader = FakeDownloader(hanging: {'aB3dE5fG7hI'});
+    final queue = _queue(downloader);
+    final planned = _planned([_first, _second]);
+
+    final events = await queue.run(planned).map((event) {
+      if (event is JobProgressed && event.download == planned.first) {
+        queue.cancelOne(planned.first);
+      }
+      return event;
+    }).toList();
+
+    expect(downloader.stopped, ['aB3dE5fG7hI']);
+    expect(events.whereType<JobCancelled>().map(_describe), [
+      'JobCancelled aB3dE5fG7hI',
+    ]);
+    expect(events.whereType<JobSucceeded>().map(_describe), [
+      'JobSucceeded jK9lM1nO3pQ',
+    ]);
+  });
+
+  test('cancelOne drops a waiting video before it starts', () async {
+    final downloader = FakeDownloader(hanging: {'aB3dE5fG7hI'});
+    final queue = _queue(downloader);
+    final planned = _planned([_first, _second, _third]);
+    final events = <JobEvent>[];
+    final done = queue.run(planned).listen(events.add).asFuture<void>();
+    await Future<void>.delayed(Duration.zero);
+
+    queue.cancelOne(planned[1]);
+    queue.cancelOne(planned.first);
+    await done;
+
+    expect(downloader.requests.map((r) => r.videoId), [
+      'aB3dE5fG7hI',
+      'rS5tU7vW9xY',
+    ]);
+    expect(events.whereType<JobCancelled>().map(_describe), [
+      'JobCancelled jK9lM1nO3pQ',
+      'JobCancelled aB3dE5fG7hI',
     ]);
   });
 

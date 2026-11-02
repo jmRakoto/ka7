@@ -81,6 +81,24 @@ void main() {
     expect(ytDlp.arguments, containsAllInOrder(['--playlist-end', '25']));
   });
 
+  test('searches YouTube for plain words, videos only', () async {
+    final ytDlp = FakeYtDlp(
+      stdout: File('test/fixtures/search_flat.json').readAsStringSync(),
+    );
+
+    final probe = await YtDlpExtractor(
+      run: ytDlp.call,
+    ).probe(const SearchEntry('Mahaleo', query: 'Mahaleo'));
+
+    expect(ytDlp.arguments!.last, 'ytsearch20:Mahaleo');
+    expect(probe.isSearch, isTrue);
+    expect(probe.title, 'Mahaleo');
+    expect(probe.playlistId, isNull);
+    expect(probe.items.map((i) => i.videoId), ['7MSYzO8Avzk', '-ieWGHvs9xQ']);
+    expect(probe.items.first.channel, 'Mahaleo official ');
+    expect(probe.items.first.duration, const Duration(seconds: 181));
+  });
+
   test('turns yt-dlp errors into readable reasons', () async {
     const cases = {
       "ERROR: [youtube] rS5tU7vW9xY: Private video. Sign in if you've been granted access to this video":

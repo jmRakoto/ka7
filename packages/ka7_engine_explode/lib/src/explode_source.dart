@@ -64,6 +64,9 @@ abstract interface class ExplodeSource {
   /// Uploads of a channel, `@handle` or `channel/UC…`.
   Future<SourceList> channel(String channel);
 
+  /// The first [limit] videos YouTube finds for [query].
+  Future<List<SourceVideo>> search(String query, {required int limit});
+
   Future<List<SourceStream>> streams(String videoId);
   Stream<List<int>> open(String videoId, SourceStream stream);
 }

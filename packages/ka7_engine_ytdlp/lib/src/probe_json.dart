@@ -7,6 +7,17 @@ Probe parseProbeJson(Map<String, Object?> json) {
   }
   final entries = (json['entries'] as List<Object?>? ?? const [])
       .cast<Map<String, Object?>>();
+  if (json['extractor_key'] == 'YoutubeSearch') {
+    return Probe(
+      title: json['title'] as String? ?? '',
+      isSearch: true,
+      // Results also list channels and playlists: videos only.
+      items: [
+        for (final entry in entries)
+          if (entry['ie_key'] == 'Youtube') _item(entry),
+      ],
+    );
+  }
   final id = json['id'] as String?;
   // A channel tab: its id is the channel's, and its title "Name - Videos".
   final isChannel = id != null && id == json['channel_id'];

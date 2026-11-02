@@ -47,6 +47,49 @@ void main() {
   });
 
   group('relativePathOf', () {
+    group('by artist', () {
+      const sung = ProbeItem(
+        videoId: 'aB3dE5fG7hI',
+        title: "Tsara Ny Hiran' Ny Taniko",
+        channel: 'Erick Manana',
+      );
+
+      test('files a video in its artist folder, unnumbered', () {
+        expect(
+          relativePathOf(
+            const PlannedDownload(source: _playlist, item: sung, index: 3),
+            MediaFormat.mp3,
+            layout: FolderLayout.artist,
+          ),
+          "Erick Manana/Tsara Ny Hiran' Ny Taniko.mp3",
+        );
+      });
+
+      test('files a single video in its artist folder too', () {
+        const video = Probe(title: 'Tsara', items: [sung]);
+
+        expect(
+          relativePathOf(
+            const PlannedDownload(source: video, item: sung, index: 1),
+            MediaFormat.mp4,
+            layout: FolderLayout.artist,
+          ),
+          "Erick Manana/Tsara Ny Hiran' Ny Taniko.mp4",
+        );
+      });
+
+      test('falls back to the playlist folder when the artist is unknown', () {
+        expect(
+          relativePathOf(
+            const PlannedDownload(source: _playlist, item: _song, index: 3),
+            MediaFormat.mp3,
+            layout: FolderLayout.artist,
+          ),
+          "Erick Manana · Sélection/03 - Tsara Ny Hiran' Ny Taniko.mp3",
+        );
+      });
+    });
+
     test('files a playlist video in the playlist folder, numbered', () {
       const download = PlannedDownload(
         source: _playlist,
