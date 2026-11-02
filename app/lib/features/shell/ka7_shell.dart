@@ -39,7 +39,11 @@ class Ka7Shell extends StatefulWidget {
     this.acceptDrops = false,
     this.pickLinksFile,
     this.notifier,
+    this.shownFolder,
   });
+
+  /// Where the user finds a format's files, when not the download folder.
+  final String Function(MediaFormat format)? shownFolder;
 
   final Extractor extractor;
   final Downloader downloader;
@@ -403,6 +407,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
         ),
         QueueScreen(
           runs: _runs,
+          shownFolder: widget.shownFolder,
           onRetry: (run, downloads) =>
               unawaited(_download(downloads, run.format, run.folder)),
           interrupted: _interrupted.length,

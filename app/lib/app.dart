@@ -31,6 +31,7 @@ class Ka7App extends StatefulWidget {
     this.acceptDrops = false,
     this.pickLinksFile,
     this.notifier,
+    this.shownFolder,
     this.now = DateTime.now,
   });
 
@@ -43,6 +44,10 @@ class Ka7App extends StatefulWidget {
 
   /// Says when downloads end while the app is in the background.
   final RunNotifier? notifier;
+
+  /// Where the user finds a format's files, when not the download folder
+  /// (Android: moved to Music/Ka7 or Movies/Ka7 afterwards).
+  final String Function(MediaFormat format)? shownFolder;
 
   /// Keeps downloads going with the screen off (Android).
   final BackgroundWork? background;
@@ -107,6 +112,7 @@ class _Ka7AppState extends State<Ka7App> {
       acceptDrops: widget.acceptDrops,
       pickLinksFile: widget.pickLinksFile,
       notifier: widget.notifier,
+      shownFolder: widget.shownFolder,
       pickFolder: widget.pickFolder,
       openFolder: widget.openFolder,
       now: widget.now,

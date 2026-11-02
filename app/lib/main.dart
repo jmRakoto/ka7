@@ -107,6 +107,9 @@ Future<Ka7App> _mobile(Ka7Store store) async {
       sharedLinks: sharedLinks(),
       background: AndroidBackgroundWork(),
       notifier: AndroidRunNotifier(),
+      // Downloaded to the app's own folder, then moved by MediaStore.
+      shownFolder: (format) =>
+          format == MediaFormat.mp4 ? 'Movies/Ka7' : 'Music/Ka7',
       pickLinksFile: _pickLinksFile,
       // Downloaded first to the app's own folder, no picker: MediaStore files them.
       defaultFolders: folders,

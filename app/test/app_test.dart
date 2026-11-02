@@ -66,6 +66,7 @@ void main() {
     bool acceptDrops = false,
     RunNotifier? notifier,
     void Function(AppSettings settings)? onEngines,
+    String Function(MediaFormat format)? shownFolder,
     Size size = const Size(1280, 900),
   }) async {
     tester.view
@@ -80,6 +81,7 @@ void main() {
         background: background,
         acceptDrops: acceptDrops,
         notifier: notifier,
+        shownFolder: shownFolder,
         enginesFor: (status, settings) {
           onEngines?.call(settings);
           return (extractor: _extractor, downloader: downloader);
@@ -918,6 +920,22 @@ void main() {
         downloader.requests.single.destination,
         '/home/me/Musique/Hafatra.m4a',
       );
+    });
+
+    testWidgets('shows the folder the system files music in', (tester) async {
+      await pumpKa7(
+        tester,
+        builtInEngine: true,
+        canPickFolders: false,
+        formats: const [MediaFormat.m4a, MediaFormat.mp4],
+        shownFolder: (format) =>
+            format == MediaFormat.mp4 ? 'Movies/Ka7' : 'Music/Ka7',
+      );
+
+      await download(tester, 'Qm7tR2vLx9A');
+
+      expect(find.text("M4A · d'origine · Music/Ka7"), findsOneWidget);
+      expect(find.textContaining('/home/me/Musique'), findsNothing);
     });
 
     testWidgets('hides the folder settings where the system files music', (

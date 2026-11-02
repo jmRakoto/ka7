@@ -26,6 +26,7 @@ class QueueScreen extends StatelessWidget {
     super.key,
     required this.runs,
     required this.onRetry,
+    this.shownFolder,
     this.interrupted = 0,
     this.onResume,
     this.onDiscard,
@@ -35,6 +36,9 @@ class QueueScreen extends StatelessWidget {
 
   /// Runs [downloads] again, in the format of [run].
   final void Function(QueuedRun run, List<PlannedDownload> downloads) onRetry;
+
+  /// Where the user finds a format's files, when not the download folder.
+  final String Function(MediaFormat format)? shownFolder;
 
   /// Videos a previous launch left unfinished.
   final int interrupted;
@@ -67,7 +71,7 @@ class QueueScreen extends StatelessWidget {
                 MediaFormat.mp3 => l10n.formatMp3,
                 MediaFormat.m4a => l10n.formatM4a,
                 MediaFormat.mp4 => l10n.formatMp4,
-              }} · ${run.folder}',
+              }} · ${shownFolder?.call(run.format) ?? run.folder}',
               style: theme.textTheme.labelLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
