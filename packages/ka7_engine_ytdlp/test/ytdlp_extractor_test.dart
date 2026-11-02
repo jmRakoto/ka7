@@ -66,6 +66,21 @@ void main() {
     expect(ytDlp.arguments, containsAllInOrder(['--playlist-end', '50']));
   });
 
+  test('caps a mix at the limit chosen in the settings', () async {
+    final ytDlp = FakeYtDlp(
+      stdout: File('test/fixtures/playlist_flat.json').readAsStringSync(),
+    );
+    var limit = 100;
+    final extractor = YtDlpExtractor(run: ytDlp.call, mixLimit: () => limit);
+
+    await extractor.probe(entryOf('RDHb8sJ1kP0wE'));
+    expect(ytDlp.arguments, containsAllInOrder(['--playlist-end', '100']));
+
+    limit = 25;
+    await extractor.probe(entryOf('RDHb8sJ1kP0wE'));
+    expect(ytDlp.arguments, containsAllInOrder(['--playlist-end', '25']));
+  });
+
   test('turns yt-dlp errors into readable reasons', () async {
     const cases = {
       "ERROR: [youtube] rS5tU7vW9xY: Private video. Sign in if you've been granted access to this video":

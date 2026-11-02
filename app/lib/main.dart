@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -11,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'app.dart';
 import 'platform/android_background.dart';
 import 'platform/android_ytdlp.dart';
+import 'platform/desktop_notifier.dart';
 import 'platform/media_store.dart';
 import 'platform/shared_links.dart';
 import 'platform/user_folders.dart';
@@ -47,7 +49,7 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
           store.setSetting(_ytDlpUpdatedKey, at.toUtc().toIso8601String()),
       now: DateTime.now,
     ),
-    enginesFor: (status) => (
+    enginesFor: (status, settings) => (
       extractor: YtDlpExtractor(run: Process.run, executable: status!.ytDlp!),
       downloader: YtDlpDownloader(
         start: Process.start,
@@ -62,6 +64,9 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
     },
     pickFolder: FilePicker.getDirectoryPath,
     openFolder: (path) => Process.run('xdg-open', [path]),
+    acceptDrops: true,
+    pickLinksFile: _pickLinksFile,
+    notifier: DesktopNotifier(run: Process.run),
   );
 }
 
@@ -84,7 +89,7 @@ Future<Ka7App> _mobile(Ka7Store store) async {
     final explode = ExplodeEngine(source: YoutubeExplodeSource());
     return Ka7App(
       engineSetup: AndroidEngineSetup(ytDlp),
-      enginesFor: (_) => (
+      enginesFor: (_, settings) => (
         extractor: FallbackExtractor([YtDlpExtractor(run: ytDlp.run), explode]),
         // Then moved to Music/Ka7 or Movies/Ka7, seen by every player.
         downloader: PublishingDownloader(
@@ -101,19 +106,32 @@ Future<Ka7App> _mobile(Ka7Store store) async {
       formats: const [MediaFormat.mp3, MediaFormat.m4a, MediaFormat.mp4],
       sharedLinks: sharedLinks(),
       background: AndroidBackgroundWork(),
+      notifier: AndroidRunNotifier(),
+      pickLinksFile: _pickLinksFile,
       // Downloaded first to the app's own folder, no picker: MediaStore files them.
       defaultFolders: folders,
     );
   }
   final engine = ExplodeEngine(source: YoutubeExplodeSource());
   return Ka7App(
-    enginesFor: (_) => (extractor: engine, downloader: engine),
+    enginesFor: (_, settings) => (extractor: engine, downloader: engine),
     store: store,
     formats: const [MediaFormat.m4a, MediaFormat.mp4],
     defaultFolders: folders,
+    pickLinksFile: _pickLinksFile,
     pickFolder: FilePicker.getDirectoryPath,
   );
 }
 
 /// When the app's own yt-dlp last updated itself (ISO 8601, UTC).
 const _ytDlpUpdatedKey = 'ytdlp.updated';
+
+/// Native picker on a `links.txt` (flow 1, import a file).
+Future<String?> _pickLinksFile() async {
+  final files = await FilePicker.pickFiles(
+    type: FileType.custom,
+    allowedExtensions: const ['txt'],
+  );
+  if (files.isEmpty) return null;
+  return utf8.decode(await files.first.readAsBytes(), allowMalformed: true);
+}

@@ -44,4 +44,18 @@ void main() {
 
     expect(calls, isEmpty);
   });
+
+  test('posts a notification once downloads end', () async {
+    AndroidRunNotifier().finished(
+      title: 'Téléchargements terminés',
+      body: '2 réussis',
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    expect(calls.single.method, 'finished');
+    expect(calls.single.arguments, {
+      'title': 'Téléchargements terminés',
+      'body': '2 réussis',
+    });
+  });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 
 import 'background_work.dart';
+import 'run_notifier.dart';
 
 /// Android foreground service with a progress notification. Kotlin side:
 /// `DownloadService.kt`, driven by `BackgroundChannel.kt`.
@@ -29,4 +30,18 @@ class AndroidBackgroundWork implements BackgroundWork {
     _kept = false;
     _channel.invokeMethod<void>('release');
   }
+}
+
+/// Android: a notification that stays once the progress one is gone. Kotlin
+/// side: `BackgroundChannel.kt`, method `finished`.
+class AndroidRunNotifier implements RunNotifier {
+  AndroidRunNotifier([
+    this._channel = const MethodChannel('mg.rakoto.ka7/background'),
+  ]);
+
+  final MethodChannel _channel;
+
+  @override
+  void finished({required String title, required String body}) =>
+      _channel.invokeMethod<void>('finished', {'title': title, 'body': body});
 }

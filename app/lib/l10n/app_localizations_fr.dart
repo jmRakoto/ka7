@@ -18,7 +18,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get kindPlaylist => 'Playlist';
 
   @override
-  String get kindMix => 'Mix · 50 max';
+  String kindMix(int count) {
+    return 'Mix · $count max';
+  }
 
   @override
   String get kindVideoInPlaylist => 'Vidéo + playlist';
@@ -58,7 +60,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count entrées reconnues',
-      one: '1 entrée reconnue',
+      one: '$count entrée reconnue',
     );
     return '$_temp0';
   }
@@ -69,7 +71,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count ignorées',
-      one: '1 ignorée',
+      one: '$count ignorée',
     );
     return '$_temp0';
   }
@@ -92,7 +94,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count titres',
-      one: '1 titre',
+      one: '$count titre',
     );
     return '$_temp0';
   }
@@ -166,7 +168,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count réussis',
-      one: '1 réussi',
+      one: '$count réussi',
     );
     return '$_temp0';
   }
@@ -177,7 +179,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count déjà là',
-      one: '1 déjà là',
+      one: '$count déjà là',
     );
     return '$_temp0';
   }
@@ -188,7 +190,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count échoués',
-      one: '1 échoué',
+      one: '$count échoué',
     );
     return '$_temp0';
   }
@@ -199,7 +201,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count annulés',
-      one: '1 annulé',
+      one: '$count annulé',
     );
     return '$_temp0';
   }
@@ -320,4 +322,64 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notificationTitle => 'Téléchargement';
+
+  @override
+  String get interruptedTitle => 'File interrompue';
+
+  @override
+  String interruptedBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count titres n\'ont pas fini la dernière fois.',
+      one: '$count titre n\'a pas fini la dernière fois.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get interruptedResume => 'Reprendre';
+
+  @override
+  String get interruptedDiscard => 'Abandonner';
+
+  @override
+  String get dropHint => 'Dépose tes liens ou un fichier .txt';
+
+  @override
+  String get importFile => 'Importer un fichier';
+
+  @override
+  String get clearLinks => 'Effacer';
+
+  @override
+  String get settingsConcurrency => 'Téléchargements simultanés';
+
+  @override
+  String get settingsMixLimit => 'Mix YouTube : titres lus';
+
+  @override
+  String get updatePlaylist => 'Mettre à jour la playlist';
+
+  @override
+  String get notifyDoneTitle => 'Téléchargements terminés';
+
+  @override
+  String get settingsTheme => 'Thème';
+
+  @override
+  String get themeSystem => 'Système';
+
+  @override
+  String get themeLight => 'Clair';
+
+  @override
+  String get themeDark => 'Sombre';
+
+  @override
+  String get settingsMixLimitHelp =>
+      'Un mix (lien qui contient « list=RD ») est une playlist sans fin que YouTube compose à partir d\'une vidéo. Ka7 n\'en lit que les premiers titres, ce nombre-ci.';
+
+  @override
+  String get selectAll => 'Tout sélectionner';
 }

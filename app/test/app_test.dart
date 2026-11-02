@@ -1,11 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ka7/app.dart';
 import 'package:ka7/features/add_links/add_links_screen.dart';
 import 'package:ka7/features/queue/run_view.dart';
 import 'package:ka7/platform/background_work.dart';
+import 'package:ka7/platform/run_notifier.dart';
+import 'package:ka7/settings/app_settings.dart';
+import 'package:ka7/features/preview/preview_screen.dart';
 import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_engine_ytdlp/ka7_engine_ytdlp.dart';
 import 'package:ka7_store/ka7_store.dart';
@@ -45,6 +49,9 @@ void main() {
     List<MediaFormat> formats = const [MediaFormat.mp3, MediaFormat.mp4],
     Stream<String>? shared,
     BackgroundWork? background,
+    bool acceptDrops = false,
+    RunNotifier? notifier,
+    void Function(AppSettings settings)? onEngines,
     Size size = const Size(1280, 900),
   }) async {
     tester.view
@@ -57,7 +64,12 @@ void main() {
         formats: formats,
         sharedLinks: shared,
         background: background,
-        enginesFor: (status) => (extractor: _extractor, downloader: downloader),
+        acceptDrops: acceptDrops,
+        notifier: notifier,
+        enginesFor: (status, settings) {
+          onEngines?.call(settings);
+          return (extractor: _extractor, downloader: downloader);
+        },
         store: store,
         defaultFolders: const {
           MediaFormat.mp3: '/home/me/Musique',
@@ -140,11 +152,21 @@ void main() {
       expect(find.text('0 / 3'), findsOneWidget);
     });
 
-    testWidgets('skips what the archive already holds', (tester) async {
+    testWidgets('skips what the archive holds, even checked again', (
+      tester,
+    ) async {
       await store.add('Qm7tR2vLx9A', MediaFormat.mp3);
       await pumpKa7(tester);
+      await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
+      await tester.pump();
+      await tester.tap(find.text("Voir l'aperçu"));
+      await tester.pumpAndSettle();
 
-      await download(tester, 'Qm7tR2vLx9A');
+      expect(find.text('Déjà là'), findsOneWidget);
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+      await tester.tap(find.text('Télécharger'));
+      await tester.pumpAndSettle();
 
       expect(downloader.requests, isEmpty);
       expect(find.text('1 déjà là'), findsOneWidget);
@@ -217,6 +239,41 @@ void main() {
 
       expect(find.text("Rien n'a encore été téléchargé."), findsOneWidget);
       expect(await store.contains('Qm7tR2vLx9A', MediaFormat.mp3), isFalse);
+    });
+
+    testWidgets('updates a playlist: only its new videos are checked', (
+      tester,
+    ) async {
+      final first = PlannedDownload(
+        source: ericMananaPlaylist,
+        item: ericMananaPlaylist.items.first,
+        index: 1,
+      );
+      await store.record(
+        JobSucceeded(first, '/home/me/Musique/x.mp3'),
+        MediaFormat.mp3,
+        DateTime(2026, 10, 1),
+      );
+      await store.add('aB3dE5fG7hI', MediaFormat.mp3);
+      await pumpKa7(tester);
+      await tester.tap(find.text('Bibliothèque'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Mettre à jour la playlist'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PreviewScreen), findsOneWidget);
+      expect(find.text('Déjà là'), findsOneWidget);
+      await tester.tap(find.text('Télécharger'));
+      await tester.pumpAndSettle();
+      expect(downloader.requests.map((r) => r.videoId), ['jK9lM1nO3pQ']);
+    });
+
+    testWidgets('offers no update for a single video', (tester) async {
+      await pumpKa7(tester);
+      await downloadHafatra(tester);
+
+      expect(find.byTooltip('Mettre à jour la playlist'), findsNothing);
     });
   });
 
@@ -312,6 +369,268 @@ void main() {
     });
   });
 
+  group('download settings', () {
+    Future<void> openSettings(WidgetTester tester) async {
+      await tester.tap(find.text('Réglages'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('downloads one video at a time when asked to', (tester) async {
+      await pumpKa7(tester);
+      await openSettings(tester);
+
+      await tester.tap(find.text('1').first);
+      await tester.pumpAndSettle();
+      await download(tester, 'PLe7rK2mErickManana01');
+
+      expect(downloader.requests.map((r) => r.videoId), ['aB3dE5fG7hI']);
+      downloader.finish('aB3dE5fG7hI');
+      await tester.pumpAndSettle();
+      expect(downloader.requests, hasLength(2));
+      expect(await store.setting('downloads.concurrency'), '1');
+    });
+
+    testWidgets('explains what a YouTube mix is', (tester) async {
+      await pumpKa7(tester);
+      await openSettings(tester);
+
+      expect(
+        find.textContaining('playlist sans fin que YouTube compose'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('switches the theme at once and remembers it', (tester) async {
+      await pumpKa7(tester);
+      await openSettings(tester);
+      ThemeMode mode() =>
+          tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode!;
+      expect(mode(), ThemeMode.system);
+
+      await tester.tap(find.text('Sombre'));
+      await tester.pumpAndSettle();
+
+      expect(mode(), ThemeMode.dark);
+      expect(await store.setting('theme'), 'dark');
+    });
+
+    testWidgets('downloads two at a time by default', (tester) async {
+      await pumpKa7(tester);
+
+      await download(tester, 'PLe7rK2mErickManana01');
+
+      expect(downloader.requests, hasLength(2));
+    });
+
+    testWidgets('reads as many videos of a mix as chosen', (tester) async {
+      late AppSettings seen;
+      await pumpKa7(tester, onEngines: (settings) => seen = settings);
+      await openSettings(tester);
+
+      await tester.tap(find.text('100'));
+      await tester.pumpAndSettle();
+
+      expect(seen.mixLimit, 100);
+      expect(await store.setting('mix.limit'), '100');
+      await tester.tap(find.text('Ajouter'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'RDHb8sJ1kP0wE');
+      await tester.pump();
+      expect(find.text('Mix · 100 max'), findsOneWidget);
+    });
+  });
+
+  group('end notification', () {
+    tearDown(
+      () => TestWidgetsFlutterBinding.instance.handleAppLifecycleStateChanged(
+        AppLifecycleState.resumed,
+      ),
+    );
+
+    testWidgets('tells the system once downloads end in the background', (
+      tester,
+    ) async {
+      final notifier = _FakeNotifier();
+      await pumpKa7(tester, notifier: notifier);
+      await download(tester, 'PLe7rK2mErickManana01');
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+
+      downloader.finish('aB3dE5fG7hI');
+      await tester.pumpAndSettle();
+      expect(notifier.log, isEmpty);
+      downloader.fail('jK9lM1nO3pQ', FailureReason.private);
+      await tester.pumpAndSettle();
+
+      expect(notifier.log, ['Téléchargements terminés | 1 réussi · 1 échoué']);
+    });
+
+    testWidgets('stays quiet while the app is in front', (tester) async {
+      final notifier = _FakeNotifier();
+      await pumpKa7(tester, notifier: notifier);
+      await download(tester, 'Qm7tR2vLx9A');
+
+      downloader.finish('Qm7tR2vLx9A');
+      await tester.pumpAndSettle();
+
+      expect(notifier.log, isEmpty);
+    });
+  });
+
+  group('interrupted queue', () {
+    List<String> ids(List<PendingDownload> pending) => [
+      for (final p in pending) p.download.item.videoId,
+    ];
+
+    /// The two playable songs of the playlist, queued by a previous launch.
+    Future<void> interrupted() => store.keepPending(
+      [
+        for (final (i, item) in ericMananaPlaylist.items.take(2).indexed)
+          PlannedDownload(source: ericMananaPlaylist, item: item, index: i + 1),
+      ],
+      MediaFormat.mp3,
+      '/data/Mozika',
+    );
+
+    testWidgets('keeps queued videos until they end, to resume them later', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+
+      await download(tester, 'PLe7rK2mErickManana01');
+      expect(ids(await store.pending()), ['aB3dE5fG7hI', 'jK9lM1nO3pQ']);
+
+      downloader.finish('aB3dE5fG7hI');
+      await tester.pumpAndSettle();
+      expect(ids(await store.pending()), ['jK9lM1nO3pQ']);
+
+      downloader.fail('jK9lM1nO3pQ', FailureReason.network);
+      await tester.pumpAndSettle();
+      expect(await store.pending(), isEmpty);
+    });
+
+    testWidgets('leaves nothing to resume once the user cancels all', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await download(tester, 'PLe7rK2mErickManana01');
+
+      await tester.tap(find.text('Tout annuler'));
+      await tester.pumpAndSettle();
+
+      expect(await store.pending(), isEmpty);
+    });
+
+    testWidgets('opens on the queue and offers to resume', (tester) async {
+      await interrupted();
+
+      await pumpKa7(tester);
+
+      expect(find.text('File interrompue'), findsOneWidget);
+      expect(
+        find.text("2 titres n'ont pas fini la dernière fois."),
+        findsOneWidget,
+      );
+      expect(downloader.requests, isEmpty);
+    });
+
+    testWidgets('resumes into the folder they were queued to', (tester) async {
+      await interrupted();
+      await pumpKa7(tester);
+
+      await tester.tap(find.text('Reprendre'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('File interrompue'), findsNothing);
+      expect(downloader.requests.map((r) => r.destination), [
+        "/data/Mozika/Erick Manana · Sélection/01 - Tsara Ny Hiran' Ny Taniko.mp3",
+        '/data/Mozika/Erick Manana · Sélection/02 - Tsy Ferana.mp3',
+      ]);
+      expect(ids(await store.pending()), ['aB3dE5fG7hI', 'jK9lM1nO3pQ']);
+    });
+
+    testWidgets('discards into the history as cancelled', (tester) async {
+      await interrupted();
+      await pumpKa7(tester);
+
+      await tester.tap(find.text('Abandonner'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('File interrompue'), findsNothing);
+      expect(downloader.requests, isEmpty);
+      expect(await store.pending(), isEmpty);
+      expect((await store.history()).map((h) => h.status), [
+        HistoryStatus.cancelled,
+        HistoryStatus.cancelled,
+      ]);
+    });
+  });
+
+  group('drop', () {
+    /// What GTK sends while something is dragged over, then dropped on, the
+    /// middle of the window.
+    Future<void> native(WidgetTester tester, String method, [String? text]) =>
+        tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+          'desktop_drop',
+          const StandardMethodCodec().encodeMethodCall(
+            MethodCall(method, switch (method) {
+              'performOperation_linux' => [
+                text,
+                [640.0, 450.0],
+              ],
+              'updated' => [640.0, 450.0],
+              _ => null,
+            }),
+          ),
+          (_) {},
+        );
+
+    Future<void> drop(WidgetTester tester, String text) async {
+      await native(tester, 'updated');
+      await native(tester, 'performOperation_linux', text);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('adds dropped links to Add, below what is there', (
+      tester,
+    ) async {
+      await pumpKa7(tester, acceptDrops: true);
+      await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
+
+      await drop(tester, 'https://youtu.be/aB3dE5fG7hI\nPLe7rK2mErickManana01');
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Qm7tR2vLx9A\nhttps://youtu.be/aB3dE5fG7hI\nPLe7rK2mErickManana01',
+      );
+      expect(find.text('3 entrées reconnues'), findsOneWidget);
+    });
+
+    testWidgets('goes back to Add from any section', (tester) async {
+      await pumpKa7(tester, acceptDrops: true);
+      await tester.tap(find.text('Bibliothèque'));
+      await tester.pumpAndSettle();
+
+      await drop(tester, 'Qm7tR2vLx9A');
+
+      expect(find.byType(AddLinksScreen), findsOneWidget);
+      expect(find.text('1 entrée reconnue'), findsOneWidget);
+    });
+
+    testWidgets('says where to let go while something is dragged over', (
+      tester,
+    ) async {
+      await pumpKa7(tester, acceptDrops: true);
+
+      await native(tester, 'updated');
+      await tester.pump();
+      expect(find.text('Dépose tes liens ou un fichier .txt'), findsOneWidget);
+
+      await native(tester, 'exited');
+      await tester.pump();
+      expect(find.text('Dépose tes liens ou un fichier .txt'), findsNothing);
+    });
+  });
+
   group('screen off', () {
     testWidgets('keeps the app alive while downloads run, then lets go', (
       tester,
@@ -401,4 +720,12 @@ final class _FakeBackground implements BackgroundWork {
 
   @override
   void release() => log.add('release');
+}
+
+class _FakeNotifier implements RunNotifier {
+  final log = <String>[];
+
+  @override
+  void finished({required String title, required String body}) =>
+      log.add('$title | $body');
 }

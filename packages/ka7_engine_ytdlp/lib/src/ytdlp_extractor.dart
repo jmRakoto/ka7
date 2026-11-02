@@ -12,15 +12,20 @@ typedef RunProcess =
 
 /// Engine driving the official yt-dlp binary (desktop).
 final class YtDlpExtractor implements Extractor {
-  YtDlpExtractor({required this.run, this.executable = 'yt-dlp'});
+  YtDlpExtractor({
+    required this.run,
+    this.executable = 'yt-dlp',
+    this.mixLimit = defaultMixLimit,
+  });
 
   final RunProcess run;
 
   /// Path of the yt-dlp binary managed by the app.
   final String executable;
 
-  /// A mix never ends: only its first videos are read.
-  static const mixLimit = 50;
+  /// A mix never ends: only its first videos are read, as many as the
+  /// settings say at the time of reading.
+  final int Function() mixLimit;
 
   @override
   String get name => 'yt-dlp';
@@ -33,7 +38,7 @@ final class YtDlpExtractor implements Extractor {
       '--no-warnings',
       if (entry case PlaylistEntry(isMix: true)) ...[
         '--playlist-end',
-        '$mixLimit',
+        '${mixLimit()}',
       ],
       // Long videos only: a channel's root also lists its shorts and lives.
       if (entry is ChannelEntry) '${entry.url}/videos' else entry.url,

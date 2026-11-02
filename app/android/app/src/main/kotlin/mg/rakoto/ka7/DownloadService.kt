@@ -64,6 +64,8 @@ class DownloadService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "downloads"
+        private const val DONE_CHANNEL_ID = "finished"
+        private const val DONE_NOTIFICATION_ID = 8
         private const val NOTIFICATION_ID = 7
         private const val ACTION_STOP = "mg.rakoto.ka7.STOP"
         private const val EXTRA_TITLE = "title"
@@ -82,6 +84,30 @@ class DownloadService : Service() {
 
         fun release(context: Context) {
             context.startService(Intent(context, DownloadService::class.java).setAction(ACTION_STOP))
+        }
+
+        /** Stays after the progress notification is gone; a tap opens Ka7. */
+        fun finished(context: Context, title: String, body: String) {
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(
+                NotificationChannel(DONE_CHANNEL_ID, "Fin des téléchargements / Downloads finished", NotificationManager.IMPORTANCE_DEFAULT),
+            )
+            val open = PendingIntent.getActivity(
+                context,
+                1,
+                Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                PendingIntent.FLAG_IMMUTABLE,
+            )
+            manager.notify(
+                DONE_NOTIFICATION_ID,
+                Notification.Builder(context, DONE_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setContentTitle(title)
+                    .setContentText(body)
+                    .setAutoCancel(true)
+                    .setContentIntent(open)
+                    .build(),
+            )
         }
     }
 }

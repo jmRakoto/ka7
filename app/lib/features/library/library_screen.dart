@@ -14,7 +14,11 @@ class LibraryScreen extends StatefulWidget {
     required this.store,
     required this.changes,
     required this.openFolder,
+    this.onUpdatePlaylist,
   });
+
+  /// Opens the preview of a playlist, so only its new videos are fetched.
+  final void Function(String playlistId)? onUpdatePlaylist;
 
   final Ka7Store store;
 
@@ -101,6 +105,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             ),
                           ),
                     onForget: () => _forget(item),
+                    onUpdate:
+                        item.playlistId == null ||
+                            widget.onUpdatePlaylist == null
+                        ? null
+                        : () => widget.onUpdatePlaylist!(item.playlistId!),
                   ),
               ],
             );
@@ -116,11 +125,13 @@ class _HistoryTile extends StatelessWidget {
     required this.item,
     required this.onOpen,
     required this.onForget,
+    required this.onUpdate,
   });
 
   final HistoryItem item;
   final VoidCallback? onOpen;
   final VoidCallback onForget;
+  final VoidCallback? onUpdate;
 
   @override
   Widget build(BuildContext context) {
@@ -156,6 +167,12 @@ class _HistoryTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (onUpdate != null)
+            IconButton(
+              tooltip: l10n.updatePlaylist,
+              onPressed: onUpdate,
+              icon: const Icon(Icons.sync),
+            ),
           if (onOpen != null)
             IconButton(
               tooltip: l10n.openFolder,

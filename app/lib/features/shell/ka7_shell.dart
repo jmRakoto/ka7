@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_store/ka7_store.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../platform/background_work.dart';
+import '../../platform/link_drop.dart';
+import '../../platform/run_notifier.dart';
 import '../../settings/app_settings.dart';
 import '../../widgets/ka7_wordmark.dart';
 import '../add_links/add_links_screen.dart';
@@ -33,6 +36,9 @@ class Ka7Shell extends StatefulWidget {
     this.formats = const [MediaFormat.mp3, MediaFormat.mp4],
     this.sharedLinks,
     this.background,
+    this.acceptDrops = false,
+    this.pickLinksFile,
+    this.notifier,
   });
 
   final Extractor extractor;
@@ -50,6 +56,15 @@ class Ka7Shell extends StatefulWidget {
   /// Keeps downloads going with the screen off (Android).
   final BackgroundWork? background;
 
+  /// Links, text and `.txt` files dropped on the window go to Add (desktop).
+  final bool acceptDrops;
+
+  /// Native picker on a `links.txt`, returning its text; null when closed.
+  final Future<String?> Function()? pickLinksFile;
+
+  /// Says when downloads end while the app is in the background.
+  final RunNotifier? notifier;
+
   @override
   State<Ka7Shell> createState() => _Ka7ShellState();
 }
@@ -65,10 +80,26 @@ class _Ka7ShellState extends State<Ka7Shell> {
   final _links = TextEditingController();
   StreamSubscription<String>? _shared;
 
+  /// Something dragged over the window, not dropped yet.
+  var _dragging = false;
+
+  /// Videos a previous launch left unfinished, until resumed or discarded.
+  var _interrupted = <PendingDownload>[];
+
+  /// Store id of each queued video, dropped once it ends.
+  final _pendingIds = Expando<int>();
+
   @override
   void initState() {
     super.initState();
     _shared = widget.sharedLinks?.listen(_receive);
+    widget.store.pending().then((pending) {
+      if (!mounted || pending.isEmpty) return;
+      setState(() {
+        _interrupted = pending;
+        _section = _Section.queue;
+      });
+    });
   }
 
   /// A link shared from YouTube: back to Add, below what is already there.
@@ -78,7 +109,19 @@ class _Ka7ShellState extends State<Ka7Shell> {
       for (final word in text.split(RegExp(r'\s+')))
         if (parseEntry(word) is MediaEntry) word,
     ];
-    final added = links.isEmpty ? text.trim() : links.join('\n');
+    _addToLinks(links.isEmpty ? text : links.join('\n'));
+  }
+
+  Future<void> _drop(DropDoneDetails details) async {
+    setState(() => _dragging = false);
+    _addToLinks(await droppedText(details.files.map((file) => file.path)));
+  }
+
+  /// Below what is already in the Add field, then shows Add.
+  void _addToLinks(String text) {
+    if (!mounted) return;
+    final added = text.trim();
+    if (added.isEmpty) return;
     final current = _links.text.trimRight();
     _links.text = current.isEmpty ? added : '$current\n$added';
     _addNavigator.currentState?.popUntil((route) => route.isFirst);
@@ -100,10 +143,27 @@ class _Ka7ShellState extends State<Ka7Shell> {
     super.dispose();
   }
 
-  /// Joins the running queue of [format], or starts a new one.
-  void _download(List<PlannedDownload> downloads, MediaFormat format) {
+  /// Joins the running queue of [format] and [folder] (by default the one
+  /// chosen in Settings), or starts a new one.
+  Future<void> _download(
+    List<PlannedDownload> downloads,
+    MediaFormat format, [
+    String? folder,
+  ]) async {
+    folder ??= widget.settings.folderFor(format);
+    // Kept before it starts: a crash from here on can be resumed.
+    final ids = await widget.store.keepPending(downloads, format, folder);
+    if (!mounted) return;
+    for (final (i, download) in downloads.indexed) {
+      _pendingIds[download] = ids[i];
+    }
     final running = _runs
-        .where((run) => run.format == format && !run.progress.isDone)
+        .where(
+          (run) =>
+              run.format == format &&
+              run.folder == folder &&
+              !run.progress.isDone,
+        )
         .firstOrNull;
     if (running != null && running.queue.add(downloads)) {
       setState(() {
@@ -113,13 +173,13 @@ class _Ka7ShellState extends State<Ka7Shell> {
       _keepAwake();
       return;
     }
-    final folder = widget.settings.folderFor(format);
     final run = QueuedRun(
       queue: DownloadQueue(
         downloader: widget.downloader,
         folder: folder,
         format: format,
         archive: widget.store,
+        concurrency: widget.settings.concurrency,
       ),
       progress: RunProgress(downloads),
       format: format,
@@ -130,9 +190,13 @@ class _Ka7ShellState extends State<Ka7Shell> {
         if (mounted) {
           setState(() => run.progress.apply(event));
           _keepAwake();
+          if (run.progress.isDone) _notifyEnd(run.progress);
         }
         if (event is JobStarted || event is JobProgressed) return;
         await widget.store.record(event, format, widget.now());
+        if (_pendingIds[event.download] case final id?) {
+          await widget.store.dropPending(id);
+        }
         _historyChanges.value++;
       }),
     );
@@ -143,15 +207,88 @@ class _Ka7ShellState extends State<Ka7Shell> {
     _keepAwake();
   }
 
+  /// Queues again what a previous launch left unfinished, where it was going.
+  Future<void> _resume() async {
+    final interrupted = _forgetInterrupted();
+    final runs = <(MediaFormat, String), List<PlannedDownload>>{};
+    for (final pending in interrupted) {
+      runs
+          .putIfAbsent((pending.format, pending.folder), () => [])
+          .add(pending.download);
+    }
+    for (final MapEntry(key: (format, folder), value: downloads)
+        in runs.entries) {
+      await _download(downloads, format, folder);
+    }
+    // Only now: a crash while queuing again still finds them next time.
+    for (final pending in interrupted) {
+      await widget.store.dropPending(pending.id);
+    }
+  }
+
+  /// Gives up on what a previous launch left unfinished: cancelled in the
+  /// history.
+  Future<void> _discard() async {
+    for (final pending in _forgetInterrupted()) {
+      await widget.store.record(
+        JobCancelled(pending.download),
+        pending.format,
+        widget.now(),
+      );
+      await widget.store.dropPending(pending.id);
+    }
+    _historyChanges.value++;
+  }
+
+  List<PendingDownload> _forgetInterrupted() {
+    final interrupted = _interrupted;
+    setState(() => _interrupted = []);
+    return interrupted;
+  }
+
+  /// Only when the user looks elsewhere: in front, the queue says it all.
+  void _notifyEnd(RunProgress progress) {
+    final notifier = widget.notifier;
+    final state = WidgetsBinding.instance.lifecycleState;
+    if (notifier == null ||
+        state == null ||
+        state == AppLifecycleState.resumed) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    int count(RunItemStatus status) =>
+        progress.finished.where((item) => item.status == status).length;
+    notifier.finished(
+      title: l10n.notifyDoneTitle,
+      body: [
+        for (final (status, text) in [
+          (RunItemStatus.succeeded, l10n.countSucceeded),
+          (RunItemStatus.skipped, l10n.countSkipped),
+          (RunItemStatus.failed, l10n.countFailed),
+          (RunItemStatus.cancelled, l10n.countCancelled),
+        ])
+          if (count(status) > 0) text(count(status)),
+      ].join(' · '),
+    );
+  }
+
+  /// A playlist from the Library: its preview, with what is there unchecked.
+  void _updatePlaylist(String playlistId) {
+    _addNavigator.currentState?.popUntil((route) => route.isFirst);
+    setState(() => _section = _Section.add);
+    _preview([parseEntry(playlistId) as MediaEntry]);
+  }
+
   void _preview(List<MediaEntry> entries) => _addNavigator.currentState!.push(
     MaterialPageRoute<void>(
       builder: (context) => PreviewScreen(
         entries: entries,
         extractor: widget.extractor,
         formats: widget.formats,
+        archive: widget.store,
         onDownload: (downloads, format) {
           Navigator.of(context).pop();
-          _download(downloads, format);
+          unawaited(_download(downloads, format));
         },
       ),
     ),
@@ -200,17 +337,30 @@ class _Ka7ShellState extends State<Ka7Shell> {
         Navigator(
           key: _addNavigator,
           onGenerateRoute: (_) => MaterialPageRoute<void>(
-            builder: (_) => AddLinksScreen(onPreview: _preview, links: _links),
+            builder: (_) => ListenableBuilder(
+              listenable: widget.settings,
+              builder: (_, _) => AddLinksScreen(
+                onPreview: _preview,
+                links: _links,
+                pickLinksFile: widget.pickLinksFile,
+                mixLimit: widget.settings.mixLimit,
+              ),
+            ),
           ),
         ),
         QueueScreen(
           runs: _runs,
-          onRetry: (run, downloads) => _download(downloads, run.format),
+          onRetry: (run, downloads) =>
+              unawaited(_download(downloads, run.format, run.folder)),
+          interrupted: _interrupted.length,
+          onResume: _resume,
+          onDiscard: _discard,
         ),
         LibraryScreen(
           store: widget.store,
           changes: _historyChanges,
           openFolder: widget.openFolder,
+          onUpdatePlaylist: _updatePlaylist,
         ),
         SettingsScreen(
           settings: widget.settings,
@@ -220,7 +370,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
     );
     void select(int index) => setState(() => _section = _Section.values[index]);
 
-    return LayoutBuilder(
+    final window = LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < _sidebarWidth) {
           return Scaffold(
@@ -260,6 +410,56 @@ class _Ka7ShellState extends State<Ka7Shell> {
           ),
         );
       },
+    );
+    if (!widget.acceptDrops) return window;
+    return DropTarget(
+      onDragEntered: (_) => setState(() => _dragging = true),
+      onDragExited: (_) => setState(() => _dragging = false),
+      onDragDone: _drop,
+      child: Stack(
+        children: [
+          window,
+          if (_dragging) const Positioned.fill(child: _DropHint()),
+        ],
+      ),
+    );
+  }
+}
+
+/// Over the whole window while links or a file are dragged over it.
+class _DropHint extends StatelessWidget {
+  const _DropHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return IgnorePointer(
+      child: ColoredBox(
+        color: colors.surface.withValues(alpha: 0.9),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: colors.primary, width: 2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_link, size: 40, color: colors.primary),
+                  const SizedBox(height: 12),
+                  Text(
+                    AppLocalizations.of(context).dropHint,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

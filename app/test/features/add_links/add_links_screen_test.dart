@@ -83,4 +83,91 @@ void main() {
     expect(find.text('1 recognized · 1 skipped'), findsOneWidget);
     expect(find.text('Preview'), findsOneWidget);
   });
+
+  group('clear', () {
+    testWidgets('empties the field and the recognized list', (tester) async {
+      await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
+      await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
+      await tester.pump();
+
+      await tester.tap(find.text('Effacer'));
+      await tester.pump();
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
+      expect(find.text('Vidéo'), findsNothing);
+      expect(find.text('Aucune entrée reconnue'), findsOneWidget);
+    });
+
+    testWidgets('is off while there is nothing to clear', (tester) async {
+      await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
+
+      final clear = tester.widget<TextButton>(
+        find.ancestor(
+          of: find.text('Effacer'),
+          matching: find.byWidgetPredicate((w) => w is TextButton),
+        ),
+      );
+      expect(clear.onPressed, isNull);
+    });
+  });
+
+  group('import', () {
+    testWidgets('adds the links of the chosen file below the field', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        AddLinksScreen(
+          onPreview: (_) {},
+          pickLinksFile: () async =>
+              '# Mahaleo\nPLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy\n',
+        ),
+      );
+      await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
+      await tester.pump();
+
+      await tester.tap(find.text('Importer un fichier'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Qm7tR2vLx9A\n# Mahaleo\nPLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy',
+      );
+      expect(find.text('2 entrées reconnues'), findsOneWidget);
+    });
+
+    testWidgets('changes nothing when the picker is closed', (tester) async {
+      await pumpApp(
+        tester,
+        AddLinksScreen(onPreview: (_) {}, pickLinksFile: () async => null),
+      );
+      await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
+
+      await tester.tap(find.text('Importer un fichier'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Qm7tR2vLx9A',
+      );
+    });
+
+    testWidgets('is not offered where no file can be picked', (tester) async {
+      await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
+
+      expect(find.text('Importer un fichier'), findsNothing);
+    });
+  });
+
+  testWidgets('says how many videos of a mix will be read', (tester) async {
+    await pumpApp(tester, AddLinksScreen(onPreview: (_) {}, mixLimit: 100));
+
+    await tester.enterText(find.byType(TextField), 'RDHb8sJ1kP0wE');
+    await tester.pump();
+
+    expect(find.text('Mix · 100 max'), findsOneWidget);
+  });
 }

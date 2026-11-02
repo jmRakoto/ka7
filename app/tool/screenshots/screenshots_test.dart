@@ -5,8 +5,8 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ka7/app.dart';
 import 'package:ka7_core/ka7_core.dart';
@@ -72,9 +72,9 @@ void main() {
           await tester.runAsync(() async {
             final image = await boundary.toImage();
             final png = await image.toByteData(format: ui.ImageByteFormat.png);
-            File('$prefix-$screen.png').writeAsBytesSync(
-              png!.buffer.asUint8List(),
-            );
+            File(
+              '$prefix-$screen.png',
+            ).writeAsBytesSync(png!.buffer.asUint8List());
           });
         }
 
@@ -87,7 +87,7 @@ void main() {
           RepaintBoundary(
             child: Ka7App(
               engineSetup: setup,
-              enginesFor: (_) =>
+              enginesFor: (_, _) =>
                   (extractor: _extractor, downloader: downloader),
               store: store,
               defaultFolders: const {
@@ -96,6 +96,8 @@ void main() {
               },
               pickFolder: () async => null,
               openFolder: (_) {},
+              acceptDrops: true,
+              pickLinksFile: () async => null,
             ),
           ),
         );
@@ -113,6 +115,21 @@ void main() {
           'vimeo.com/123\nQm7tR2vLx9A',
         );
         await shot('1-add');
+        await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+          'desktop_drop',
+          const StandardMethodCodec().encodeMethodCall(
+            MethodCall('updated', [size.width / 2, size.height / 2]),
+          ),
+          (_) {},
+        );
+        await shot('1-add-drop');
+        await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+          'desktop_drop',
+          const StandardMethodCodec().encodeMethodCall(
+            const MethodCall('exited'),
+          ),
+          (_) {},
+        );
         await tester.tap(find.text("Voir l'aperçu"));
         await shot('2-preview');
         await tester.tap(find.text('Télécharger'));
@@ -130,6 +147,41 @@ void main() {
         await shot('5-library');
         await tester.tap(find.text('Réglages').last);
         await shot('6-settings');
+
+        // Next launch, after a crash in the middle of the playlist.
+        final relaunched = Ka7Store.inMemory();
+        addTearDown(relaunched.close);
+        await relaunched.setSetting('language', 'fr');
+        await relaunched.keepPending(
+          [
+            for (final (i, item) in ericMananaPlaylist.items.take(2).indexed)
+              PlannedDownload(
+                source: ericMananaPlaylist,
+                item: item,
+                index: i + 1,
+              ),
+          ],
+          MediaFormat.mp3,
+          '/home/rakoto/Musique',
+        );
+        await tester.pumpWidget(
+          RepaintBoundary(
+            child: Ka7App(
+              key: const ValueKey('relaunch'),
+              engineSetup: FakeEngineSetup.ready(),
+              enginesFor: (_, _) =>
+                  (extractor: _extractor, downloader: downloader),
+              store: relaunched,
+              defaultFolders: const {
+                MediaFormat.mp3: '/home/rakoto/Musique',
+                MediaFormat.mp4: '/home/rakoto/Vidéos',
+              },
+              pickFolder: () async => null,
+              openFolder: (_) {},
+            ),
+          ),
+        );
+        await shot('7-interrupted');
       });
     }
   }

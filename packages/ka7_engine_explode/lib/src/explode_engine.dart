@@ -8,12 +8,13 @@ import 'explode_source.dart';
 /// Engine in pure Dart: reads and downloads through youtube_explode, writes
 /// files itself. Makes m4a and low-quality mp4; mp3 needs ffmpeg.
 final class ExplodeEngine implements Extractor, Downloader {
-  ExplodeEngine({required this.source});
+  ExplodeEngine({required this.source, this.mixLimit = defaultMixLimit});
 
   final ExplodeSource source;
 
-  /// A mix never ends: only its first videos are read.
-  static const mixLimit = 50;
+  /// A mix never ends: only its first videos are read, as many as the
+  /// settings say at the time of reading.
+  final int Function() mixLimit;
 
   @override
   String get name => 'youtube_explode';
@@ -24,7 +25,7 @@ final class ExplodeEngine implements Extractor, Downloader {
       _single(await source.video(videoId)),
     PlaylistEntry(:final playlistId, :final isMix) => _list(
       playlistId,
-      await source.playlist(playlistId, limit: isMix ? mixLimit : null),
+      await source.playlist(playlistId, limit: isMix ? mixLimit() : null),
     ),
     ChannelEntry(:final channel) => _list(
       channel,

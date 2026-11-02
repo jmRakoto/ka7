@@ -45,6 +45,55 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          SectionTitle(l10n.settingsTheme),
+          const SizedBox(height: 4),
+          SegmentedButton<ThemeMode>(
+            segments: [
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text(l10n.themeSystem),
+              ),
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text(l10n.themeLight),
+              ),
+              ButtonSegment(value: ThemeMode.dark, label: Text(l10n.themeDark)),
+            ],
+            selected: {settings.theme},
+            onSelectionChanged: (choice) => settings.setTheme(choice.single),
+          ),
+          const SizedBox(height: 16),
+          SectionTitle(l10n.settingsConcurrency),
+          const SizedBox(height: 4),
+          SegmentedButton<int>(
+            segments: [
+              for (final count in concurrencyChoices)
+                ButtonSegment(value: count, label: Text('$count')),
+            ],
+            selected: {settings.concurrency},
+            onSelectionChanged: (choice) =>
+                settings.setConcurrency(choice.single),
+          ),
+          const SizedBox(height: 16),
+          SectionTitle(l10n.settingsMixLimit),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              l10n.settingsMixLimitHelp,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          SegmentedButton<int>(
+            segments: [
+              for (final limit in mixLimitChoices)
+                ButtonSegment(value: limit, label: Text('$limit')),
+            ],
+            selected: {settings.mixLimit},
+            onSelectionChanged: (choice) => settings.setMixLimit(choice.single),
+          ),
+          const SizedBox(height: 16),
           if (pickFolder != null)
             for (final (format, label, tooltip) in [
               (MediaFormat.mp3, l10n.folderMusic, l10n.changeMusicFolder),

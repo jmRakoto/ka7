@@ -18,6 +18,7 @@ final class HistoryItem {
     required this.status,
     required this.at,
     this.album,
+    this.playlistId,
     this.path,
     this.reason,
     this.message,
@@ -26,12 +27,33 @@ final class HistoryItem {
   final String videoId;
   final String title;
   final String? album;
+
+  /// The playlist it was downloaded from, to fetch its new videos later;
+  /// null for a single video or a channel.
+  final String? playlistId;
   final MediaFormat format;
   final HistoryStatus status;
   final String? path;
   final FailureReason? reason;
   final String? message;
   final DateTime at;
+}
+
+/// A queued video that had not ended when the app last stopped.
+final class PendingDownload {
+  const PendingDownload({
+    required this.id,
+    required this.download,
+    required this.format,
+    required this.folder,
+  });
+
+  final int id;
+  final PlannedDownload download;
+  final MediaFormat format;
+
+  /// Absolute folder it was queued to.
+  final String folder;
 }
 
 /// Ka7's memory between two launches: archive and history, in one SQLite file.
@@ -81,6 +103,9 @@ final class Ka7Store implements Archive {
             title: download.item.title,
             album: Value(
               download.source.playlistId == null ? null : download.source.title,
+            ),
+            playlistId: Value(
+              download.source.isChannel ? null : download.source.playlistId,
             ),
             format: format.name,
             status: status.name,
@@ -136,6 +161,45 @@ final class Ka7Store implements Archive {
     }
   }
 
+  /// Remembers [downloads], queued to [folder], until each one ends; returns
+  /// their ids, in order.
+  Future<List<int>> keepPending(
+    List<PlannedDownload> downloads,
+    MediaFormat format,
+    String folder,
+  ) => _db.transaction(() async {
+    return [
+      for (final download in downloads)
+        await _db
+            .into(_db.pendingDownloads)
+            .insert(
+              PendingDownloadsCompanion.insert(
+                format: format.name,
+                folder: folder,
+                sourceTitle: download.source.title,
+                sourcePlaylistId: Value(download.source.playlistId),
+                sourceIsChannel: download.source.isChannel,
+                videoId: download.item.videoId,
+                title: download.item.title,
+                channel: Value(download.item.channel),
+                durationSeconds: Value(download.item.duration?.inSeconds),
+                position: download.index,
+              ),
+            ),
+    ];
+  });
+
+  /// [id] has ended: nothing left to resume for it.
+  Future<void> dropPending(int id) =>
+      (_db.delete(_db.pendingDownloads)..where((p) => p.id.equals(id))).go();
+
+  /// Queued videos that never ended, in queue order.
+  Future<List<PendingDownload>> pending() async {
+    final query = _db.select(_db.pendingDownloads)
+      ..orderBy([(p) => OrderingTerm.asc(p.id)]);
+    return [for (final row in await query.get()) _pendingOf(row)];
+  }
+
   Future<void> close() => _db.close();
 }
 
@@ -143,10 +207,34 @@ HistoryItem _itemOf(HistoryEntry row) => HistoryItem(
   videoId: row.videoId,
   title: row.title,
   album: row.album,
+  playlistId: row.playlistId,
   format: MediaFormat.values.byName(row.format),
   status: HistoryStatus.values.byName(row.status),
   path: row.path,
   reason: row.reason == null ? null : FailureReason.values.byName(row.reason!),
   message: row.message,
   at: row.at,
+);
+
+PendingDownload _pendingOf(PendingRow row) => PendingDownload(
+  id: row.id,
+  format: MediaFormat.values.byName(row.format),
+  folder: row.folder,
+  download: PlannedDownload(
+    source: Probe(
+      title: row.sourceTitle,
+      playlistId: row.sourcePlaylistId,
+      isChannel: row.sourceIsChannel,
+      items: const [],
+    ),
+    item: ProbeItem(
+      videoId: row.videoId,
+      title: row.title,
+      channel: row.channel,
+      duration: row.durationSeconds == null
+          ? null
+          : Duration(seconds: row.durationSeconds!),
+    ),
+    index: row.position,
+  ),
 );

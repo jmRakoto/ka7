@@ -8,7 +8,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 
 /**
- * `keep` {title, text, done, total} and `release` from
+ * `keep` {title, text, done, total}, `release` and `finished` {title, body} from
  * app/lib/platform/android_background.dart, for [DownloadService].
  */
 class BackgroundChannel(private val activity: Activity, messenger: BinaryMessenger) {
@@ -30,6 +30,14 @@ class BackgroundChannel(private val activity: Activity, messenger: BinaryMesseng
                 }
                 "release" -> {
                     DownloadService.release(activity.applicationContext)
+                    result.success(null)
+                }
+                "finished" -> {
+                    DownloadService.finished(
+                        activity.applicationContext,
+                        call.argument<String>("title")!!,
+                        call.argument<String>("body")!!,
+                    )
                     result.success(null)
                 }
                 else -> result.notImplemented()

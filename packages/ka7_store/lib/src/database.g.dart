@@ -268,6 +268,17 @@ class $HistoryEntriesTable extends HistoryEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _playlistIdMeta = const VerificationMeta(
+    'playlistId',
+  );
+  @override
+  late final GeneratedColumn<String> playlistId = GeneratedColumn<String>(
+    'playlist_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _formatMeta = const VerificationMeta('format');
   @override
   late final GeneratedColumn<String> format = GeneratedColumn<String>(
@@ -330,6 +341,7 @@ class $HistoryEntriesTable extends HistoryEntries
     videoId,
     title,
     album,
+    playlistId,
     format,
     status,
     path,
@@ -372,6 +384,12 @@ class $HistoryEntriesTable extends HistoryEntries
       context.handle(
         _albumMeta,
         album.isAcceptableOrUnknown(data['album']!, _albumMeta),
+      );
+    }
+    if (data.containsKey('playlist_id')) {
+      context.handle(
+        _playlistIdMeta,
+        playlistId.isAcceptableOrUnknown(data['playlist_id']!, _playlistIdMeta),
       );
     }
     if (data.containsKey('format')) {
@@ -438,6 +456,10 @@ class $HistoryEntriesTable extends HistoryEntries
         DriftSqlType.string,
         data['${effectivePrefix}album'],
       ),
+      playlistId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}playlist_id'],
+      ),
       format: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}format'],
@@ -478,6 +500,9 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
 
   /// Playlist title; null for a single video.
   final String? album;
+
+  /// Playlist id, to fetch its new videos; null for a video or a channel.
+  final String? playlistId;
   final String format;
 
   /// [HistoryStatus.name].
@@ -495,6 +520,7 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
     required this.videoId,
     required this.title,
     this.album,
+    this.playlistId,
     required this.format,
     required this.status,
     this.path,
@@ -510,6 +536,9 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || album != null) {
       map['album'] = Variable<String>(album);
+    }
+    if (!nullToAbsent || playlistId != null) {
+      map['playlist_id'] = Variable<String>(playlistId);
     }
     map['format'] = Variable<String>(format);
     map['status'] = Variable<String>(status);
@@ -534,6 +563,9 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
       album: album == null && nullToAbsent
           ? const Value.absent()
           : Value(album),
+      playlistId: playlistId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(playlistId),
       format: Value(format),
       status: Value(status),
       path: path == null && nullToAbsent ? const Value.absent() : Value(path),
@@ -557,6 +589,7 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
       videoId: serializer.fromJson<String>(json['videoId']),
       title: serializer.fromJson<String>(json['title']),
       album: serializer.fromJson<String?>(json['album']),
+      playlistId: serializer.fromJson<String?>(json['playlistId']),
       format: serializer.fromJson<String>(json['format']),
       status: serializer.fromJson<String>(json['status']),
       path: serializer.fromJson<String?>(json['path']),
@@ -573,6 +606,7 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
       'videoId': serializer.toJson<String>(videoId),
       'title': serializer.toJson<String>(title),
       'album': serializer.toJson<String?>(album),
+      'playlistId': serializer.toJson<String?>(playlistId),
       'format': serializer.toJson<String>(format),
       'status': serializer.toJson<String>(status),
       'path': serializer.toJson<String?>(path),
@@ -587,6 +621,7 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
     String? videoId,
     String? title,
     Value<String?> album = const Value.absent(),
+    Value<String?> playlistId = const Value.absent(),
     String? format,
     String? status,
     Value<String?> path = const Value.absent(),
@@ -598,6 +633,7 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
     videoId: videoId ?? this.videoId,
     title: title ?? this.title,
     album: album.present ? album.value : this.album,
+    playlistId: playlistId.present ? playlistId.value : this.playlistId,
     format: format ?? this.format,
     status: status ?? this.status,
     path: path.present ? path.value : this.path,
@@ -611,6 +647,9 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
       videoId: data.videoId.present ? data.videoId.value : this.videoId,
       title: data.title.present ? data.title.value : this.title,
       album: data.album.present ? data.album.value : this.album,
+      playlistId: data.playlistId.present
+          ? data.playlistId.value
+          : this.playlistId,
       format: data.format.present ? data.format.value : this.format,
       status: data.status.present ? data.status.value : this.status,
       path: data.path.present ? data.path.value : this.path,
@@ -627,6 +666,7 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
           ..write('videoId: $videoId, ')
           ..write('title: $title, ')
           ..write('album: $album, ')
+          ..write('playlistId: $playlistId, ')
           ..write('format: $format, ')
           ..write('status: $status, ')
           ..write('path: $path, ')
@@ -643,6 +683,7 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
     videoId,
     title,
     album,
+    playlistId,
     format,
     status,
     path,
@@ -658,6 +699,7 @@ class HistoryEntry extends DataClass implements Insertable<HistoryEntry> {
           other.videoId == this.videoId &&
           other.title == this.title &&
           other.album == this.album &&
+          other.playlistId == this.playlistId &&
           other.format == this.format &&
           other.status == this.status &&
           other.path == this.path &&
@@ -671,6 +713,7 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntry> {
   final Value<String> videoId;
   final Value<String> title;
   final Value<String?> album;
+  final Value<String?> playlistId;
   final Value<String> format;
   final Value<String> status;
   final Value<String?> path;
@@ -682,6 +725,7 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntry> {
     this.videoId = const Value.absent(),
     this.title = const Value.absent(),
     this.album = const Value.absent(),
+    this.playlistId = const Value.absent(),
     this.format = const Value.absent(),
     this.status = const Value.absent(),
     this.path = const Value.absent(),
@@ -694,6 +738,7 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntry> {
     required String videoId,
     required String title,
     this.album = const Value.absent(),
+    this.playlistId = const Value.absent(),
     required String format,
     required String status,
     this.path = const Value.absent(),
@@ -710,6 +755,7 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntry> {
     Expression<String>? videoId,
     Expression<String>? title,
     Expression<String>? album,
+    Expression<String>? playlistId,
     Expression<String>? format,
     Expression<String>? status,
     Expression<String>? path,
@@ -722,6 +768,7 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntry> {
       if (videoId != null) 'video_id': videoId,
       if (title != null) 'title': title,
       if (album != null) 'album': album,
+      if (playlistId != null) 'playlist_id': playlistId,
       if (format != null) 'format': format,
       if (status != null) 'status': status,
       if (path != null) 'path': path,
@@ -736,6 +783,7 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntry> {
     Value<String>? videoId,
     Value<String>? title,
     Value<String?>? album,
+    Value<String?>? playlistId,
     Value<String>? format,
     Value<String>? status,
     Value<String?>? path,
@@ -748,6 +796,7 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntry> {
       videoId: videoId ?? this.videoId,
       title: title ?? this.title,
       album: album ?? this.album,
+      playlistId: playlistId ?? this.playlistId,
       format: format ?? this.format,
       status: status ?? this.status,
       path: path ?? this.path,
@@ -771,6 +820,9 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntry> {
     }
     if (album.present) {
       map['album'] = Variable<String>(album.value);
+    }
+    if (playlistId.present) {
+      map['playlist_id'] = Variable<String>(playlistId.value);
     }
     if (format.present) {
       map['format'] = Variable<String>(format.value);
@@ -800,6 +852,7 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntry> {
           ..write('videoId: $videoId, ')
           ..write('title: $title, ')
           ..write('album: $album, ')
+          ..write('playlistId: $playlistId, ')
           ..write('format: $format, ')
           ..write('status: $status, ')
           ..write('path: $path, ')
@@ -1016,12 +1069,691 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   }
 }
 
+class $PendingDownloadsTable extends PendingDownloads
+    with TableInfo<$PendingDownloadsTable, PendingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PendingDownloadsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _formatMeta = const VerificationMeta('format');
+  @override
+  late final GeneratedColumn<String> format = GeneratedColumn<String>(
+    'format',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _folderMeta = const VerificationMeta('folder');
+  @override
+  late final GeneratedColumn<String> folder = GeneratedColumn<String>(
+    'folder',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceTitleMeta = const VerificationMeta(
+    'sourceTitle',
+  );
+  @override
+  late final GeneratedColumn<String> sourceTitle = GeneratedColumn<String>(
+    'source_title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourcePlaylistIdMeta = const VerificationMeta(
+    'sourcePlaylistId',
+  );
+  @override
+  late final GeneratedColumn<String> sourcePlaylistId = GeneratedColumn<String>(
+    'source_playlist_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceIsChannelMeta = const VerificationMeta(
+    'sourceIsChannel',
+  );
+  @override
+  late final GeneratedColumn<bool> sourceIsChannel = GeneratedColumn<bool>(
+    'source_is_channel',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("source_is_channel" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _videoIdMeta = const VerificationMeta(
+    'videoId',
+  );
+  @override
+  late final GeneratedColumn<String> videoId = GeneratedColumn<String>(
+    'video_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _channelMeta = const VerificationMeta(
+    'channel',
+  );
+  @override
+  late final GeneratedColumn<String> channel = GeneratedColumn<String>(
+    'channel',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationSecondsMeta = const VerificationMeta(
+    'durationSeconds',
+  );
+  @override
+  late final GeneratedColumn<int> durationSeconds = GeneratedColumn<int>(
+    'duration_seconds',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    format,
+    folder,
+    sourceTitle,
+    sourcePlaylistId,
+    sourceIsChannel,
+    videoId,
+    title,
+    channel,
+    durationSeconds,
+    position,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pending_downloads';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PendingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('format')) {
+      context.handle(
+        _formatMeta,
+        format.isAcceptableOrUnknown(data['format']!, _formatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_formatMeta);
+    }
+    if (data.containsKey('folder')) {
+      context.handle(
+        _folderMeta,
+        folder.isAcceptableOrUnknown(data['folder']!, _folderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_folderMeta);
+    }
+    if (data.containsKey('source_title')) {
+      context.handle(
+        _sourceTitleMeta,
+        sourceTitle.isAcceptableOrUnknown(
+          data['source_title']!,
+          _sourceTitleMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceTitleMeta);
+    }
+    if (data.containsKey('source_playlist_id')) {
+      context.handle(
+        _sourcePlaylistIdMeta,
+        sourcePlaylistId.isAcceptableOrUnknown(
+          data['source_playlist_id']!,
+          _sourcePlaylistIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_is_channel')) {
+      context.handle(
+        _sourceIsChannelMeta,
+        sourceIsChannel.isAcceptableOrUnknown(
+          data['source_is_channel']!,
+          _sourceIsChannelMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIsChannelMeta);
+    }
+    if (data.containsKey('video_id')) {
+      context.handle(
+        _videoIdMeta,
+        videoId.isAcceptableOrUnknown(data['video_id']!, _videoIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_videoIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('channel')) {
+      context.handle(
+        _channelMeta,
+        channel.isAcceptableOrUnknown(data['channel']!, _channelMeta),
+      );
+    }
+    if (data.containsKey('duration_seconds')) {
+      context.handle(
+        _durationSecondsMeta,
+        durationSeconds.isAcceptableOrUnknown(
+          data['duration_seconds']!,
+          _durationSecondsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PendingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PendingRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      format: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}format'],
+      )!,
+      folder: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}folder'],
+      )!,
+      sourceTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_title'],
+      )!,
+      sourcePlaylistId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_playlist_id'],
+      ),
+      sourceIsChannel: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}source_is_channel'],
+      )!,
+      videoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}video_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      channel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}channel'],
+      ),
+      durationSeconds: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_seconds'],
+      ),
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+    );
+  }
+
+  @override
+  $PendingDownloadsTable createAlias(String alias) {
+    return $PendingDownloadsTable(attachedDatabase, alias);
+  }
+}
+
+class PendingRow extends DataClass implements Insertable<PendingRow> {
+  final int id;
+
+  /// [MediaFormat.name].
+  final String format;
+  final String folder;
+
+  /// The playlist, channel or video it comes from.
+  final String sourceTitle;
+  final String? sourcePlaylistId;
+  final bool sourceIsChannel;
+  final String videoId;
+  final String title;
+  final String? channel;
+  final int? durationSeconds;
+
+  /// 1-based position in the source.
+  final int position;
+  const PendingRow({
+    required this.id,
+    required this.format,
+    required this.folder,
+    required this.sourceTitle,
+    this.sourcePlaylistId,
+    required this.sourceIsChannel,
+    required this.videoId,
+    required this.title,
+    this.channel,
+    this.durationSeconds,
+    required this.position,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['format'] = Variable<String>(format);
+    map['folder'] = Variable<String>(folder);
+    map['source_title'] = Variable<String>(sourceTitle);
+    if (!nullToAbsent || sourcePlaylistId != null) {
+      map['source_playlist_id'] = Variable<String>(sourcePlaylistId);
+    }
+    map['source_is_channel'] = Variable<bool>(sourceIsChannel);
+    map['video_id'] = Variable<String>(videoId);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || channel != null) {
+      map['channel'] = Variable<String>(channel);
+    }
+    if (!nullToAbsent || durationSeconds != null) {
+      map['duration_seconds'] = Variable<int>(durationSeconds);
+    }
+    map['position'] = Variable<int>(position);
+    return map;
+  }
+
+  PendingDownloadsCompanion toCompanion(bool nullToAbsent) {
+    return PendingDownloadsCompanion(
+      id: Value(id),
+      format: Value(format),
+      folder: Value(folder),
+      sourceTitle: Value(sourceTitle),
+      sourcePlaylistId: sourcePlaylistId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourcePlaylistId),
+      sourceIsChannel: Value(sourceIsChannel),
+      videoId: Value(videoId),
+      title: Value(title),
+      channel: channel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(channel),
+      durationSeconds: durationSeconds == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationSeconds),
+      position: Value(position),
+    );
+  }
+
+  factory PendingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PendingRow(
+      id: serializer.fromJson<int>(json['id']),
+      format: serializer.fromJson<String>(json['format']),
+      folder: serializer.fromJson<String>(json['folder']),
+      sourceTitle: serializer.fromJson<String>(json['sourceTitle']),
+      sourcePlaylistId: serializer.fromJson<String?>(json['sourcePlaylistId']),
+      sourceIsChannel: serializer.fromJson<bool>(json['sourceIsChannel']),
+      videoId: serializer.fromJson<String>(json['videoId']),
+      title: serializer.fromJson<String>(json['title']),
+      channel: serializer.fromJson<String?>(json['channel']),
+      durationSeconds: serializer.fromJson<int?>(json['durationSeconds']),
+      position: serializer.fromJson<int>(json['position']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'format': serializer.toJson<String>(format),
+      'folder': serializer.toJson<String>(folder),
+      'sourceTitle': serializer.toJson<String>(sourceTitle),
+      'sourcePlaylistId': serializer.toJson<String?>(sourcePlaylistId),
+      'sourceIsChannel': serializer.toJson<bool>(sourceIsChannel),
+      'videoId': serializer.toJson<String>(videoId),
+      'title': serializer.toJson<String>(title),
+      'channel': serializer.toJson<String?>(channel),
+      'durationSeconds': serializer.toJson<int?>(durationSeconds),
+      'position': serializer.toJson<int>(position),
+    };
+  }
+
+  PendingRow copyWith({
+    int? id,
+    String? format,
+    String? folder,
+    String? sourceTitle,
+    Value<String?> sourcePlaylistId = const Value.absent(),
+    bool? sourceIsChannel,
+    String? videoId,
+    String? title,
+    Value<String?> channel = const Value.absent(),
+    Value<int?> durationSeconds = const Value.absent(),
+    int? position,
+  }) => PendingRow(
+    id: id ?? this.id,
+    format: format ?? this.format,
+    folder: folder ?? this.folder,
+    sourceTitle: sourceTitle ?? this.sourceTitle,
+    sourcePlaylistId: sourcePlaylistId.present
+        ? sourcePlaylistId.value
+        : this.sourcePlaylistId,
+    sourceIsChannel: sourceIsChannel ?? this.sourceIsChannel,
+    videoId: videoId ?? this.videoId,
+    title: title ?? this.title,
+    channel: channel.present ? channel.value : this.channel,
+    durationSeconds: durationSeconds.present
+        ? durationSeconds.value
+        : this.durationSeconds,
+    position: position ?? this.position,
+  );
+  PendingRow copyWithCompanion(PendingDownloadsCompanion data) {
+    return PendingRow(
+      id: data.id.present ? data.id.value : this.id,
+      format: data.format.present ? data.format.value : this.format,
+      folder: data.folder.present ? data.folder.value : this.folder,
+      sourceTitle: data.sourceTitle.present
+          ? data.sourceTitle.value
+          : this.sourceTitle,
+      sourcePlaylistId: data.sourcePlaylistId.present
+          ? data.sourcePlaylistId.value
+          : this.sourcePlaylistId,
+      sourceIsChannel: data.sourceIsChannel.present
+          ? data.sourceIsChannel.value
+          : this.sourceIsChannel,
+      videoId: data.videoId.present ? data.videoId.value : this.videoId,
+      title: data.title.present ? data.title.value : this.title,
+      channel: data.channel.present ? data.channel.value : this.channel,
+      durationSeconds: data.durationSeconds.present
+          ? data.durationSeconds.value
+          : this.durationSeconds,
+      position: data.position.present ? data.position.value : this.position,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingRow(')
+          ..write('id: $id, ')
+          ..write('format: $format, ')
+          ..write('folder: $folder, ')
+          ..write('sourceTitle: $sourceTitle, ')
+          ..write('sourcePlaylistId: $sourcePlaylistId, ')
+          ..write('sourceIsChannel: $sourceIsChannel, ')
+          ..write('videoId: $videoId, ')
+          ..write('title: $title, ')
+          ..write('channel: $channel, ')
+          ..write('durationSeconds: $durationSeconds, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    format,
+    folder,
+    sourceTitle,
+    sourcePlaylistId,
+    sourceIsChannel,
+    videoId,
+    title,
+    channel,
+    durationSeconds,
+    position,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PendingRow &&
+          other.id == this.id &&
+          other.format == this.format &&
+          other.folder == this.folder &&
+          other.sourceTitle == this.sourceTitle &&
+          other.sourcePlaylistId == this.sourcePlaylistId &&
+          other.sourceIsChannel == this.sourceIsChannel &&
+          other.videoId == this.videoId &&
+          other.title == this.title &&
+          other.channel == this.channel &&
+          other.durationSeconds == this.durationSeconds &&
+          other.position == this.position);
+}
+
+class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
+  final Value<int> id;
+  final Value<String> format;
+  final Value<String> folder;
+  final Value<String> sourceTitle;
+  final Value<String?> sourcePlaylistId;
+  final Value<bool> sourceIsChannel;
+  final Value<String> videoId;
+  final Value<String> title;
+  final Value<String?> channel;
+  final Value<int?> durationSeconds;
+  final Value<int> position;
+  const PendingDownloadsCompanion({
+    this.id = const Value.absent(),
+    this.format = const Value.absent(),
+    this.folder = const Value.absent(),
+    this.sourceTitle = const Value.absent(),
+    this.sourcePlaylistId = const Value.absent(),
+    this.sourceIsChannel = const Value.absent(),
+    this.videoId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.channel = const Value.absent(),
+    this.durationSeconds = const Value.absent(),
+    this.position = const Value.absent(),
+  });
+  PendingDownloadsCompanion.insert({
+    this.id = const Value.absent(),
+    required String format,
+    required String folder,
+    required String sourceTitle,
+    this.sourcePlaylistId = const Value.absent(),
+    required bool sourceIsChannel,
+    required String videoId,
+    required String title,
+    this.channel = const Value.absent(),
+    this.durationSeconds = const Value.absent(),
+    required int position,
+  }) : format = Value(format),
+       folder = Value(folder),
+       sourceTitle = Value(sourceTitle),
+       sourceIsChannel = Value(sourceIsChannel),
+       videoId = Value(videoId),
+       title = Value(title),
+       position = Value(position);
+  static Insertable<PendingRow> custom({
+    Expression<int>? id,
+    Expression<String>? format,
+    Expression<String>? folder,
+    Expression<String>? sourceTitle,
+    Expression<String>? sourcePlaylistId,
+    Expression<bool>? sourceIsChannel,
+    Expression<String>? videoId,
+    Expression<String>? title,
+    Expression<String>? channel,
+    Expression<int>? durationSeconds,
+    Expression<int>? position,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (format != null) 'format': format,
+      if (folder != null) 'folder': folder,
+      if (sourceTitle != null) 'source_title': sourceTitle,
+      if (sourcePlaylistId != null) 'source_playlist_id': sourcePlaylistId,
+      if (sourceIsChannel != null) 'source_is_channel': sourceIsChannel,
+      if (videoId != null) 'video_id': videoId,
+      if (title != null) 'title': title,
+      if (channel != null) 'channel': channel,
+      if (durationSeconds != null) 'duration_seconds': durationSeconds,
+      if (position != null) 'position': position,
+    });
+  }
+
+  PendingDownloadsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? format,
+    Value<String>? folder,
+    Value<String>? sourceTitle,
+    Value<String?>? sourcePlaylistId,
+    Value<bool>? sourceIsChannel,
+    Value<String>? videoId,
+    Value<String>? title,
+    Value<String?>? channel,
+    Value<int?>? durationSeconds,
+    Value<int>? position,
+  }) {
+    return PendingDownloadsCompanion(
+      id: id ?? this.id,
+      format: format ?? this.format,
+      folder: folder ?? this.folder,
+      sourceTitle: sourceTitle ?? this.sourceTitle,
+      sourcePlaylistId: sourcePlaylistId ?? this.sourcePlaylistId,
+      sourceIsChannel: sourceIsChannel ?? this.sourceIsChannel,
+      videoId: videoId ?? this.videoId,
+      title: title ?? this.title,
+      channel: channel ?? this.channel,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      position: position ?? this.position,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (format.present) {
+      map['format'] = Variable<String>(format.value);
+    }
+    if (folder.present) {
+      map['folder'] = Variable<String>(folder.value);
+    }
+    if (sourceTitle.present) {
+      map['source_title'] = Variable<String>(sourceTitle.value);
+    }
+    if (sourcePlaylistId.present) {
+      map['source_playlist_id'] = Variable<String>(sourcePlaylistId.value);
+    }
+    if (sourceIsChannel.present) {
+      map['source_is_channel'] = Variable<bool>(sourceIsChannel.value);
+    }
+    if (videoId.present) {
+      map['video_id'] = Variable<String>(videoId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (channel.present) {
+      map['channel'] = Variable<String>(channel.value);
+    }
+    if (durationSeconds.present) {
+      map['duration_seconds'] = Variable<int>(durationSeconds.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingDownloadsCompanion(')
+          ..write('id: $id, ')
+          ..write('format: $format, ')
+          ..write('folder: $folder, ')
+          ..write('sourceTitle: $sourceTitle, ')
+          ..write('sourcePlaylistId: $sourcePlaylistId, ')
+          ..write('sourceIsChannel: $sourceIsChannel, ')
+          ..write('videoId: $videoId, ')
+          ..write('title: $title, ')
+          ..write('channel: $channel, ')
+          ..write('durationSeconds: $durationSeconds, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Ka7Database extends GeneratedDatabase {
   _$Ka7Database(QueryExecutor e) : super(e);
   $Ka7DatabaseManager get managers => $Ka7DatabaseManager(this);
   late final $ArchiveEntriesTable archiveEntries = $ArchiveEntriesTable(this);
   late final $HistoryEntriesTable historyEntries = $HistoryEntriesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
+  late final $PendingDownloadsTable pendingDownloads = $PendingDownloadsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1030,6 +1762,7 @@ abstract class _$Ka7Database extends GeneratedDatabase {
     archiveEntries,
     historyEntries,
     settings,
+    pendingDownloads,
   ];
 }
 
@@ -1184,6 +1917,7 @@ typedef $$HistoryEntriesTableCreateCompanionBuilder =
       required String videoId,
       required String title,
       Value<String?> album,
+      Value<String?> playlistId,
       required String format,
       required String status,
       Value<String?> path,
@@ -1197,6 +1931,7 @@ typedef $$HistoryEntriesTableUpdateCompanionBuilder =
       Value<String> videoId,
       Value<String> title,
       Value<String?> album,
+      Value<String?> playlistId,
       Value<String> format,
       Value<String> status,
       Value<String?> path,
@@ -1231,6 +1966,11 @@ class $$HistoryEntriesTableFilterComposer
 
   ColumnFilters<String> get album => $composableBuilder(
     column: $table.album,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get playlistId => $composableBuilder(
+    column: $table.playlistId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1294,6 +2034,11 @@ class $$HistoryEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get playlistId => $composableBuilder(
+    column: $table.playlistId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get format => $composableBuilder(
     column: $table.format,
     builder: (column) => ColumnOrderings(column),
@@ -1345,6 +2090,11 @@ class $$HistoryEntriesTableAnnotationComposer
 
   GeneratedColumn<String> get album =>
       $composableBuilder(column: $table.album, builder: (column) => column);
+
+  GeneratedColumn<String> get playlistId => $composableBuilder(
+    column: $table.playlistId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get format =>
       $composableBuilder(column: $table.format, builder: (column) => column);
@@ -1402,6 +2152,7 @@ class $$HistoryEntriesTableTableManager
                 Value<String> videoId = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String?> album = const Value.absent(),
+                Value<String?> playlistId = const Value.absent(),
                 Value<String> format = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> path = const Value.absent(),
@@ -1413,6 +2164,7 @@ class $$HistoryEntriesTableTableManager
                 videoId: videoId,
                 title: title,
                 album: album,
+                playlistId: playlistId,
                 format: format,
                 status: status,
                 path: path,
@@ -1426,6 +2178,7 @@ class $$HistoryEntriesTableTableManager
                 required String videoId,
                 required String title,
                 Value<String?> album = const Value.absent(),
+                Value<String?> playlistId = const Value.absent(),
                 required String format,
                 required String status,
                 Value<String?> path = const Value.absent(),
@@ -1437,6 +2190,7 @@ class $$HistoryEntriesTableTableManager
                 videoId: videoId,
                 title: title,
                 album: album,
+                playlistId: playlistId,
                 format: format,
                 status: status,
                 path: path,
@@ -1602,6 +2356,324 @@ typedef $$SettingsTableProcessedTableManager =
       Setting,
       PrefetchHooks Function()
     >;
+typedef $$PendingDownloadsTableCreateCompanionBuilder =
+    PendingDownloadsCompanion Function({
+      Value<int> id,
+      required String format,
+      required String folder,
+      required String sourceTitle,
+      Value<String?> sourcePlaylistId,
+      required bool sourceIsChannel,
+      required String videoId,
+      required String title,
+      Value<String?> channel,
+      Value<int?> durationSeconds,
+      required int position,
+    });
+typedef $$PendingDownloadsTableUpdateCompanionBuilder =
+    PendingDownloadsCompanion Function({
+      Value<int> id,
+      Value<String> format,
+      Value<String> folder,
+      Value<String> sourceTitle,
+      Value<String?> sourcePlaylistId,
+      Value<bool> sourceIsChannel,
+      Value<String> videoId,
+      Value<String> title,
+      Value<String?> channel,
+      Value<int?> durationSeconds,
+      Value<int> position,
+    });
+
+class $$PendingDownloadsTableFilterComposer
+    extends Composer<_$Ka7Database, $PendingDownloadsTable> {
+  $$PendingDownloadsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get folder => $composableBuilder(
+    column: $table.folder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceTitle => $composableBuilder(
+    column: $table.sourceTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourcePlaylistId => $composableBuilder(
+    column: $table.sourcePlaylistId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get sourceIsChannel => $composableBuilder(
+    column: $table.sourceIsChannel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get videoId => $composableBuilder(
+    column: $table.videoId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get channel => $composableBuilder(
+    column: $table.channel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationSeconds => $composableBuilder(
+    column: $table.durationSeconds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PendingDownloadsTableOrderingComposer
+    extends Composer<_$Ka7Database, $PendingDownloadsTable> {
+  $$PendingDownloadsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get folder => $composableBuilder(
+    column: $table.folder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceTitle => $composableBuilder(
+    column: $table.sourceTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourcePlaylistId => $composableBuilder(
+    column: $table.sourcePlaylistId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get sourceIsChannel => $composableBuilder(
+    column: $table.sourceIsChannel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get videoId => $composableBuilder(
+    column: $table.videoId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get channel => $composableBuilder(
+    column: $table.channel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationSeconds => $composableBuilder(
+    column: $table.durationSeconds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PendingDownloadsTableAnnotationComposer
+    extends Composer<_$Ka7Database, $PendingDownloadsTable> {
+  $$PendingDownloadsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get format =>
+      $composableBuilder(column: $table.format, builder: (column) => column);
+
+  GeneratedColumn<String> get folder =>
+      $composableBuilder(column: $table.folder, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceTitle => $composableBuilder(
+    column: $table.sourceTitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourcePlaylistId => $composableBuilder(
+    column: $table.sourcePlaylistId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get sourceIsChannel => $composableBuilder(
+    column: $table.sourceIsChannel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get videoId =>
+      $composableBuilder(column: $table.videoId, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get channel =>
+      $composableBuilder(column: $table.channel, builder: (column) => column);
+
+  GeneratedColumn<int> get durationSeconds => $composableBuilder(
+    column: $table.durationSeconds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+}
+
+class $$PendingDownloadsTableTableManager
+    extends
+        RootTableManager<
+          _$Ka7Database,
+          $PendingDownloadsTable,
+          PendingRow,
+          $$PendingDownloadsTableFilterComposer,
+          $$PendingDownloadsTableOrderingComposer,
+          $$PendingDownloadsTableAnnotationComposer,
+          $$PendingDownloadsTableCreateCompanionBuilder,
+          $$PendingDownloadsTableUpdateCompanionBuilder,
+          (
+            PendingRow,
+            BaseReferences<_$Ka7Database, $PendingDownloadsTable, PendingRow>,
+          ),
+          PendingRow,
+          PrefetchHooks Function()
+        > {
+  $$PendingDownloadsTableTableManager(
+    _$Ka7Database db,
+    $PendingDownloadsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PendingDownloadsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PendingDownloadsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PendingDownloadsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> format = const Value.absent(),
+                Value<String> folder = const Value.absent(),
+                Value<String> sourceTitle = const Value.absent(),
+                Value<String?> sourcePlaylistId = const Value.absent(),
+                Value<bool> sourceIsChannel = const Value.absent(),
+                Value<String> videoId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> channel = const Value.absent(),
+                Value<int?> durationSeconds = const Value.absent(),
+                Value<int> position = const Value.absent(),
+              }) => PendingDownloadsCompanion(
+                id: id,
+                format: format,
+                folder: folder,
+                sourceTitle: sourceTitle,
+                sourcePlaylistId: sourcePlaylistId,
+                sourceIsChannel: sourceIsChannel,
+                videoId: videoId,
+                title: title,
+                channel: channel,
+                durationSeconds: durationSeconds,
+                position: position,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String format,
+                required String folder,
+                required String sourceTitle,
+                Value<String?> sourcePlaylistId = const Value.absent(),
+                required bool sourceIsChannel,
+                required String videoId,
+                required String title,
+                Value<String?> channel = const Value.absent(),
+                Value<int?> durationSeconds = const Value.absent(),
+                required int position,
+              }) => PendingDownloadsCompanion.insert(
+                id: id,
+                format: format,
+                folder: folder,
+                sourceTitle: sourceTitle,
+                sourcePlaylistId: sourcePlaylistId,
+                sourceIsChannel: sourceIsChannel,
+                videoId: videoId,
+                title: title,
+                channel: channel,
+                durationSeconds: durationSeconds,
+                position: position,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PendingDownloadsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Ka7Database,
+      $PendingDownloadsTable,
+      PendingRow,
+      $$PendingDownloadsTableFilterComposer,
+      $$PendingDownloadsTableOrderingComposer,
+      $$PendingDownloadsTableAnnotationComposer,
+      $$PendingDownloadsTableCreateCompanionBuilder,
+      $$PendingDownloadsTableUpdateCompanionBuilder,
+      (
+        PendingRow,
+        BaseReferences<_$Ka7Database, $PendingDownloadsTable, PendingRow>,
+      ),
+      PendingRow,
+      PrefetchHooks Function()
+    >;
 
 class $Ka7DatabaseManager {
   final _$Ka7Database _db;
@@ -1612,4 +2684,6 @@ class $Ka7DatabaseManager {
       $$HistoryEntriesTableTableManager(_db, _db.historyEntries);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
+  $$PendingDownloadsTableTableManager get pendingDownloads =>
+      $$PendingDownloadsTableTableManager(_db, _db.pendingDownloads);
 }

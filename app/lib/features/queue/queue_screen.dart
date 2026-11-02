@@ -22,12 +22,24 @@ class QueuedRun {
 
 /// Flow 3: every run, newest first.
 class QueueScreen extends StatelessWidget {
-  const QueueScreen({super.key, required this.runs, required this.onRetry});
+  const QueueScreen({
+    super.key,
+    required this.runs,
+    required this.onRetry,
+    this.interrupted = 0,
+    this.onResume,
+    this.onDiscard,
+  });
 
   final List<QueuedRun> runs;
 
   /// Runs [downloads] again, in the format of [run].
   final void Function(QueuedRun run, List<PlannedDownload> downloads) onRetry;
+
+  /// Videos a previous launch left unfinished.
+  final int interrupted;
+  final VoidCallback? onResume;
+  final VoidCallback? onDiscard;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +48,13 @@ class QueueScreen extends StatelessWidget {
     return Ka7Page(
       title: l10n.runTitle,
       children: [
-        if (runs.isEmpty)
+        if (interrupted > 0)
+          _Interrupted(
+            count: interrupted,
+            onResume: onResume,
+            onDiscard: onDiscard,
+          ),
+        if (runs.isEmpty && interrupted == 0)
           Text(
             l10n.queueEmpty,
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
@@ -63,6 +81,72 @@ class QueueScreen extends StatelessWidget {
           const SizedBox(height: 32),
         ],
       ],
+    );
+  }
+}
+
+/// Flow 0: the queue stopped last time (closed, crashed, network down).
+class _Interrupted extends StatelessWidget {
+  const _Interrupted({
+    required this.count,
+    required this.onResume,
+    required this.onDiscard,
+  });
+
+  final int count;
+  final VoidCallback? onResume;
+  final VoidCallback? onDiscard;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 32),
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.history, color: theme.colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.interruptedTitle,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.interruptedBody(count),
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    onPressed: onResume,
+                    icon: const Icon(Icons.play_arrow),
+                    label: Text(l10n.interruptedResume),
+                  ),
+                  OutlinedButton(
+                    onPressed: onDiscard,
+                    child: Text(l10n.interruptedDiscard),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

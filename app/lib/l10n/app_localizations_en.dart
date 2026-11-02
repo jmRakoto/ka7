@@ -18,7 +18,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kindPlaylist => 'Playlist';
 
   @override
-  String get kindMix => 'Mix · 50 max';
+  String kindMix(int count) {
+    return 'Mix · $count max';
+  }
 
   @override
   String get kindVideoInPlaylist => 'Video + playlist';
@@ -307,4 +309,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationTitle => 'Downloading';
+
+  @override
+  String get interruptedTitle => 'Interrupted queue';
+
+  @override
+  String interruptedBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tracks didn\'t finish last time.',
+      one: '1 track didn\'t finish last time.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get interruptedResume => 'Resume';
+
+  @override
+  String get interruptedDiscard => 'Discard';
+
+  @override
+  String get dropHint => 'Drop your links or a .txt file';
+
+  @override
+  String get importFile => 'Import a file';
+
+  @override
+  String get clearLinks => 'Clear';
+
+  @override
+  String get settingsConcurrency => 'Downloads at once';
+
+  @override
+  String get settingsMixLimit => 'YouTube mix: videos read';
+
+  @override
+  String get updatePlaylist => 'Update the playlist';
+
+  @override
+  String get notifyDoneTitle => 'Downloads finished';
+
+  @override
+  String get settingsTheme => 'Theme';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get settingsMixLimitHelp =>
+      'A mix (a link with “list=RD”) is an endless playlist YouTube builds from one video. Ka7 only reads its first videos, this many.';
+
+  @override
+  String get selectAll => 'Select all';
 }

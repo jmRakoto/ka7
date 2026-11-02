@@ -155,6 +155,157 @@ void main() {
     });
   });
 
+  group('playlist of a history entry', () {
+    test('is kept for a video from a playlist, not for a single one', () async {
+      const single = Probe(title: 'Hafatra', items: [_song]);
+      await store.record(
+        const JobSucceeded(_songDownload, '/m/01.mp3'),
+        MediaFormat.mp3,
+        _monday,
+      );
+      await store.record(
+        const JobSucceeded(
+          PlannedDownload(source: single, item: _other, index: 1),
+          '/m/Somambisamby.mp3',
+        ),
+        MediaFormat.mp3,
+        _friday,
+      );
+
+      final [fromSingle, fromPlaylist] = await store.history();
+      expect(fromPlaylist.playlistId, 'PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy');
+      expect(fromSingle.playlistId, isNull);
+    });
+
+    test('is not kept for a channel: its id is not a playlist', () async {
+      const channel = Probe(
+        title: 'Mahaleo',
+        playlistId: 'UCmahaleo0000000000000000',
+        isChannel: true,
+        items: [],
+      );
+      await store.record(
+        const JobSucceeded(
+          PlannedDownload(source: channel, item: _song, index: 1),
+          '/m/Mahaleo/x.mp3',
+        ),
+        MediaFormat.mp3,
+        _monday,
+      );
+
+      expect((await store.history()).single.playlistId, isNull);
+    });
+  });
+
+  test(
+    'upgrades a store from before playlist ids, keeping its history',
+    () async {
+      final folder = Directory.systemTemp.createTempSync('ka7_store_');
+      addTearDown(() => folder.deleteSync(recursive: true));
+      final file = File('${folder.path}/ka7.sqlite');
+      sqlite3.open(file.path)
+        ..execute(File('test/fixtures/schema_v3.sql').readAsStringSync())
+        ..close();
+
+      final upgraded = Ka7Store.open(file);
+      addTearDown(upgraded.close);
+
+      final old = (await upgraded.history()).single;
+      expect(old.title, 'Me at the zoo');
+      expect(old.playlistId, isNull);
+      await upgraded.record(
+        const JobSucceeded(_songDownload, '/m/01.mp3'),
+        MediaFormat.mp3,
+        _friday,
+      );
+      expect(
+        (await upgraded.history()).first.playlistId,
+        'PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy',
+      );
+    },
+  );
+
+  group('pending downloads', () {
+    test('keeps queued videos, with their source, until they end', () async {
+      final ids = await store.keepPending(
+        [_songDownload, _otherDownload],
+        MediaFormat.mp3,
+        '/home/me/Musique',
+      );
+
+      await store.dropPending(ids.first);
+
+      final [left] = await store.pending();
+      expect(left.id, ids.last);
+      expect(left.format, MediaFormat.mp3);
+      expect(left.folder, '/home/me/Musique');
+      expect(left.download.index, 2);
+      expect(left.download.item.videoId, 'YW-QLSPY8Ew');
+      expect(left.download.item.title, 'Somambisamby');
+      expect(left.download.source.title, 'Mahaleo playlist');
+      expect(
+        left.download.source.playlistId,
+        'PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy',
+      );
+      expect(left.download.source.isChannel, isFalse);
+    });
+
+    test('keeps every detail the file name and tags need', () async {
+      const channel = Probe(
+        title: 'Mahaleo',
+        playlistId: 'UCmahaleo0000000000000000',
+        isChannel: true,
+        items: [],
+      );
+      const video = ProbeItem(
+        videoId: 'yXs506QBhJY',
+        title: 'Tanalahy ny foko',
+        channel: 'Mahaleo',
+        duration: Duration(minutes: 4, seconds: 12),
+      );
+      await store.keepPending(
+        [const PlannedDownload(source: channel, item: video, index: 7)],
+        MediaFormat.mp4,
+        '/home/me/Vidéos',
+      );
+
+      final [kept] = await store.pending();
+      expect(kept.download.source.isChannel, isTrue);
+      expect(kept.download.item.channel, 'Mahaleo');
+      expect(
+        kept.download.item.duration,
+        const Duration(minutes: 4, seconds: 12),
+      );
+      expect(kept.download.index, 7);
+    });
+
+    test('lists them in the order they were queued', () async {
+      await store.keepPending([_otherDownload], MediaFormat.mp4, '/v');
+      await store.keepPending([_songDownload], MediaFormat.mp3, '/m');
+
+      expect((await store.pending()).map((p) => p.download.item.videoId), [
+        'YW-QLSPY8Ew',
+        'yXs506QBhJY',
+      ]);
+    });
+  });
+
+  test('upgrades a store from before pending downloads', () async {
+    final folder = Directory.systemTemp.createTempSync('ka7_store_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}/ka7.sqlite');
+    sqlite3.open(file.path)
+      ..execute(File('test/fixtures/schema_v2.sql').readAsStringSync())
+      ..close();
+
+    final upgraded = Ka7Store.open(file);
+    addTearDown(upgraded.close);
+
+    expect(await upgraded.setting('language'), 'fr');
+    await upgraded.keepPending([_songDownload], MediaFormat.mp3, '/m');
+    expect(await upgraded.pending(), hasLength(1));
+  });
+
   test(
     'upgrades a store written by the first version, keeping its archive',
     () async {

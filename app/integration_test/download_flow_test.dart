@@ -29,7 +29,7 @@ void main() {
           run: Process.run,
           fetch: httpFetch,
         ),
-        enginesFor: (status) => (
+        enginesFor: (status, _) => (
           extractor: YtDlpExtractor(
             run: Process.run,
             executable: status!.ytDlp!,
@@ -58,7 +58,65 @@ void main() {
     expect(find.text('1 réussi'), findsOneWidget);
     expect(File('${folder.path}/Me at the zoo.mp3').existsSync(), isTrue);
   });
+
+  testWidgets('resumes after a crash mid-download, from the store on disk', (
+    tester,
+  ) async {
+    final folder = Directory.systemTemp.createTempSync('ka7_e2e_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}/ka7.sqlite');
+
+    // First launch: the download starts, then the app dies without a word.
+    final first = Ka7Store.open(file);
+    await first.setSetting('language', 'fr');
+    await tester.pumpWidget(_realApp(first, folder.path));
+    await _waitFor(tester, find.byType(TextField));
+    await tester.enterText(find.byType(TextField), 'jNQXAC9IVRw');
+    await tester.pump();
+    await tester.tap(find.text("Voir l'aperçu"));
+    await _waitFor(tester, find.text('Me at the zoo'));
+    await tester.tap(find.text('Télécharger'));
+    await _waitFor(tester, find.text('En cours'));
+    await tester.pumpWidget(const SizedBox());
+    await first.close();
+
+    // Next launch, same file.
+    final second = Ka7Store.open(file);
+    addTearDown(second.close);
+    expect(await second.pending(), hasLength(1));
+    await tester.pumpWidget(_realApp(second, folder.path));
+    await _waitFor(tester, find.text('File interrompue'));
+    expect(find.text("1 titre n'a pas fini la dernière fois."), findsOneWidget);
+
+    await tester.tap(find.text('Reprendre'));
+    await _waitFor(tester, find.text('Terminé'), timeout: 180);
+
+    expect(find.text('1 réussi'), findsOneWidget);
+    expect(File('${folder.path}/Me at the zoo.mp3').existsSync(), isTrue);
+    expect(await second.pending(), isEmpty);
+  });
 }
+
+/// The same real engines, for every journey.
+Ka7App _realApp(Ka7Store store, String folder) => Ka7App(
+  engineSetup: EngineBinaries(
+    folder: '$folder/bin',
+    run: Process.run,
+    fetch: httpFetch,
+  ),
+  enginesFor: (status, _) => (
+    extractor: YtDlpExtractor(run: Process.run, executable: status!.ytDlp!),
+    downloader: YtDlpDownloader(
+      start: Process.start,
+      executable: status.ytDlp!,
+      ffmpegPath: status.ffmpeg,
+    ),
+  ),
+  store: store,
+  defaultFolders: {for (final f in MediaFormat.values) f: folder},
+  pickFolder: () async => null,
+  openFolder: (_) {},
+);
 
 Future<void> _waitFor(
   WidgetTester tester,

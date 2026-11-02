@@ -5,10 +5,14 @@ import '../../l10n/app_localizations.dart';
 /// How a recognized line is shown: a short label and one line of detail.
 ({String label, String detail}) describeEntry(
   LinkEntry entry,
-  AppLocalizations l10n,
-) => switch (entry) {
+  AppLocalizations l10n, {
+  int mixLimit = 50,
+}) => switch (entry) {
   VideoEntry() => (label: l10n.kindVideo, detail: entry.url),
-  PlaylistEntry(isMix: true) => (label: l10n.kindMix, detail: entry.url),
+  PlaylistEntry(isMix: true) => (
+    label: l10n.kindMix(mixLimit),
+    detail: entry.url,
+  ),
   PlaylistEntry() => (label: l10n.kindPlaylist, detail: entry.url),
   VideoInPlaylistEntry() => (
     label: l10n.kindVideoInPlaylist,

@@ -142,6 +142,20 @@ void main() {
       expect(source.asked.single, 'playlist RDHb8sJ1kP0wE limit 50');
     });
 
+    test('caps a mix at the limit chosen in the settings', () async {
+      source.lists['RDHb8sJ1kP0wE'] = const SourceList(
+        title: 'Mix',
+        videos: [_zoo],
+      );
+
+      await ExplodeEngine(
+        source: source,
+        mixLimit: () => 200,
+      ).probe(entryOf('RDHb8sJ1kP0wE'));
+
+      expect(source.asked.single, 'playlist RDHb8sJ1kP0wE limit 200');
+    });
+
     test('reads a video opened from a playlist as that video', () async {
       final probe = await engine.probe(
         entryOf(

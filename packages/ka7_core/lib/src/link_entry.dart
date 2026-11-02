@@ -26,6 +26,9 @@ final class VideoEntry extends MediaEntry {
   String get url => '$_base/watch?v=$videoId';
 }
 
+/// How many videos of a mix are read until the user picks another number.
+int defaultMixLimit() => 50;
+
 /// A playlist: every video in it.
 final class PlaylistEntry extends MediaEntry {
   const PlaylistEntry(super.source, {required this.playlistId});

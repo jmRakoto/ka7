@@ -9,6 +9,21 @@ import '../../helpers/pump_app.dart';
 
 MediaEntry entryOf(String input) => parseEntry(input) as MediaEntry;
 
+/// Videos already downloaded, per format.
+class _Archive implements Archive {
+  _Archive(this.kept);
+
+  final Set<(String, MediaFormat)> kept;
+
+  @override
+  Future<bool> contains(String videoId, MediaFormat format) async =>
+      kept.contains((videoId, format));
+
+  @override
+  Future<void> add(String videoId, MediaFormat format) async =>
+      kept.add((videoId, format));
+}
+
 void main() {
   final playlist = entryOf('PLe7rK2mErickManana01');
   final video = entryOf('Qm7tR2vLx9A');
@@ -181,5 +196,87 @@ void main() {
 
     expect(find.text('Qm7tR2vLx9A'), findsOneWidget);
     expect(find.text('Lecture impossible'), findsOneWidget);
+  });
+
+  group('already downloaded', () {
+    CheckboxListTile row(WidgetTester tester, String text) =>
+        tester.widget(find.widgetWithText(CheckboxListTile, text));
+
+    testWidgets('unchecks videos already there in the chosen format', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [playlist],
+          extractor: extractor,
+          archive: _Archive({('aB3dE5fG7hI', MediaFormat.mp3)}),
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(row(tester, "Tsara Ny Hiran' Ny Taniko").value, isFalse);
+      expect(find.text('Déjà là'), findsOneWidget);
+      expect(row(tester, 'Tsy Ferana').value, isTrue);
+      expect(find.text('1 titre · 6 min'), findsOneWidget);
+    });
+
+    testWidgets('checks them again in a format not downloaded yet', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [playlist],
+          extractor: extractor,
+          archive: _Archive({('aB3dE5fG7hI', MediaFormat.mp3)}),
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('MP4 · vidéo'));
+      await tester.pumpAndSettle();
+
+      expect(row(tester, "Tsara Ny Hiran' Ny Taniko").value, isTrue);
+      expect(find.text('Déjà là'), findsNothing);
+    });
+  });
+
+  testWidgets('one box checks or unchecks every video of a playlist', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      PreviewScreen(
+        entries: [playlist],
+        extractor: extractor,
+        onDownload: (_, _) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+    bool? checked(String text) => tester
+        .widget<CheckboxListTile>(find.widgetWithText(CheckboxListTile, text))
+        .value;
+
+    expect(checked('Tout sélectionner'), isTrue);
+
+    await tester.tap(find.text('Tout sélectionner'));
+    await tester.pump();
+    expect(checked("Tsara Ny Hiran' Ny Taniko"), isFalse);
+    expect(checked('Tsy Ferana'), isFalse);
+    expect(checked('Tout sélectionner'), isFalse);
+    expect(find.textContaining('0 titre'), findsOneWidget);
+
+    await tester.tap(find.text('Tsy Ferana'));
+    await tester.pump();
+    expect(checked('Tout sélectionner'), isNull, reason: 'partly checked');
+
+    await tester.tap(find.text('Tout sélectionner'));
+    await tester.pump();
+    expect(checked("Tsara Ny Hiran' Ny Taniko"), isTrue);
+    expect(checked('Tsy Ferana'), isTrue);
+    expect(checked('Vidéo privée'), isFalse);
   });
 }

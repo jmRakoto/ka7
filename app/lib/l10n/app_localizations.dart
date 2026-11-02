@@ -119,8 +119,8 @@ abstract class AppLocalizations {
   /// No description provided for @kindMix.
   ///
   /// In fr, this message translates to:
-  /// **'Mix · 50 max'**
-  String get kindMix;
+  /// **'Mix · {count} max'**
+  String kindMix(int count);
 
   /// No description provided for @kindVideoInPlaylist.
   ///
@@ -185,13 +185,13 @@ abstract class AppLocalizations {
   /// No description provided for @summaryRecognized.
   ///
   /// In fr, this message translates to:
-  /// **'{count, plural, =1{1 entrée reconnue} other{{count} entrées reconnues}}'**
+  /// **'{count, plural, one{{count} entrée reconnue} other{{count} entrées reconnues}}'**
   String summaryRecognized(int count);
 
   /// No description provided for @summarySkipped.
   ///
   /// In fr, this message translates to:
-  /// **'{count, plural, =1{1 ignorée} other{{count} ignorées}}'**
+  /// **'{count, plural, one{{count} ignorée} other{{count} ignorées}}'**
   String summarySkipped(int count);
 
   /// No description provided for @previewButton.
@@ -221,7 +221,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackCount.
   ///
   /// In fr, this message translates to:
-  /// **'{count, plural, =1{1 titre} other{{count} titres}}'**
+  /// **'{count, plural, one{{count} titre} other{{count} titres}}'**
   String trackCount(int count);
 
   /// No description provided for @probePrivate.
@@ -341,25 +341,25 @@ abstract class AppLocalizations {
   /// No description provided for @countSucceeded.
   ///
   /// In fr, this message translates to:
-  /// **'{count, plural, =1{1 réussi} other{{count} réussis}}'**
+  /// **'{count, plural, one{{count} réussi} other{{count} réussis}}'**
   String countSucceeded(int count);
 
   /// No description provided for @countSkipped.
   ///
   /// In fr, this message translates to:
-  /// **'{count, plural, =1{1 déjà là} other{{count} déjà là}}'**
+  /// **'{count, plural, one{{count} déjà là} other{{count} déjà là}}'**
   String countSkipped(int count);
 
   /// No description provided for @countFailed.
   ///
   /// In fr, this message translates to:
-  /// **'{count, plural, =1{1 échoué} other{{count} échoués}}'**
+  /// **'{count, plural, one{{count} échoué} other{{count} échoués}}'**
   String countFailed(int count);
 
   /// No description provided for @countCancelled.
   ///
   /// In fr, this message translates to:
-  /// **'{count, plural, =1{1 annulé} other{{count} annulés}}'**
+  /// **'{count, plural, one{{count} annulé} other{{count} annulés}}'**
   String countCancelled(int count);
 
   /// No description provided for @retryButton.
@@ -583,6 +583,108 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Téléchargement'**
   String get notificationTitle;
+
+  /// No description provided for @interruptedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'File interrompue'**
+  String get interruptedTitle;
+
+  /// No description provided for @interruptedBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} titre n\'a pas fini la dernière fois.} other{{count} titres n\'ont pas fini la dernière fois.}}'**
+  String interruptedBody(int count);
+
+  /// No description provided for @interruptedResume.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reprendre'**
+  String get interruptedResume;
+
+  /// No description provided for @interruptedDiscard.
+  ///
+  /// In fr, this message translates to:
+  /// **'Abandonner'**
+  String get interruptedDiscard;
+
+  /// No description provided for @dropHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dépose tes liens ou un fichier .txt'**
+  String get dropHint;
+
+  /// No description provided for @importFile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Importer un fichier'**
+  String get importFile;
+
+  /// No description provided for @clearLinks.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer'**
+  String get clearLinks;
+
+  /// No description provided for @settingsConcurrency.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléchargements simultanés'**
+  String get settingsConcurrency;
+
+  /// No description provided for @settingsMixLimit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mix YouTube : titres lus'**
+  String get settingsMixLimit;
+
+  /// No description provided for @updatePlaylist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mettre à jour la playlist'**
+  String get updatePlaylist;
+
+  /// No description provided for @notifyDoneTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléchargements terminés'**
+  String get notifyDoneTitle;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In fr, this message translates to:
+  /// **'Thème'**
+  String get settingsTheme;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In fr, this message translates to:
+  /// **'Système'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clair'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sombre'**
+  String get themeDark;
+
+  /// No description provided for @settingsMixLimitHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un mix (lien qui contient « list=RD ») est une playlist sans fin que YouTube compose à partir d\'une vidéo. Ka7 n\'en lit que les premiers titres, ce nombre-ci.'**
+  String get settingsMixLimitHelp;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout sélectionner'**
+  String get selectAll;
 }
 
 class _AppLocalizationsDelegate

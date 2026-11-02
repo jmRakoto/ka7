@@ -7,6 +7,7 @@ import 'features/shell/ka7_shell.dart';
 import 'features/startup/engine_gate.dart';
 import 'l10n/app_localizations.dart';
 import 'platform/background_work.dart';
+import 'platform/run_notifier.dart';
 import 'settings/app_settings.dart';
 import 'theme/ka7_theme.dart';
 
@@ -26,16 +27,30 @@ class Ka7App extends StatefulWidget {
     this.formats = const [MediaFormat.mp3, MediaFormat.mp4],
     this.sharedLinks,
     this.background,
+    this.acceptDrops = false,
+    this.pickLinksFile,
+    this.notifier,
     this.now = DateTime.now,
   });
 
   /// Finds yt-dlp and ffmpeg, or installs them (flow 0); null when the
   /// engine is built into the app (mobile).
   final EngineSetup? engineSetup;
-  final Engines Function(EngineStatus? status) enginesFor;
+
+  /// [settings] are read when the engines need them (mix limit).
+  final Engines Function(EngineStatus? status, AppSettings settings) enginesFor;
+
+  /// Says when downloads end while the app is in the background.
+  final RunNotifier? notifier;
 
   /// Keeps downloads going with the screen off (Android).
   final BackgroundWork? background;
+
+  /// Links, text and `.txt` files dropped on the window go to Add (desktop).
+  final bool acceptDrops;
+
+  /// Native picker on a `links.txt`, returning its text; null when closed.
+  final Future<String?> Function()? pickLinksFile;
 
   /// Text shared to Ka7 from another app (YouTube's share menu).
   final Stream<String>? sharedLinks;
@@ -79,7 +94,7 @@ class _Ka7AppState extends State<Ka7App> {
   }
 
   Widget _shell(AppSettings settings, EngineStatus? status) {
-    final engines = widget.enginesFor(status);
+    final engines = widget.enginesFor(status, settings);
     return Ka7Shell(
       extractor: engines.extractor,
       downloader: engines.downloader,
@@ -88,6 +103,9 @@ class _Ka7AppState extends State<Ka7App> {
       formats: widget.formats,
       sharedLinks: widget.sharedLinks,
       background: widget.background,
+      acceptDrops: widget.acceptDrops,
+      pickLinksFile: widget.pickLinksFile,
+      notifier: widget.notifier,
       pickFolder: widget.pickFolder,
       openFolder: widget.openFolder,
       now: widget.now,
@@ -105,6 +123,7 @@ class _Ka7AppState extends State<Ka7App> {
         debugShowCheckedModeBanner: false,
         theme: ka7Theme(Brightness.light),
         darkTheme: ka7Theme(Brightness.dark),
+        themeMode: settings.theme,
         locale: switch (settings.language) {
           final language? => Locale(language),
           null => null,

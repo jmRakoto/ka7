@@ -3,7 +3,7 @@
   "appTitle": "Ka7",
   "kindVideo": "Vidéo",
   "kindPlaylist": "Playlist",
-  "kindMix": "Mix · 50 max",
+  "kindMix": "Mix · {count} max",
   "kindVideoInPlaylist": "Vidéo + playlist",
   "kindChannel": "Chaîne",
   "kindDuplicate": "Doublon",
@@ -14,7 +14,7 @@
   "detailDuplicate": "Déjà présent plus haut",
   "detailVideoInPlaylist": "Choix à l'aperçu : cette vidéo ou toute la playlist",
   "summaryNone": "Aucune entrée reconnue",
-  "summaryRecognized": "{count, plural, =1{1 entrée reconnue} other{{count} entrées reconnues}}",
+  "summaryRecognized": "{count, plural, one{{count} entrée reconnue} other{{count} entrées reconnues}}",
   "@summaryRecognized": {
     "placeholders": {
       "count": {
@@ -22,7 +22,7 @@
       }
     }
   },
-  "summarySkipped": "{count, plural, =1{1 ignorée} other{{count} ignorées}}",
+  "summarySkipped": "{count, plural, one{{count} ignorée} other{{count} ignorées}}",
   "@summarySkipped": {
     "placeholders": {
       "count": {
@@ -34,7 +34,7 @@
   "itemPrivate": "Vidéo privée",
   "itemDeleted": "Vidéo supprimée",
   "itemUnavailable": "Vidéo indisponible",
-  "trackCount": "{count, plural, =1{1 titre} other{{count} titres}}",
+  "trackCount": "{count, plural, one{{count} titre} other{{count} titres}}",
   "@trackCount": {
     "placeholders": {
       "count": {
@@ -85,7 +85,7 @@
   "statusSkipped": "Déjà là",
   "statusFailed": "Échoué",
   "statusCancelled": "Annulé",
-  "countSucceeded": "{count, plural, =1{1 réussi} other{{count} réussis}}",
+  "countSucceeded": "{count, plural, one{{count} réussi} other{{count} réussis}}",
   "@countSucceeded": {
     "placeholders": {
       "count": {
@@ -93,7 +93,7 @@
       }
     }
   },
-  "countSkipped": "{count, plural, =1{1 déjà là} other{{count} déjà là}}",
+  "countSkipped": "{count, plural, one{{count} déjà là} other{{count} déjà là}}",
   "@countSkipped": {
     "placeholders": {
       "count": {
@@ -101,7 +101,7 @@
       }
     }
   },
-  "countFailed": "{count, plural, =1{1 échoué} other{{count} échoués}}",
+  "countFailed": "{count, plural, one{{count} échoué} other{{count} échoués}}",
   "@countFailed": {
     "placeholders": {
       "count": {
@@ -109,7 +109,7 @@
       }
     }
   },
-  "countCancelled": "{count, plural, =1{1 annulé} other{{count} annulés}}",
+  "countCancelled": "{count, plural, one{{count} annulé} other{{count} annulés}}",
   "@countCancelled": {
     "placeholders": {
       "count": {
@@ -163,5 +163,36 @@
   "engineSize": "Environ 180 Mo à télécharger, une seule fois.",
   "formatM4a": "M4A · d'origine",
   "formatUnsupported": "Format impossible sur cet appareil",
-  "notificationTitle": "Téléchargement"
+  "notificationTitle": "Téléchargement",
+  "interruptedTitle": "File interrompue",
+  "interruptedBody": "{count, plural, one{{count} titre n'a pas fini la dernière fois.} other{{count} titres n'ont pas fini la dernière fois.}}",
+  "interruptedResume": "Reprendre",
+  "interruptedDiscard": "Abandonner",
+  "@interruptedBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dropHint": "Dépose tes liens ou un fichier .txt",
+  "importFile": "Importer un fichier",
+  "clearLinks": "Effacer",
+  "settingsConcurrency": "Téléchargements simultanés",
+  "settingsMixLimit": "Mix YouTube : titres lus",
+  "updatePlaylist": "Mettre à jour la playlist",
+  "notifyDoneTitle": "Téléchargements terminés",
+  "@kindMix": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsTheme": "Thème",
+  "themeSystem": "Système",
+  "themeLight": "Clair",
+  "themeDark": "Sombre",
+  "settingsMixLimitHelp": "Un mix (lien qui contient « list=RD ») est une playlist sans fin que YouTube compose à partir d'une vidéo. Ka7 n'en lit que les premiers titres, ce nombre-ci.",
+  "selectAll": "Tout sélectionner"
 }

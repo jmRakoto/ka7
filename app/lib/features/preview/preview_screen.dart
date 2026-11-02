@@ -4,6 +4,7 @@ import 'package:ka7_core/ka7_core.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/failure_text.dart';
 import '../../widgets/ka7_page.dart';
+import '../../widgets/status_pill.dart';
 import 'durations.dart';
 
 /// Flow 2: what each link contains, before anything is downloaded.
@@ -14,7 +15,11 @@ class PreviewScreen extends StatefulWidget {
     required this.extractor,
     required this.onDownload,
     this.formats = const [MediaFormat.mp3, MediaFormat.mp4],
+    this.archive,
   });
+
+  /// Videos already downloaded: shown, unchecked.
+  final Archive? archive;
 
   final List<MediaEntry> entries;
   final Extractor extractor;
@@ -41,6 +46,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
   /// Ids of the videos the user keeps.
   final Set<String> _selected = {};
 
+  /// Ids already downloaded in the chosen format.
+  final Set<String> _present = {};
+
   late var _format = widget.formats.first;
 
   @override
@@ -50,15 +58,13 @@ class _PreviewScreenState extends State<PreviewScreen> {
       widget.extractor
           .probe(entry)
           .then(
-            (probe) {
+            (probe) async {
+              final present = await _presentIn(probe);
               if (!mounted) return;
               setState(() {
                 _probes[entry] = probe;
-                _selected.addAll([
-                  for (final item in probe.items)
-                    if (item.availability == Availability.available)
-                      item.videoId,
-                ]);
+                _present.addAll(present);
+                _selected.addAll(_wanted(probe));
               });
             },
             onError: (Object error) {
@@ -71,6 +77,42 @@ class _PreviewScreenState extends State<PreviewScreen> {
             },
           );
     }
+  }
+
+  /// Videos of [probe] already in the archive, in the chosen format.
+  Future<Set<String>> _presentIn(Probe probe) async {
+    final archive = widget.archive;
+    if (archive == null) return const {};
+    return {
+      for (final item in probe.items)
+        if (await archive.contains(item.videoId, _format)) item.videoId,
+    };
+  }
+
+  /// Available videos not downloaded yet.
+  Iterable<String> _wanted(Probe probe) => [
+    for (final item in probe.items)
+      if (item.availability == Availability.available &&
+          !_present.contains(item.videoId))
+        item.videoId,
+  ];
+
+  /// Another format: what is already there changes, so does the selection.
+  Future<void> _changeFormat(MediaFormat format) async {
+    setState(() => _format = format);
+    final present = <String>{};
+    for (final probe in _probes.values) {
+      present.addAll(await _presentIn(probe));
+    }
+    if (!mounted || format != _format) return;
+    setState(() {
+      _present
+        ..clear()
+        ..addAll(present);
+      _selected
+        ..clear()
+        ..addAll(_probes.values.expand(_wanted));
+    });
   }
 
   /// Checked videos, in the order of the entries and of each playlist.
@@ -108,7 +150,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
           ),
       ],
       selected: {_format},
-      onSelectionChanged: (choice) => setState(() => _format = choice.single),
+      onSelectionChanged: (choice) => _changeFormat(choice.single),
     );
     final total = Text(
       _total(l10n),
@@ -159,9 +201,18 @@ class _PreviewScreenState extends State<PreviewScreen> {
             _ProbeGroup(
               probe: probe,
               selected: _selected,
+              present: _present,
               onToggle: (id, keep) => setState(
                 () => keep ? _selected.add(id) : _selected.remove(id),
               ),
+              onToggleAll: (keep) => setState(() {
+                final ids = [
+                  for (final item in probe.items)
+                    if (item.availability == Availability.available)
+                      item.videoId,
+                ];
+                keep ? _selected.addAll(ids) : _selected.removeAll(ids);
+              }),
             )
           else if (_failures[entry] case final failure?)
             ListTile(
@@ -183,16 +234,45 @@ class _ProbeGroup extends StatelessWidget {
   const _ProbeGroup({
     required this.probe,
     required this.selected,
+    required this.present,
     required this.onToggle,
+    required this.onToggleAll,
   });
+
+  /// Every available video of the playlist, checked or not.
+  final void Function(bool keep) onToggleAll;
 
   final Probe probe;
   final Set<String> selected;
+  final Set<String> present;
   final void Function(String videoId, bool keep) onToggle;
+
+  /// Duration, and « Déjà là » when downloaded before in this format.
+  Widget? _details(BuildContext context, ProbeItem item) {
+    final duration = item.duration;
+    if (!present.contains(item.videoId)) {
+      return duration == null ? null : Text(clock(duration));
+    }
+    return Wrap(
+      spacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        StatusPill(
+          AppLocalizations.of(context).statusSkipped,
+          tone: PillTone.warn,
+        ),
+        if (duration != null) Text(clock(duration)),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final available = [
+      for (final item in probe.items)
+        if (item.availability == Availability.available) item.videoId,
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -200,15 +280,28 @@ class _ProbeGroup extends StatelessWidget {
           probe.title,
           trailing: l10n.trackCount(probe.items.length),
         ),
+        if (available.length > 1)
+          CheckboxListTile(
+            tristate: true,
+            value: switch (available.where(selected.contains).length) {
+              0 => false,
+              final n when n == available.length => true,
+              _ => null,
+            },
+            // Partly checked: a tap checks everything.
+            onChanged: (_) => onToggleAll(!available.every(selected.contains)),
+            title: Text(
+              l10n.selectAll,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
         for (final item in probe.items)
           if (item.availability == Availability.available)
             CheckboxListTile(
               value: selected.contains(item.videoId),
               onChanged: (keep) => onToggle(item.videoId, keep ?? false),
               title: Text(item.title),
-              subtitle: item.duration == null
-                  ? null
-                  : Text(clock(item.duration!)),
+              subtitle: _details(context, item),
             )
           else
             CheckboxListTile(
