@@ -4,7 +4,9 @@
 
 ## Platform
 
-mobile + desktop (Flutter): Linux, macOS, Windows, Android, iOS. No web.
+adaptive
+
+One Flutter app for Linux, macOS, Windows, Android and iOS, following each OS's conventions (sidebar on desktop, bottom tabs and share sheet on mobile). No web.
 
 ## Users
 - Primary: the owner, building a personal music and video library from YouTube (Malagasy music such as Mahaleo, Erick Manana, Rija Ramanantoanina; jazz, classical, instrumental covers). Works in batches: whole playlists, or a list of artists ticked off one by one.

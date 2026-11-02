@@ -7,3 +7,7 @@ environment:
 workspace:
   - app
   - packages/ka7_core
+  - packages/ka7_engine_ytdlp
+  - packages/ka7_store
+  - packages/ka7_engine_explode
+  - cli

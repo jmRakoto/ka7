@@ -175,6 +175,414 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Choix à l\'aperçu : cette vidéo ou toute la playlist'**
   String get detailVideoInPlaylist;
+
+  /// No description provided for @summaryNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune entrée reconnue'**
+  String get summaryNone;
+
+  /// No description provided for @summaryRecognized.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée reconnue} other{{count} entrées reconnues}}'**
+  String summaryRecognized(int count);
+
+  /// No description provided for @summarySkipped.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 ignorée} other{{count} ignorées}}'**
+  String summarySkipped(int count);
+
+  /// No description provided for @previewButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir l\'aperçu'**
+  String get previewButton;
+
+  /// No description provided for @itemPrivate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vidéo privée'**
+  String get itemPrivate;
+
+  /// No description provided for @itemDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vidéo supprimée'**
+  String get itemDeleted;
+
+  /// No description provided for @itemUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vidéo indisponible'**
+  String get itemUnavailable;
+
+  /// No description provided for @trackCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 titre} other{{count} titres}}'**
+  String trackCount(int count);
+
+  /// No description provided for @probePrivate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vidéo privée'**
+  String get probePrivate;
+
+  /// No description provided for @probeUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vidéo indisponible'**
+  String get probeUnavailable;
+
+  /// No description provided for @probeNetwork.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas de connexion à YouTube'**
+  String get probeNetwork;
+
+  /// No description provided for @probeUnknown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture impossible'**
+  String get probeUnknown;
+
+  /// No description provided for @downloadButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Télécharger'**
+  String get downloadButton;
+
+  /// No description provided for @probeEngineMissing.
+  ///
+  /// In fr, this message translates to:
+  /// **'yt-dlp n\'est pas installé'**
+  String get probeEngineMissing;
+
+  /// No description provided for @runTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'File d\'attente'**
+  String get runTitle;
+
+  /// No description provided for @runRunning.
+  ///
+  /// In fr, this message translates to:
+  /// **'En cours'**
+  String get runRunning;
+
+  /// No description provided for @runWaiting.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente'**
+  String get runWaiting;
+
+  /// No description provided for @runFinished.
+  ///
+  /// In fr, this message translates to:
+  /// **'Traités'**
+  String get runFinished;
+
+  /// No description provided for @runCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{done} / {total}'**
+  String runCount(int done, int total);
+
+  /// No description provided for @percent.
+  ///
+  /// In fr, this message translates to:
+  /// **'{value} %'**
+  String percent(int value);
+
+  /// No description provided for @speed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{value} Mo/s'**
+  String speed(String value);
+
+  /// No description provided for @cancelAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout annuler'**
+  String get cancelAll;
+
+  /// No description provided for @runDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminé'**
+  String get runDone;
+
+  /// No description provided for @statusSucceeded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réussi'**
+  String get statusSucceeded;
+
+  /// No description provided for @statusSkipped.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déjà là'**
+  String get statusSkipped;
+
+  /// No description provided for @statusFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Échoué'**
+  String get statusFailed;
+
+  /// No description provided for @statusCancelled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annulé'**
+  String get statusCancelled;
+
+  /// No description provided for @countSucceeded.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 réussi} other{{count} réussis}}'**
+  String countSucceeded(int count);
+
+  /// No description provided for @countSkipped.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 déjà là} other{{count} déjà là}}'**
+  String countSkipped(int count);
+
+  /// No description provided for @countFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 échoué} other{{count} échoués}}'**
+  String countFailed(int count);
+
+  /// No description provided for @countCancelled.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 annulé} other{{count} annulés}}'**
+  String countCancelled(int count);
+
+  /// No description provided for @retryButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réessayer'**
+  String get retryButton;
+
+  /// No description provided for @copyFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier les liens échoués'**
+  String get copyFailed;
+
+  /// No description provided for @copiedFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Liens copiés : colle-les dans Ajouter pour réessayer plus tard.'**
+  String get copiedFailed;
+
+  /// No description provided for @formatMp3.
+  ///
+  /// In fr, this message translates to:
+  /// **'MP3 · audio'**
+  String get formatMp3;
+
+  /// No description provided for @formatMp4.
+  ///
+  /// In fr, this message translates to:
+  /// **'MP4 · vidéo'**
+  String get formatMp4;
+
+  /// No description provided for @engineMissingBoth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il manque yt-dlp et ffmpeg'**
+  String get engineMissingBoth;
+
+  /// No description provided for @engineMissingYtDlp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il manque yt-dlp'**
+  String get engineMissingYtDlp;
+
+  /// No description provided for @engineMissingFfmpeg.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il manque ffmpeg'**
+  String get engineMissingFfmpeg;
+
+  /// No description provided for @engineMissingBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ka7 s\'en sert pour lire YouTube et créer les MP3. Il les télécharge depuis leurs sites officiels et les garde dans son propre dossier.'**
+  String get engineMissingBody;
+
+  /// No description provided for @engineInstall.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installer'**
+  String get engineInstall;
+
+  /// No description provided for @engineInstalling.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installation de {tool}… {percent}'**
+  String engineInstalling(String tool, String percent);
+
+  /// No description provided for @engineFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installation impossible. Vérifie ta connexion, puis réessaie.'**
+  String get engineFailed;
+
+  /// No description provided for @navAdd.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter'**
+  String get navAdd;
+
+  /// No description provided for @navQueue.
+  ///
+  /// In fr, this message translates to:
+  /// **'File'**
+  String get navQueue;
+
+  /// No description provided for @navLibrary.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bibliothèque'**
+  String get navLibrary;
+
+  /// No description provided for @navSettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages'**
+  String get navSettings;
+
+  /// No description provided for @queueEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun téléchargement en cours.'**
+  String get queueEmpty;
+
+  /// No description provided for @libraryTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bibliothèque'**
+  String get libraryTitle;
+
+  /// No description provided for @librarySearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chercher un titre ou une playlist'**
+  String get librarySearch;
+
+  /// No description provided for @libraryEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien n\'a encore été téléchargé.'**
+  String get libraryEmpty;
+
+  /// No description provided for @libraryNoMatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun résultat.'**
+  String get libraryNoMatch;
+
+  /// No description provided for @openFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir le dossier'**
+  String get openFolder;
+
+  /// No description provided for @forget.
+  ///
+  /// In fr, this message translates to:
+  /// **'Oublier'**
+  String get forget;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langue'**
+  String get settingsLanguage;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In fr, this message translates to:
+  /// **'Système'**
+  String get languageSystem;
+
+  /// No description provided for @folderMusic.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossier de la musique (MP3)'**
+  String get folderMusic;
+
+  /// No description provided for @folderVideos.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossier des vidéos (MP4)'**
+  String get folderVideos;
+
+  /// No description provided for @changeMusicFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer le dossier de la musique'**
+  String get changeMusicFolder;
+
+  /// No description provided for @changeVideosFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer le dossier des vidéos'**
+  String get changeVideosFolder;
+
+  /// No description provided for @addTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter des liens'**
+  String get addTitle;
+
+  /// No description provided for @addHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Colle des liens, des ID ou une liste : un par ligne, ou séparés par des espaces.'**
+  String get addHint;
+
+  /// No description provided for @previewTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aperçu'**
+  String get previewTitle;
+
+  /// No description provided for @engineSize.
+  ///
+  /// In fr, this message translates to:
+  /// **'Environ 180 Mo à télécharger, une seule fois.'**
+  String get engineSize;
+
+  /// No description provided for @formatM4a.
+  ///
+  /// In fr, this message translates to:
+  /// **'M4A · d\'origine'**
+  String get formatM4a;
+
+  /// No description provided for @formatUnsupported.
+  ///
+  /// In fr, this message translates to:
+  /// **'Format impossible sur cet appareil'**
+  String get formatUnsupported;
+
+  /// No description provided for @notificationTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléchargement'**
+  String get notificationTitle;
 }
 
 class _AppLocalizationsDelegate

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Ka7
+GenericName=YouTube to MP3 / MP4
+GenericName[fr]=YouTube vers MP3 / MP4
+Comment=Turn YouTube links into clean, tagged MP3 or MP4 files
+Comment[fr]=Transforme des liens YouTube en fichiers MP3 ou MP4 propres et tagués
+Exec=ka7-app %U
+Icon=mg.rakoto.ka7
+Terminal=false
+Categories=AudioVideo;Audio;Video;
+Keywords=youtube;mp3;mp4;music;playlist;cassette;
+StartupWMClass=mg.rakoto.ka7

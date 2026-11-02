@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "mg.cinco" "\0"
+            VALUE "CompanyName", "mg.rakoto" "\0"
             VALUE "FileDescription", "ka7" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "ka7" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 mg.cinco. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 mg.rakoto. All rights reserved." "\0"
             VALUE "OriginalFilename", "ka7.exe" "\0"
             VALUE "ProductName", "ka7" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

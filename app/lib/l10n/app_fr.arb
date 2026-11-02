@@ -12,5 +12,156 @@
   "reasonNoVideoOrPlaylist": "Lien YouTube sans vidéo ni playlist",
   "reasonFreeText": "Texte libre : la recherche n'est pas encore disponible",
   "detailDuplicate": "Déjà présent plus haut",
-  "detailVideoInPlaylist": "Choix à l'aperçu : cette vidéo ou toute la playlist"
+  "detailVideoInPlaylist": "Choix à l'aperçu : cette vidéo ou toute la playlist",
+  "summaryNone": "Aucune entrée reconnue",
+  "summaryRecognized": "{count, plural, =1{1 entrée reconnue} other{{count} entrées reconnues}}",
+  "@summaryRecognized": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "summarySkipped": "{count, plural, =1{1 ignorée} other{{count} ignorées}}",
+  "@summarySkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewButton": "Voir l'aperçu",
+  "itemPrivate": "Vidéo privée",
+  "itemDeleted": "Vidéo supprimée",
+  "itemUnavailable": "Vidéo indisponible",
+  "trackCount": "{count, plural, =1{1 titre} other{{count} titres}}",
+  "@trackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "probePrivate": "Vidéo privée",
+  "probeUnavailable": "Vidéo indisponible",
+  "probeNetwork": "Pas de connexion à YouTube",
+  "probeUnknown": "Lecture impossible",
+  "downloadButton": "Télécharger",
+  "probeEngineMissing": "yt-dlp n'est pas installé",
+  "runTitle": "File d'attente",
+  "runRunning": "En cours",
+  "runWaiting": "En attente",
+  "runFinished": "Traités",
+  "runCount": "{done} / {total}",
+  "@runCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "percent": "{value} %",
+  "@percent": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "speed": "{value} Mo/s",
+  "@speed": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelAll": "Tout annuler",
+  "runDone": "Terminé",
+  "statusSucceeded": "Réussi",
+  "statusSkipped": "Déjà là",
+  "statusFailed": "Échoué",
+  "statusCancelled": "Annulé",
+  "countSucceeded": "{count, plural, =1{1 réussi} other{{count} réussis}}",
+  "@countSucceeded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countSkipped": "{count, plural, =1{1 déjà là} other{{count} déjà là}}",
+  "@countSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countFailed": "{count, plural, =1{1 échoué} other{{count} échoués}}",
+  "@countFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countCancelled": "{count, plural, =1{1 annulé} other{{count} annulés}}",
+  "@countCancelled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "retryButton": "Réessayer",
+  "copyFailed": "Copier les liens échoués",
+  "copiedFailed": "Liens copiés : colle-les dans Ajouter pour réessayer plus tard.",
+  "formatMp3": "MP3 · audio",
+  "formatMp4": "MP4 · vidéo",
+  "engineMissingBoth": "Il manque yt-dlp et ffmpeg",
+  "engineMissingYtDlp": "Il manque yt-dlp",
+  "engineMissingFfmpeg": "Il manque ffmpeg",
+  "engineMissingBody": "Ka7 s'en sert pour lire YouTube et créer les MP3. Il les télécharge depuis leurs sites officiels et les garde dans son propre dossier.",
+  "engineInstall": "Installer",
+  "engineInstalling": "Installation de {tool}… {percent}",
+  "@engineInstalling": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "engineFailed": "Installation impossible. Vérifie ta connexion, puis réessaie.",
+  "navAdd": "Ajouter",
+  "navQueue": "File",
+  "navLibrary": "Bibliothèque",
+  "navSettings": "Réglages",
+  "queueEmpty": "Aucun téléchargement en cours.",
+  "libraryTitle": "Bibliothèque",
+  "librarySearch": "Chercher un titre ou une playlist",
+  "libraryEmpty": "Rien n'a encore été téléchargé.",
+  "libraryNoMatch": "Aucun résultat.",
+  "openFolder": "Ouvrir le dossier",
+  "forget": "Oublier",
+  "settingsTitle": "Réglages",
+  "settingsLanguage": "Langue",
+  "languageSystem": "Système",
+  "folderMusic": "Dossier de la musique (MP3)",
+  "folderVideos": "Dossier des vidéos (MP4)",
+  "changeMusicFolder": "Changer le dossier de la musique",
+  "changeVideosFolder": "Changer le dossier des vidéos",
+  "addTitle": "Ajouter des liens",
+  "addHint": "Colle des liens, des ID ou une liste : un par ligne, ou séparés par des espaces.",
+  "previewTitle": "Aperçu",
+  "engineSize": "Environ 180 Mo à télécharger, une seule fois.",
+  "formatM4a": "M4A · d'origine",
+  "formatUnsupported": "Format impossible sur cet appareil",
+  "notificationTitle": "Téléchargement"
 }

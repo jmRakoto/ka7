@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Ka7">
+  <title>Ka7</title>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b4fd0"/><stop offset="1" stop-color="#2a2176"/></linearGradient></defs>
+  <rect width="1024" height="1024" rx="230" fill="url(#bg)"/>
+  <g transform="translate(160 248) scale(4.4)">
+  <rect x="4" y="4" width="152" height="112" rx="16" fill="#ececf6"/>
+  <rect x="18" y="18" width="124" height="56" rx="10" fill="#1b1b2f"/>
+  <circle cx="52" cy="44" r="17" fill="#a79bff"/><circle cx="52" cy="44" r="8.5" fill="none" stroke="#1b1b2f" stroke-width="5" stroke-dasharray="3.6 5.3"/><circle cx="52" cy="44" r="4.5" fill="#1b1b2f"/>
+  <circle cx="108" cy="44" r="17" fill="#a79bff"/><circle cx="108" cy="44" r="8.5" fill="none" stroke="#1b1b2f" stroke-width="5" stroke-dasharray="3.6 5.3"/><circle cx="108" cy="44" r="4.5" fill="#1b1b2f"/>
+  <path d="M38 116 L47 90 H113 L122 116 Z" fill="#c9c9de"/>
+  <circle cx="64" cy="104" r="4.5" fill="#4b3fa8"/><circle cx="96" cy="104" r="4.5" fill="#4b3fa8"/>
+  </g>
+</svg>

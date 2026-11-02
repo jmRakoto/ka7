@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ka7 cassette, one color, for the status bar (from ka7-brand/ka7-icon-mono.svg). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="160"
+    android:viewportHeight="160">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M20,24 H140 A16,16 0 0 1 156,40 V120 A16,16 0 0 1 140,136 H20 A16,16 0 0 1 4,120 V40 A16,16 0 0 1 20,24 Z M28,38 H132 A10,10 0 0 1 142,48 V84 A10,10 0 0 1 132,94 H28 A10,10 0 0 1 18,84 V48 A10,10 0 0 1 28,38 Z M38,136 L47,110 H113 L122,136 Z"/>
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M35,64 A17,17 0 1 0 69,64 A17,17 0 1 0 35,64 Z M46,64 A6,6 0 1 0 58,64 A6,6 0 1 0 46,64 Z M91,64 A17,17 0 1 0 125,64 A17,17 0 1 0 91,64 Z M102,64 A6,6 0 1 0 114,64 A6,6 0 1 0 102,64 Z"/>
+</vector>

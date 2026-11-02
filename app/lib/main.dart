@@ -1,122 +1,107 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:ka7_core/ka7_core.dart';
+import 'package:ka7_engine_explode/ka7_engine_explode.dart';
+import 'package:ka7_engine_ytdlp/ka7_engine_ytdlp.dart';
+import 'package:ka7_store/ka7_store.dart';
+import 'package:path_provider/path_provider.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'app.dart';
+import 'platform/android_background.dart';
+import 'platform/android_ytdlp.dart';
+import 'platform/media_store.dart';
+import 'platform/shared_links.dart';
+import 'platform/user_folders.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Same folder as the CLI on desktop: one archive, one history.
+  final support = await getApplicationSupportDirectory();
+  final store = Ka7Store.open(File('${support.path}/ka7.sqlite'));
+  runApp(
+    Platform.isAndroid || Platform.isIOS
+        ? await _mobile(store)
+        : await _desktop(store, support),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+/// yt-dlp and ffmpeg, installed by the app when missing.
+Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
+  final home = Platform.environment['HOME'] ?? support.path;
+  Future<String> folder(UserFolder kind) =>
+      userFolder(kind, run: Process.run, home: home);
+  return Ka7App(
+    engineSetup: EngineBinaries(
+      folder: '${support.path}/bin',
+      run: Process.run,
+      fetch: httpFetch,
+    ),
+    enginesFor: (status) => (
+      extractor: YtDlpExtractor(run: Process.run, executable: status!.ytDlp!),
+      downloader: YtDlpDownloader(
+        start: Process.start,
+        executable: status.ytDlp!,
+        ffmpegPath: status.ffmpeg,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
+    ),
+    store: store,
+    defaultFolders: {
+      MediaFormat.mp3: await folder(UserFolder.music),
+      MediaFormat.mp4: await folder(UserFolder.videos),
+    },
+    pickFolder: FilePicker.getDirectoryPath,
+    openFolder: (path) => Process.run('xdg-open', [path]),
+  );
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+/// Android: yt-dlp, Python and ffmpeg embedded (youtubedl-android), then
+/// youtube_explode as a fallback.
+/// iOS: youtube_explode in Dart, original audio (m4a) and mp4, no ffmpeg yet.
+Future<Ka7App> _mobile(Ka7Store store) async {
+  // Android: the app's own external folder (then MediaStore), no permission.
+  // iOS: Documents, shown in the Files app.
+  final root = Platform.isAndroid
+      ? (await getExternalStorageDirectory())!
+      : await getApplicationDocumentsDirectory();
+  final folders = {
+    MediaFormat.mp3: '${root.path}/Music',
+    MediaFormat.mp4: '${root.path}/Movies',
+  };
+  if (Platform.isAndroid) {
+    final ytDlp = AndroidYtDlp();
+    // youtube_explode takes over when yt-dlp breaks (m4a and mp4 only).
+    final explode = ExplodeEngine(source: YoutubeExplodeSource());
+    return Ka7App(
+      engineSetup: AndroidEngineSetup(ytDlp),
+      enginesFor: (_) => (
+        extractor: FallbackExtractor([YtDlpExtractor(run: ytDlp.run), explode]),
+        // Then moved to Music/Ka7 or Movies/Ka7, seen by every player.
+        downloader: PublishingDownloader(
+          FallbackDownloader({
+            'yt-dlp': YtDlpDownloader(start: ytDlp.start),
+            explode.name: explode,
+          }),
+          folders: (format) =>
+              folders[format == MediaFormat.mp4 ? format : MediaFormat.mp3]!,
+          publish: AndroidMediaStore().publish,
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      store: store,
+      formats: const [MediaFormat.mp3, MediaFormat.m4a, MediaFormat.mp4],
+      sharedLinks: sharedLinks(),
+      background: AndroidBackgroundWork(),
+      // Downloaded first to the app's own folder, no picker: MediaStore files them.
+      defaultFolders: folders,
     );
   }
+  final engine = ExplodeEngine(source: YoutubeExplodeSource());
+  return Ka7App(
+    enginesFor: (_) => (extractor: engine, downloader: engine),
+    store: store,
+    formats: const [MediaFormat.m4a, MediaFormat.mp4],
+    defaultFolders: folders,
+    pickFolder: FilePicker.getDirectoryPath,
+  );
 }

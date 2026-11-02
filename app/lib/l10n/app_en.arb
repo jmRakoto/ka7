@@ -12,5 +12,156 @@
   "reasonNoVideoOrPlaylist": "YouTube link without a video or playlist",
   "reasonFreeText": "Free text: search is not available yet",
   "detailDuplicate": "Already listed above",
-  "detailVideoInPlaylist": "Choose in preview: this video or the whole playlist"
+  "detailVideoInPlaylist": "Choose in preview: this video or the whole playlist",
+  "summaryNone": "Nothing recognized",
+  "summaryRecognized": "{count} recognized",
+  "@summaryRecognized": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "summarySkipped": "{count} skipped",
+  "@summarySkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewButton": "Preview",
+  "itemPrivate": "Private video",
+  "itemDeleted": "Deleted video",
+  "itemUnavailable": "Unavailable video",
+  "trackCount": "{count, plural, =1{1 track} other{{count} tracks}}",
+  "@trackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "probePrivate": "Private video",
+  "probeUnavailable": "Video unavailable",
+  "probeNetwork": "Can't reach YouTube",
+  "probeUnknown": "Couldn't read this link",
+  "downloadButton": "Download",
+  "probeEngineMissing": "yt-dlp is not installed",
+  "runTitle": "Queue",
+  "runRunning": "Downloading",
+  "runWaiting": "Waiting",
+  "runFinished": "Done",
+  "runCount": "{done} / {total}",
+  "@runCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "percent": "{value}%",
+  "@percent": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "speed": "{value} MB/s",
+  "@speed": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelAll": "Cancel all",
+  "runDone": "Finished",
+  "statusSucceeded": "Succeeded",
+  "statusSkipped": "Already there",
+  "statusFailed": "Failed",
+  "statusCancelled": "Cancelled",
+  "countSucceeded": "{count, plural, =1{1 succeeded} other{{count} succeeded}}",
+  "@countSucceeded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countSkipped": "{count, plural, =1{1 already there} other{{count} already there}}",
+  "@countSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countFailed": "{count, plural, =1{1 failed} other{{count} failed}}",
+  "@countFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countCancelled": "{count, plural, =1{1 cancelled} other{{count} cancelled}}",
+  "@countCancelled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "retryButton": "Retry",
+  "copyFailed": "Copy failed links",
+  "copiedFailed": "Links copied: paste them in Add to retry later.",
+  "formatMp3": "MP3 · audio",
+  "formatMp4": "MP4 · video",
+  "engineMissingBoth": "yt-dlp and ffmpeg are missing",
+  "engineMissingYtDlp": "yt-dlp is missing",
+  "engineMissingFfmpeg": "ffmpeg is missing",
+  "engineMissingBody": "Ka7 uses them to read YouTube and make MP3 files. It downloads them from their official sites and keeps them in its own folder.",
+  "engineInstall": "Install",
+  "engineInstalling": "Installing {tool}… {percent}",
+  "@engineInstalling": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "engineFailed": "Could not install. Check your connection, then try again.",
+  "navAdd": "Add",
+  "navQueue": "Queue",
+  "navLibrary": "Library",
+  "navSettings": "Settings",
+  "queueEmpty": "Nothing downloading.",
+  "libraryTitle": "Library",
+  "librarySearch": "Search a title or a playlist",
+  "libraryEmpty": "Nothing downloaded yet.",
+  "libraryNoMatch": "No results.",
+  "openFolder": "Open folder",
+  "forget": "Forget",
+  "settingsTitle": "Settings",
+  "settingsLanguage": "Language",
+  "languageSystem": "System",
+  "folderMusic": "Music folder (MP3)",
+  "folderVideos": "Videos folder (MP4)",
+  "changeMusicFolder": "Change the music folder",
+  "changeVideosFolder": "Change the videos folder",
+  "addTitle": "Add links",
+  "addHint": "Paste links, IDs or a list: one per line, or separated by spaces.",
+  "previewTitle": "Preview",
+  "engineSize": "About 180 MB to download, once.",
+  "formatM4a": "M4A · original",
+  "formatUnsupported": "Format not available on this device",
+  "notificationTitle": "Downloading"
 }

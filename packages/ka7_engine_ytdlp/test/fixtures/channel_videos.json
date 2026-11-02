@@ -1,0 +1,93 @@
+{
+ "id": "UCBR8-60-B28hp2BmDPdntcQ",
+ "channel": "YouTube",
+ "channel_id": "UCBR8-60-B28hp2BmDPdntcQ",
+ "title": "YouTube - Videos",
+ "availability": "public",
+ "channel_follower_count": 46600000,
+ "description": "YouTube's official YouTube channel",
+ "tags": [
+  "youtube",
+  "official",
+  "channel"
+ ],
+ "uploader_id": "@YouTube",
+ "uploader_url": "https://www.youtube.com/@YouTube",
+ "channel_is_verified": true,
+ "modified_date": null,
+ "view_count": null,
+ "playlist_count": null,
+ "uploader": "YouTube",
+ "channel_url": "https://www.youtube.com/channel/UCBR8-60-B28hp2BmDPdntcQ",
+ "_type": "playlist",
+ "entries": [
+  {
+   "title": "Daddy Yankee reacts to his Watch History",
+   "duration": 607,
+   "view_count": null,
+   "timestamp": null,
+   "live_status": null,
+   "availability": null,
+   "channel_url": null,
+   "uploader_url": null,
+   "creators": null,
+   "ie_key": "Youtube",
+   "id": "Yil32mThG04",
+   "_type": "url",
+   "url": "https://www.youtube.com/watch?v=Yil32mThG04",
+   "__x_forwarded_for_ip": null
+  },
+  {
+   "title": "How @haleypham ascended the throne of the literary realm",
+   "duration": 677,
+   "view_count": null,
+   "timestamp": null,
+   "live_status": null,
+   "availability": null,
+   "channel_url": null,
+   "uploader_url": null,
+   "creators": null,
+   "ie_key": "Youtube",
+   "id": "QEM3EHUV5ko",
+   "_type": "url",
+   "url": "https://www.youtube.com/watch?v=QEM3EHUV5ko",
+   "__x_forwarded_for_ip": null
+  },
+  {
+   "title": "@ldshadowlady created Shadowcraft as a teen. 15 years later, she's a Minecraft legend.",
+   "duration": 500,
+   "view_count": null,
+   "timestamp": null,
+   "live_status": null,
+   "availability": null,
+   "channel_url": null,
+   "uploader_url": null,
+   "creators": null,
+   "ie_key": "Youtube",
+   "id": "yjHvkMeVzK0",
+   "_type": "url",
+   "url": "https://www.youtube.com/watch?v=yjHvkMeVzK0",
+   "__x_forwarded_for_ip": null
+  }
+ ],
+ "extractor_key": "YoutubeTab",
+ "extractor": "youtube:tab",
+ "webpage_url": "https://www.youtube.com/@YouTube/videos",
+ "original_url": "https://www.youtube.com/@YouTube/videos",
+ "webpage_url_basename": "videos",
+ "webpage_url_domain": "youtube.com",
+ "release_year": null,
+ "requested_entries": [
+  1,
+  2,
+  3
+ ],
+ "epoch": 1793384171,
+ "__files_to_move": {},
+ "_version": {
+  "version": "2026.10.26",
+  "current_git_head": null,
+  "release_git_head": "c91f8de0bfb3577894abad716eaaa01659e6bd14",
+  "repository": "yt-dlp/yt-dlp"
+ }
+}

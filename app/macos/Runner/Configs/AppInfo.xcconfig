@@ -8,7 +8,7 @@
 PRODUCT_NAME = ka7
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = mg.cinco.ka7
+PRODUCT_BUNDLE_IDENTIFIER = mg.rakoto.ka7
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 mg.cinco. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 mg.rakoto. All rights reserved.
