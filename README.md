@@ -23,17 +23,70 @@ tool/check.sh               # format, analyse, tous les tests
 - `app/` : app Flutter.
 - `packages/ka7_core/` : cœur en Dart pur, partagé par l'app et le CLI.
 - `packages/ka7_engine_ytdlp/` : moteur bureau (yt-dlp + ffmpeg).
-- `packages/ka7_store/` : archive et historique (SQLite).
+- `packages/ka7_engine_explode/` : moteur de secours en Dart pur (youtube_explode), seul moteur d'iOS.
+- `packages/ka7_store/` : archive, historique, réglages, abonnements (SQLite).
 - `cli/` : commande `ka7`.
 
-## Paquets Linux
+## Publier une version
+
+Tout se lance depuis la racine de `ka7/`. Les paquets arrivent dans `dist/`.
+
+### 1. Numéro de version
+
+Avant chaque version, augmenter le numéro dans `app/pubspec.yaml` (et `cli/pubspec.yaml` pour la commande) :
+
+```yaml
+version: 0.2.1+3   # 0.2.1 = version affichée, +3 = numéro de build
+```
+
+Le `+N` doit augmenter à **chaque** version : sinon Android refuse d'installer la nouvelle par-dessus l'ancienne.
+
+### 2. Linux
+
+Prérequis : `fvm`, `fakeroot`, `dpkg-deb`. L'outil AppImage est téléchargé seul la première fois.
 
 ```bash
 tool/package_linux.sh       # dist/ka7_<version>_amd64.deb et dist/Ka7-<version>-x86_64.AppImage
 sudo apt install ./dist/ka7_*_amd64.deb
 ```
 
+| Fichier | Contenu | Pour qui |
+|---|---|---|
+| `ka7_<version>_amd64.deb` | App + commande `ka7` | Ubuntu, Debian : `sudo apt install ./ka7_<version>_amd64.deb` |
+| `Ka7-<version>-x86_64.AppImage` | App seule, un seul fichier | Toute distribution : `chmod +x`, puis double-clic |
+
 Au premier lancement, l'app propose d'installer yt-dlp et ffmpeg (environ 180 Mo).
+
+### 3. Android
+
+Prérequis :
+
+- La clé de publication `~/.config/ka7/ka7-release.jks` et son mot de passe dans `~/.config/ka7/key.properties` (autre emplacement : variable `KA7_KEY_PROPERTIES`). **Sans eux, l'APK est signé avec la clé de debug et ne peut pas mettre à jour les installations existantes.**
+- Le SDK Android avec le NDK et CMake, la première fois seulement : le script recompile ffmpeg pour les téléphones à pages de 16 Ko.
+
+```bash
+tool/package_android.sh     # dist/Ka7-<version>-{arm64-v8a,armeabi-v7a,x86_64}.apk
+```
+
+| Fichier | Pour qui |
+|---|---|
+| `Ka7-<version>-arm64-v8a.apk` | Presque tous les téléphones depuis 2017 : **à donner par défaut** |
+| `Ka7-<version>-armeabi-v7a.apk` | Vieux téléphones 32 bits, si l'autre affiche « app non compatible » |
+| `Ka7-<version>-x86_64.apk` | Émulateurs, Chromebooks : inutile pour les utilisateurs |
+
+### 4. Installer sur Android (côté utilisateur)
+
+1. Ouvrir l'APK reçu (WhatsApp, Drive, lien…).
+2. Android demande d'autoriser l'installation depuis cette source (Chrome, Fichiers…) : accepter.
+3. Au premier lancement : langue et thème, présentation, puis autorisation des notifications.
+
+Mise à jour : donner le nouvel APK, il s'installe par-dessus l'ancien et garde l'historique, **à condition** que le `+N` ait augmenté et qu'il soit signé avec la même clé.
+
+Un téléphone qui a une version de développement (`flutter run`, clé de debug) doit d'abord la désinstaller.
+
+### La clé de publication
+
+Elle est irremplaçable. Perdre `ka7-release.jks` ou son mot de passe oblige chaque utilisateur à désinstaller Ka7, donc à perdre son historique, pour installer une nouvelle version. **La sauvegarder hors de cette machine** (clé USB, gestionnaire de mots de passe), avec `key.properties`.
 
 ## Ligne de commande
 
