@@ -583,4 +583,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get engineChecking => 'Préparation du moteur…';
+
+  @override
+  String get close => 'Fermer';
 }

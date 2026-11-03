@@ -1027,6 +1027,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Préparation du moteur…'**
   String get engineChecking;
+
+  /// No description provided for @close.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate

@@ -472,6 +472,52 @@ void main() {
       );
     });
 
+    testWidgets('opens a larger view on a long press on the picture', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [playlist],
+          extractor: extractor,
+          thumbnail: (_) => MemoryImage(pixel),
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+      final picture = find.descendant(
+        of: find.widgetWithText(CheckboxListTile, 'Tsy Ferana'),
+        matching: find.byType(Image),
+      );
+
+      await tester.longPress(picture);
+      await tester.pumpAndSettle();
+
+      final dialog = find.byType(Dialog);
+      expect(dialog, findsOneWidget);
+      expect(
+        find.descendant(of: dialog, matching: find.text('Tsy Ferana')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('5:41')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<CheckboxListTile>(
+              find.widgetWithText(CheckboxListTile, 'Tsy Ferana'),
+            )
+            .value,
+        isTrue,
+        reason: 'looking does not uncheck',
+      );
+
+      await tester.tap(find.text('Fermer'));
+      await tester.pumpAndSettle();
+      expect(dialog, findsNothing);
+    });
+
     testWidgets('shows none where no thumbnail is given', (tester) async {
       await pumpApp(
         tester,

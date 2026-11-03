@@ -566,4 +566,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get engineChecking => 'Getting the engine ready…';
+
+  @override
+  String get close => 'Close';
 }

@@ -390,48 +390,51 @@ class _Ka7ShellState extends State<Ka7Shell> {
         ? Badge.count(count: pending, child: Icon(data))
         : Icon(data);
 
-    final body = IndexedStack(
-      index: _section.index,
-      children: [
-        Navigator(
-          key: _addNavigator,
-          onGenerateRoute: (_) => MaterialPageRoute<void>(
-            builder: (_) => ListenableBuilder(
-              listenable: Listenable.merge([widget.settings, _news]),
-              builder: (_, _) => AddLinksScreen(
-                onPreview: _preview,
-                links: _links,
-                pickLinksFile: widget.pickLinksFile,
-                mixLimit: widget.settings.mixLimit,
-                news: _news.value,
-                onShowNews: _showNews,
-                onDismissNews: () => _news.value = const [],
+    final body = _SectionFade(
+      section: _section.index,
+      child: IndexedStack(
+        index: _section.index,
+        children: [
+          Navigator(
+            key: _addNavigator,
+            onGenerateRoute: (_) => MaterialPageRoute<void>(
+              builder: (_) => ListenableBuilder(
+                listenable: Listenable.merge([widget.settings, _news]),
+                builder: (_, _) => AddLinksScreen(
+                  onPreview: _preview,
+                  links: _links,
+                  pickLinksFile: widget.pickLinksFile,
+                  mixLimit: widget.settings.mixLimit,
+                  news: _news.value,
+                  onShowNews: _showNews,
+                  onDismissNews: () => _news.value = const [],
+                ),
               ),
             ),
           ),
-        ),
-        QueueScreen(
-          runs: _runs,
-          shownFolder: widget.shownFolder,
-          onRetry: (run, downloads) =>
-              unawaited(_download(downloads, run.format, run.folder)),
-          interrupted: _interrupted.length,
-          onResume: _resume,
-          onDiscard: _discard,
-        ),
-        LibraryScreen(
-          store: widget.store,
-          changes: _historyChanges,
-          openFolder: widget.openFolder,
-          onUpdatePlaylist: _updatePlaylist,
-        ),
-        SettingsScreen(
-          settings: widget.settings,
-          pickFolder: widget.pickFolder,
-          subscriptions: _followed,
-          onUnfollow: _unfollow,
-        ),
-      ],
+          QueueScreen(
+            runs: _runs,
+            shownFolder: widget.shownFolder,
+            onRetry: (run, downloads) =>
+                unawaited(_download(downloads, run.format, run.folder)),
+            interrupted: _interrupted.length,
+            onResume: _resume,
+            onDiscard: _discard,
+          ),
+          LibraryScreen(
+            store: widget.store,
+            changes: _historyChanges,
+            openFolder: widget.openFolder,
+            onUpdatePlaylist: _updatePlaylist,
+          ),
+          SettingsScreen(
+            settings: widget.settings,
+            pickFolder: widget.pickFolder,
+            subscriptions: _followed,
+            onUnfollow: _unfollow,
+          ),
+        ],
+      ),
     );
     void select(int index) => setState(() => _section = _Section.values[index]);
 
@@ -527,4 +530,51 @@ class _DropHint extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Each section comes in with a short fade and rise, instead of a cut.
+class _SectionFade extends StatefulWidget {
+  const _SectionFade({required this.section, required this.child});
+
+  final int section;
+  final Widget child;
+
+  @override
+  State<_SectionFade> createState() => _SectionFadeState();
+}
+
+class _SectionFadeState extends State<_SectionFade>
+    with SingleTickerProviderStateMixin {
+  late final _in = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    value: 1,
+  );
+  late final _shown = CurvedAnimation(parent: _in, curve: Curves.easeOutCubic);
+
+  @override
+  void didUpdateWidget(_SectionFade old) {
+    super.didUpdateWidget(old);
+    if (old.section == widget.section) return;
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    _in.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _in.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+    opacity: Tween(begin: 0.0, end: 1.0).animate(_shown),
+    child: SlideTransition(
+      position: Tween(
+        begin: const Offset(0, 0.015),
+        end: Offset.zero,
+      ).animate(_shown),
+      child: widget.child,
+    ),
+  );
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ka7_core/ka7_core.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/ka7_page.dart';
 import 'run_view.dart';
 
@@ -58,11 +59,7 @@ class QueueScreen extends StatelessWidget {
             onResume: onResume,
             onDiscard: onDiscard,
           ),
-        if (runs.isEmpty && interrupted == 0)
-          Text(
-            l10n.queueEmpty,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-          ),
+        if (runs.isEmpty && interrupted == 0) EmptyState(l10n.queueEmpty),
         for (final run in runs) ...[
           Padding(
             padding: const EdgeInsets.only(bottom: 8),

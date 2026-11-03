@@ -4,6 +4,8 @@ import 'package:ka7_store/ka7_store.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../l10n/failure_text.dart';
+import '../../widgets/appear.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/ka7_page.dart';
 import '../../widgets/status_pill.dart';
 
@@ -86,30 +88,37 @@ class _LibraryScreenState extends State<LibraryScreen> {
             final items = snapshot.data;
             if (items == null) return const SizedBox.shrink();
             if (items.isEmpty) {
-              return Text(
-                _search.isEmpty ? l10n.libraryEmpty : l10n.libraryNoMatch,
-                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-              );
+              return _search.isEmpty
+                  ? EmptyState(l10n.libraryEmpty)
+                  : Text(
+                      l10n.libraryNoMatch,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    );
             }
             return Column(
               children: [
-                for (final item in items)
-                  _HistoryTile(
-                    item: item,
-                    onOpen: item.path == null || widget.openFolder == null
-                        ? null
-                        : () => widget.openFolder!(
-                            item.path!.substring(
-                              0,
-                              item.path!.lastIndexOf('/'),
+                for (final (i, item) in items.indexed)
+                  Appear(
+                    index: i,
+                    child: _HistoryTile(
+                      item: item,
+                      onOpen: item.path == null || widget.openFolder == null
+                          ? null
+                          : () => widget.openFolder!(
+                              item.path!.substring(
+                                0,
+                                item.path!.lastIndexOf('/'),
+                              ),
                             ),
-                          ),
-                    onForget: () => _forget(item),
-                    onUpdate:
-                        item.playlistId == null ||
-                            widget.onUpdatePlaylist == null
-                        ? null
-                        : () => widget.onUpdatePlaylist!(item.playlistId!),
+                      onForget: () => _forget(item),
+                      onUpdate:
+                          item.playlistId == null ||
+                              widget.onUpdatePlaylist == null
+                          ? null
+                          : () => widget.onUpdatePlaylist!(item.playlistId!),
+                    ),
                   ),
               ],
             );

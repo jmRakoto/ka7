@@ -22,6 +22,7 @@ void main() {
     final store = Ka7Store.inMemory();
     addTearDown(store.close);
     await store.setSetting('language', 'fr');
+    await store.setSetting('onboarding.done', '1');
     await tester.pumpWidget(
       Ka7App(
         engineSetup: EngineBinaries(
@@ -69,6 +70,7 @@ void main() {
     // First launch: the download starts, then the app dies without a word.
     final first = Ka7Store.open(file);
     await first.setSetting('language', 'fr');
+    await first.setSetting('onboarding.done', '1');
     await tester.pumpWidget(_realApp(first, folder.path));
     await _waitFor(tester, find.byType(TextField));
     await tester.enterText(find.byType(TextField), 'jNQXAC9IVRw');
@@ -94,6 +96,46 @@ void main() {
     expect(find.text('1 réussi'), findsOneWidget);
     expect(File('${folder.path}/Me at the zoo.mp3').existsSync(), isTrue);
     expect(await second.pending(), isEmpty);
+  });
+
+  testWidgets('follows a playlist; its new videos show at the next launch', (
+    tester,
+  ) async {
+    final folder = Directory.systemTemp.createTempSync('ka7_e2e_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}/ka7.sqlite');
+
+    // First launch: follow the Mahaleo playlist from its preview.
+    final first = Ka7Store.open(file);
+    await first.setSetting('language', 'fr');
+    await first.setSetting('onboarding.done', '1');
+    await tester.pumpWidget(_realApp(first, folder.path));
+    await _waitFor(tester, find.byType(TextField));
+    await tester.enterText(
+      find.byType(TextField),
+      'PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy',
+    );
+    await tester.pump();
+    await tester.tap(find.text("Voir l'aperçu"));
+    await _waitFor(tester, find.text('Suivre'), timeout: 120);
+    await tester.tap(find.text('Suivre'));
+    await _waitFor(tester, find.text('Suivi'));
+    expect((await first.subscriptions()).single.title, 'Mahaleo playlist');
+    await tester.pumpWidget(const SizedBox());
+    await first.close();
+
+    // Next launch: the playlist is read again in the background.
+    final second = Ka7Store.open(file);
+    addTearDown(second.close);
+    await tester.pumpWidget(_realApp(second, folder.path));
+    await _waitFor(tester, find.text('Nouveautés'), timeout: 120);
+    expect(
+      find.textContaining('nouveaux titres · Mahaleo playlist'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Voir'));
+    await _waitFor(tester, find.text('Suivi'), timeout: 120);
   });
 }
 

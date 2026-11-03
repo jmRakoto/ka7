@@ -10,7 +10,12 @@ class Ka7Logo extends StatefulWidget {
     this.width = 48,
     this.spin = false,
     this.loading = false,
+    this.reelTurns,
   });
+
+  /// Where the reels stand, in turns, when something else drives them
+  /// (the progress of a run).
+  final double? reelTurns;
 
   final double width;
 
@@ -67,7 +72,9 @@ class _Ka7LogoState extends State<Ka7Logo> with SingleTickerProviderStateMixin {
             body: scheme.primary,
             window: scheme.surface,
             reels: scheme.secondary,
-            angle: turns.value * (widget.loading ? 2 : 4) * pi,
+            angle: widget.reelTurns != null
+                ? widget.reelTurns! * 2 * pi
+                : turns.value * (widget.loading ? 2 : 4) * pi,
           ),
         ),
       ),

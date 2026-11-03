@@ -5,6 +5,8 @@ import 'package:ka7_core/ka7_core.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/failure_text.dart';
 import '../../theme/ka7_theme.dart';
+import '../../widgets/appear.dart';
+import '../../widgets/ka7_logo.dart';
 import '../../widgets/ka7_page.dart';
 import '../../widgets/status_pill.dart';
 
@@ -87,7 +89,10 @@ class RunView extends StatelessWidget {
         if (run.running.isNotEmpty) ...[
           SectionTitle(l10n.runRunning),
           for (final item in run.running)
-            _RunningTile(item: item, onCancel: _cancelOf(item)),
+            Appear(
+              key: ObjectKey(item),
+              child: _RunningTile(item: item, onCancel: _cancelOf(item)),
+            ),
         ],
         if (run.waiting.isNotEmpty) ...[
           SectionTitle(l10n.runWaiting),
@@ -101,7 +106,10 @@ class RunView extends StatelessWidget {
         if (run.finished.isNotEmpty) ...[
           SectionTitle(l10n.runFinished),
           for (final item in run.finished.toList().reversed)
-            _FinishedTile(item: item),
+            Appear(
+              key: ObjectKey(item),
+              child: _FinishedTile(item: item),
+            ),
         ],
       ],
     );
@@ -136,6 +144,16 @@ class _Overall extends StatelessWidget {
           children: [
             Row(
               children: [
+                // The tape turns as the run moves on.
+                TweenAnimationBuilder<double>(
+                  tween: Tween(end: run.fraction * 6),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOut,
+                  builder: (context, turns, _) => ExcludeSemantics(
+                    child: Ka7Logo(width: 44, reelTurns: turns),
+                  ),
+                ),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     l10n.runCount(run.finished.length, run.items.length),
@@ -199,7 +217,16 @@ class _Summary extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.check_circle, color: colors.ok),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.4, end: 1),
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 600),
+                  curve: Curves.elasticOut,
+                  builder: (context, scale, child) =>
+                      Transform.scale(scale: scale, child: child),
+                  child: Icon(Icons.check_circle, color: colors.ok),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   l10n.runDone,

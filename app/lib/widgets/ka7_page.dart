@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'appear.dart';
+
 /// Below this width, pages tighten their margins (phone).
 const compactWidth = 600.0;
 
@@ -39,37 +41,43 @@ class Ka7Page extends StatelessWidget {
     );
 
     return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(side, compact ? 16 : 28, side, 32),
-          children: [
-            column(
-              Row(
-                children: [
-                  if (showBack) ...[
-                    const BackButton(),
-                    const SizedBox(width: 4),
-                  ],
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Text(
-                        title,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.4,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: _Glow()),
+          SafeArea(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(side, compact ? 16 : 28, side, 32),
+              children: [
+                column(
+                  Row(
+                    children: [
+                      if (showBack) ...[
+                        const BackButton(),
+                        const SizedBox(width: 4),
+                      ],
+                      Expanded(
+                        child: Semantics(
+                          header: true,
+                          child: Text(
+                            title,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                for (final (i, child) in children.indexed)
+                  column(Appear(index: i, child: child)),
+              ],
             ),
-            const SizedBox(height: 20),
-            for (final child in children) column(child),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: footer == null
           ? null
@@ -126,6 +134,47 @@ class SectionTitle extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Soft light behind the top of every page: violet on one side, lilac on
+/// the other, faint enough to stay behind the words.
+class _Glow extends StatelessWidget {
+  const _Glow();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = scheme.brightness == Brightness.dark;
+    Widget blob(Alignment at, Color color, double strength) => Align(
+      alignment: at,
+      child: FractionallySizedBox(
+        widthFactor: 0.9,
+        heightFactor: 0.55,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              colors: [
+                color.withValues(alpha: strength),
+                color.withValues(alpha: 0),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          blob(const Alignment(1.1, -1.2), scheme.primary, dark ? 0.18 : 0.16),
+          blob(
+            const Alignment(-1.2, -1.1),
+            scheme.secondary,
+            dark ? 0.14 : 0.20,
+          ),
+        ],
       ),
     );
   }

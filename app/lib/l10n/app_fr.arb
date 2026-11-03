@@ -282,5 +282,6 @@
   "welcomeSetupBody": "Choisis ta langue et l'apparence de Ka7.",
   "welcomeSetupLater": "Tu pourras changer ça plus tard dans Réglages.",
   "welcomePoint4e": "Une notification te prévient quand tout est fini",
-  "engineChecking": "Préparation du moteur…"
+  "engineChecking": "Préparation du moteur…",
+  "close": "Fermer"
 }

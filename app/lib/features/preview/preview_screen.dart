@@ -389,7 +389,11 @@ class _ProbeGroup extends StatelessWidget {
               title: _Title(item.title),
               subtitle: _details(context, item),
               secondary: switch (thumbnail) {
-                final thumbnail? => _Thumbnail(image: thumbnail(item.videoId)),
+                final thumbnail? => _Thumbnail(
+                  image: thumbnail(item.videoId),
+                  onLongPress: () =>
+                      _showVideo(context, item, thumbnail(item.videoId)),
+                ),
                 null => null,
               },
             )
@@ -410,9 +414,12 @@ class _ProbeGroup extends StatelessWidget {
 
 /// The video's picture, 16:9; a neutral tile when it cannot load.
 class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.image});
+  const _Thumbnail({required this.image, this.onLongPress});
 
   final ImageProvider image;
+
+  /// Opens the larger view; a tap still checks the row.
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -421,18 +428,21 @@ class _Thumbnail extends StatelessWidget {
       color: scheme.surfaceContainerHighest,
       child: Icon(Icons.music_video_outlined, color: scheme.onSurfaceVariant),
     );
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: SizedBox(
-        width: 96,
-        height: 54,
-        child: Image(
-          image: image,
-          fit: BoxFit.cover,
-          excludeFromSemantics: true,
-          frameBuilder: (context, child, frame, _) =>
-              frame == null ? placeholder : child,
-          errorBuilder: (context, _, _) => placeholder,
+    return GestureDetector(
+      onLongPress: onLongPress,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: SizedBox(
+          width: 96,
+          height: 54,
+          child: Image(
+            image: image,
+            fit: BoxFit.cover,
+            excludeFromSemantics: true,
+            frameBuilder: (context, child, frame, _) =>
+                frame == null ? placeholder : child,
+            errorBuilder: (context, _, _) => placeholder,
+          ),
         ),
       ),
     );
@@ -457,3 +467,73 @@ class _Title extends StatelessWidget {
     child: Text(text, maxLines: 2, overflow: TextOverflow.ellipsis),
   );
 }
+
+/// The video in large, its whole title, length and channel: to be sure it
+/// is the right one before downloading it.
+Future<void> _showVideo(
+  BuildContext context,
+  ProbeItem item,
+  ImageProvider image,
+) => showDialog<void>(
+  context: context,
+  builder: (context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final details = [
+      if (item.duration case final duration?) clock(duration),
+      ?item.channel?.trim(),
+    ].join(' · ');
+    return Dialog(
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Image(
+                image: image,
+                fit: BoxFit.cover,
+                excludeFromSemantics: true,
+                errorBuilder: (context, _, _) => ColoredBox(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: Icon(
+                    Icons.music_video_outlined,
+                    size: 48,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Text(item.title, style: theme.textTheme.titleMedium),
+            ),
+            if (details.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  details,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.close),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+);
