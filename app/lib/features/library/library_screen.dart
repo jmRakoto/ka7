@@ -112,6 +112,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                 item.path!.lastIndexOf('/'),
                               ),
                             ),
+                      canOpen: widget.openFolder != null,
                       onForget: () => _forget(item),
                       onUpdate:
                           item.playlistId == null ||
@@ -135,7 +136,11 @@ class _HistoryTile extends StatelessWidget {
     required this.onOpen,
     required this.onForget,
     required this.onUpdate,
+    required this.canOpen,
   });
+
+  /// Folders can be opened here (desktop): the slot is kept on every row.
+  final bool canOpen;
 
   final HistoryItem item;
   final VoidCallback? onOpen;
@@ -176,18 +181,24 @@ class _HistoryTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Fixed slots: an action missing on one row leaves its place
+          // empty, so the same action sits at the same place on every row.
           if (onUpdate != null)
             IconButton(
               tooltip: l10n.updatePlaylist,
               onPressed: onUpdate,
               icon: const Icon(Icons.sync),
-            ),
+            )
+          else
+            const SizedBox(width: _action),
           if (onOpen != null)
             IconButton(
               tooltip: l10n.openFolder,
               onPressed: onOpen,
               icon: const Icon(Icons.folder_open),
-            ),
+            )
+          else if (canOpen)
+            const SizedBox(width: _action),
           IconButton(
             tooltip: l10n.forget,
             onPressed: onForget,
@@ -198,3 +209,6 @@ class _HistoryTile extends StatelessWidget {
     );
   }
 }
+
+/// Width of one icon button, for the empty slots.
+const _action = 48.0;

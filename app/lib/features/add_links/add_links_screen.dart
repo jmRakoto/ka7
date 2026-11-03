@@ -179,12 +179,24 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
         ],
       ),
       children: [
-        if (widget.news.isNotEmpty)
-          _NewsCard(
-            news: widget.news,
-            onShow: widget.onShowNews,
-            onDismiss: widget.onDismissNews,
+        // Always there, so the field below glides down instead of jumping.
+        AnimatedSize(
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: widget.news.isEmpty
+                ? const SizedBox(width: double.infinity)
+                : _NewsCard(
+                    news: widget.news,
+                    onShow: widget.onShowNews,
+                    onDismiss: widget.onDismissNews,
+                  ),
           ),
+        ),
         mode,
         const SizedBox(height: 16),
         TextField(

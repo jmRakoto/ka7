@@ -293,8 +293,20 @@ class _Ka7ShellState extends State<Ka7Shell> {
   }
 
   /// Read in the background: the app is usable meanwhile.
+  /// At most once a day: each followed link is a YouTube read.
   Future<void> _checkNews() async {
     if (_followed.isEmpty) return;
+    final now = widget.now();
+    final last = DateTime.tryParse(
+      await widget.store.setting(_newsCheckedKey) ?? '',
+    );
+    if (last != null && now.difference(last) < const Duration(days: 1)) {
+      return;
+    }
+    await widget.store.setSetting(
+      _newsCheckedKey,
+      now.toUtc().toIso8601String(),
+    );
     final news = await findNews(
       [for (final s in _followed) (link: s.link, title: s.title)],
       extractor: widget.extractor,
@@ -578,3 +590,6 @@ class _SectionFadeState extends State<_SectionFade>
     ),
   );
 }
+
+/// When the followed playlists and channels were last read (UTC).
+const _newsCheckedKey = 'news.checked';

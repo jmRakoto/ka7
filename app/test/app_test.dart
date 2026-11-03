@@ -459,6 +459,34 @@ void main() {
       expect(downloader.requests.map((r) => r.videoId), ['jK9lM1nO3pQ']);
     });
 
+    testWidgets('keeps the actions of every row in line', (tester) async {
+      PlannedDownload song(int i) => PlannedDownload(
+        source: ericMananaPlaylist,
+        item: ericMananaPlaylist.items[i],
+        index: i + 1,
+      );
+      await store.record(
+        JobSucceeded(song(0), '/home/me/Musique/a.mp3'),
+        MediaFormat.mp3,
+        DateTime(2026, 10, 1),
+      );
+      await store.record(
+        JobFailed(song(1), FailureReason.private),
+        MediaFormat.mp3,
+        DateTime(2026, 10, 2),
+      );
+      await pumpKa7(tester);
+      await tester.tap(find.text('Bibliothèque'));
+      await tester.pumpAndSettle();
+
+      final update = find.byTooltip('Mettre à jour la playlist');
+      expect(update, findsNWidgets(2));
+      expect(
+        tester.getCenter(update.at(0)).dx,
+        tester.getCenter(update.at(1)).dx,
+      );
+    });
+
     testWidgets('offers no update for a single video', (tester) async {
       await pumpKa7(tester);
       await downloadHafatra(tester);
@@ -712,6 +740,36 @@ void main() {
       await tester.tap(find.text('Télécharger'));
       await tester.pumpAndSettle();
       expect(downloader.requests.map((r) => r.videoId), ['jK9lM1nO3pQ']);
+    });
+
+    testWidgets('reads the followed at most once a day', (tester) async {
+      await store.follow('PLe7rK2mErickManana01', 'Erick Manana · Sélection');
+      await store.setSetting(
+        'news.checked',
+        DateTime(2026, 10, 30, 9).toUtc().toIso8601String(),
+      );
+      await pumpKa7(tester);
+
+      expect(find.text('Nouveautés'), findsNothing);
+    });
+
+    testWidgets('reads them again the next day, and notes when', (
+      tester,
+    ) async {
+      await store.follow('PLe7rK2mErickManana01', 'Erick Manana · Sélection');
+      await store.setSetting(
+        'news.checked',
+        DateTime(2026, 10, 29, 9).toUtc().toIso8601String(),
+      );
+      await pumpKa7(tester);
+
+      expect(find.text('Nouveautés'), findsOneWidget);
+      expect(
+        DateTime.parse(
+          (await store.setting('news.checked'))!,
+        ).isAtSameMomentAs(DateTime(2026, 10, 30, 14, 5)),
+        isTrue,
+      );
     });
 
     testWidgets('says nothing when the followed have nothing new', (

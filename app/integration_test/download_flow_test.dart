@@ -134,6 +134,8 @@ void main() {
       findsOneWidget,
     );
 
+    // The card glides in: tap once it has stopped moving.
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.tap(find.text('Voir'));
     await _waitFor(tester, find.text('Suivi'), timeout: 120);
   });

@@ -1,6 +1,6 @@
 name: ka7_cli
 description: Ka7 in the terminal - links.txt, failed.txt, progress and summary. Replaces youtube_downloader.py.
-version: 0.1.0
+version: 0.2.0
 publish_to: none
 resolution: workspace
 
