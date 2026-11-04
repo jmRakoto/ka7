@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ka7_core/ka7_core.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -17,7 +18,30 @@ class AddLinksScreen extends StatefulWidget {
     this.news = const [],
     this.onShowNews,
     this.onDismissNews,
+    this.update,
+    this.currentVersion,
+    this.onOpenUpdate,
+    this.onPutOffUpdate,
+    this.canShare = false,
+    this.canDrop = false,
+    this.recentSearches = const [],
+    this.onClearRecent,
   });
+
+  /// Links can come from « Share → Ka7 » (phone) or be dropped (desktop):
+  /// said in the tips.
+  final bool canShare;
+  final bool canDrop;
+
+  /// The latest searches, newest first.
+  final List<String> recentSearches;
+  final VoidCallback? onClearRecent;
+
+  /// A newer Ka7, to offer above everything else.
+  final AppRelease? update;
+  final String? currentVersion;
+  final VoidCallback? onOpenUpdate;
+  final VoidCallback? onPutOffUpdate;
 
   /// New videos in followed playlists and channels, found at launch.
   final List<News> news;
@@ -72,6 +96,8 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
     final query = _query.text.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (query.isEmpty) return;
     widget.onPreview([SearchEntry(query, query: query)]);
+    // The results keep it; back from them, the field is ready for another.
+    _query.clear();
   }
 
   @override
@@ -89,6 +115,17 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
     final current = _links.text.trimRight();
     _links.text = current.isEmpty ? text : '$current\n$text';
   }
+
+  /// One tap instead of a long press and a menu (phone).
+  Future<void> _paste() async {
+    final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text?.trim();
+    if (!mounted || text == null || text.isEmpty) return;
+    final current = _links.text.trimRight();
+    _links.text = current.isEmpty ? text : '$current\n$text';
+  }
+
+  void _searchFor(String query) =>
+      widget.onPreview([SearchEntry(query, query: query)]);
 
   Iterable<MediaEntry> get _media => _entries.whereType<MediaEntry>();
 
@@ -155,6 +192,12 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
               hintText: l10n.searchHint,
             ),
           ),
+          if (widget.recentSearches.isNotEmpty)
+            _RecentSearches(
+              searches: widget.recentSearches,
+              onSearch: _searchFor,
+              onClear: widget.onClearRecent,
+            ),
         ],
       );
     }
@@ -188,12 +231,25 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
           alignment: Alignment.topCenter,
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 250),
-            child: widget.news.isEmpty
+            child: widget.news.isEmpty && widget.update == null
                 ? const SizedBox(width: double.infinity)
-                : _NewsCard(
-                    news: widget.news,
-                    onShow: widget.onShowNews,
-                    onDismiss: widget.onDismissNews,
+                : Column(
+                    key: ValueKey((widget.update, widget.news)),
+                    children: [
+                      if (widget.update case final update?)
+                        _UpdateCard(
+                          update: update,
+                          current: widget.currentVersion,
+                          onOpen: widget.onOpenUpdate,
+                          onPutOff: widget.onPutOffUpdate,
+                        ),
+                      if (widget.news.isNotEmpty)
+                        _NewsCard(
+                          news: widget.news,
+                          onShow: widget.onShowNews,
+                          onDismiss: widget.onDismissNews,
+                        ),
+                    ],
                   ),
           ),
         ),
@@ -207,9 +263,14 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
         ),
         const SizedBox(height: 12),
         Wrap(
-          spacing: 12,
+          spacing: 8,
           runSpacing: 8,
           children: [
+            FilledButton.tonalIcon(
+              onPressed: _paste,
+              icon: const Icon(Icons.content_paste),
+              label: Text(l10n.pasteLinks),
+            ),
             if (widget.pickLinksFile != null)
               OutlinedButton.icon(
                 onPressed: _import,
@@ -223,9 +284,35 @@ class _AddLinksScreenState extends State<AddLinksScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        for (final entry in _entries)
-          _RecognizedRow(entry: entry, l10n: l10n, mixLimit: widget.mixLimit),
+        const SizedBox(height: 20),
+        AnimatedSwitcher(
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 250),
+          child: _entries.isEmpty
+              ? _Tips(
+                  key: const ValueKey('tips'),
+                  canShare: widget.canShare,
+                  canDrop: widget.canDrop,
+                  canImport: widget.pickLinksFile != null,
+                )
+              : Card(
+                  key: const ValueKey('recognized'),
+                  margin: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      for (final (i, entry) in _entries.indexed) ...[
+                        if (i > 0) const Divider(height: 1, indent: 60),
+                        _RecognizedRow(
+                          entry: entry,
+                          l10n: l10n,
+                          mixLimit: widget.mixLimit,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+        ),
       ],
     );
   }
@@ -250,11 +337,169 @@ class _RecognizedRow extends StatelessWidget {
       DuplicateEntry() => PillTone.neutral,
       InvalidEntry() => PillTone.warn,
     };
+    final scheme = Theme.of(context).colorScheme;
+    final icon = switch (entry) {
+      SearchEntry() => Icons.search,
+      VideoEntry() => Icons.smart_display_outlined,
+      PlaylistEntry(isMix: true) => Icons.all_inclusive,
+      PlaylistEntry() => Icons.playlist_play,
+      VideoInPlaylistEntry() => Icons.video_library_outlined,
+      ChannelEntry() => Icons.account_circle_outlined,
+      DuplicateEntry() => Icons.content_copy,
+      InvalidEntry() => Icons.link_off,
+    };
+    final usable = entry is MediaEntry;
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: StatusPill(label, tone: tone),
-      title: Text(entry.source, overflow: TextOverflow.ellipsis),
-      subtitle: Text(detail),
+      contentPadding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: usable
+              ? scheme.primaryContainer
+              : scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: usable ? scheme.primary : scheme.onSurfaceVariant,
+        ),
+      ),
+      title: Text(entry.source, overflow: TextOverflow.ellipsis, maxLines: 1),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            StatusPill(label, tone: tone),
+            Text(detail, style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// While nothing is pasted: every way to add, in a few words.
+class _Tips extends StatelessWidget {
+  const _Tips({
+    super.key,
+    required this.canShare,
+    required this.canDrop,
+    required this.canImport,
+  });
+
+  final bool canShare;
+  final bool canDrop;
+  final bool canImport;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final tips = [
+      (Icons.format_list_bulleted, l10n.addTipLines),
+      if (canShare) (Icons.share_outlined, l10n.addTipShare),
+      if (canDrop) (Icons.move_to_inbox_outlined, l10n.addTipDrop),
+      if (canImport) (Icons.upload_file, l10n.addTipImport),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (i, (icon, text)) in tips.indexed) ...[
+            if (i > 0) const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(icon, size: 20, color: scheme.secondary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    text,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The latest searches, to run again in one tap.
+class _RecentSearches extends StatelessWidget {
+  const _RecentSearches({
+    required this.searches,
+    required this.onSearch,
+    required this.onClear,
+  });
+
+  final List<String> searches;
+  final ValueChanged<String> onSearch;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.history, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    l10n.recentSearches,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ),
+              if (onClear != null)
+                IconButton(
+                  tooltip: l10n.clearRecent,
+                  onPressed: onClear,
+                  icon: const Icon(Icons.delete_sweep_outlined),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final search in searches)
+                ActionChip(
+                  avatar: const Icon(Icons.search, size: 18),
+                  label: Text(search),
+                  onPressed: () => onSearch(search),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -312,6 +557,73 @@ class _NewsCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               FilledButton(onPressed: onShow, child: Text(l10n.newsShow)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A newer Ka7 is out: its page has the file to install.
+class _UpdateCard extends StatelessWidget {
+  const _UpdateCard({
+    required this.update,
+    required this.current,
+    required this.onOpen,
+    required this.onPutOff,
+  });
+
+  final AppRelease update;
+  final String? current;
+  final VoidCallback? onOpen;
+  final VoidCallback? onPutOff;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        margin: EdgeInsets.zero,
+        color: theme.colorScheme.primaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.system_update_alt,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.updateAvailable(update.version),
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l10n.newsLater,
+                    onPressed: onPutOff,
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              if (current case final current?)
+                Text(
+                  l10n.updateCurrent(current),
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: onOpen,
+                icon: const Icon(Icons.download),
+                label: Text(l10n.updateDownload),
+              ),
             ],
           ),
         ),

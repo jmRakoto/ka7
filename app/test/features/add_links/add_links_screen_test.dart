@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ka7/features/add_links/add_links_screen.dart';
 import 'package:ka7_core/ka7_core.dart';
@@ -79,7 +80,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('Video'), findsOneWidget);
-    expect(find.text('Free text: search is not available yet'), findsOneWidget);
+    expect(
+      find.text('Not a link: to search, use “YouTube search”'),
+      findsOneWidget,
+    );
     expect(find.text('1 recognized · 1 skipped'), findsOneWidget);
     expect(find.text('Preview'), findsOneWidget);
   });
@@ -129,7 +133,7 @@ void main() {
       await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
       await tester.pump();
 
-      await tester.tap(find.text('Importer un fichier'));
+      await tester.tap(find.text('Importer'));
       await tester.pumpAndSettle();
 
       expect(
@@ -146,7 +150,7 @@ void main() {
       );
       await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
 
-      await tester.tap(find.text('Importer un fichier'));
+      await tester.tap(find.text('Importer'));
       await tester.pumpAndSettle();
 
       expect(
@@ -158,7 +162,7 @@ void main() {
     testWidgets('is not offered where no file can be picked', (tester) async {
       await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
 
-      expect(find.text('Importer un fichier'), findsNothing);
+      expect(find.text('Importer'), findsNothing);
     });
   });
 
@@ -171,20 +175,24 @@ void main() {
     expect(find.text('Mix · 100 max'), findsOneWidget);
   });
 
-  testWidgets('treats a line of plain words as a YouTube search', (
+  testWidgets('ignores a pasted message, pointing to the search', (
     tester,
   ) async {
     await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
 
-    await tester.enterText(find.byType(TextField), 'Erick Manana');
+    await tester.enterText(
+      find.byType(TextField),
+      'Bonsoir,\nManao point miaraka amin DG',
+    );
     await tester.pump();
 
-    expect(find.text('Recherche'), findsOneWidget);
+    expect(find.text('Recherche'), findsNothing);
+    expect(find.text('Ignorée'), findsNWidgets(2));
     expect(
-      find.text('Résultats YouTube pour « Erick Manana »'),
-      findsOneWidget,
+      find.text('Pas un lien : pour chercher, passe par « Recherche YouTube »'),
+      findsNWidgets(2),
     );
-    expect(find.text('1 entrée reconnue'), findsOneWidget);
+    expect(find.text('Aucune entrée reconnue'), findsOneWidget);
   });
 
   group('search mode', () {
@@ -197,7 +205,7 @@ void main() {
 
       await tester.tap(find.text('Recherche YouTube'));
       await tester.pumpAndSettle();
-      expect(find.text('Importer un fichier'), findsNothing);
+      expect(find.text('Importer'), findsNothing);
       await tester.enterText(find.byType(TextField), '  Erick Manana ');
       await tester.pump();
       await tester.tap(find.text('Rechercher'));
@@ -241,5 +249,80 @@ void main() {
     await tester.tap(find.text('Recherche YouTube'));
     await tester.pumpAndSettle();
     expect(find.text('Ajouter'), findsOneWidget);
+  });
+
+  group('helps', () {
+    testWidgets('pastes the clipboard below what is there', (tester) async {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async => call.method == 'Clipboard.getData'
+            ? {'text': 'https://youtu.be/Qm7tR2vLx9A'}
+            : null,
+      );
+      await pumpApp(tester, AddLinksScreen(onPreview: (_) {}));
+      await tester.enterText(
+        find.byType(TextField),
+        'PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy',
+      );
+
+      await tester.tap(find.text('Coller'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy\nhttps://youtu.be/Qm7tR2vLx9A',
+      );
+      expect(find.text('Vidéo'), findsOneWidget);
+    });
+
+    testWidgets('tells every way to add while the field is empty', (
+      tester,
+    ) async {
+      await pumpApp(tester, AddLinksScreen(onPreview: (_) {}, canShare: true));
+
+      expect(find.textContaining('Un lien par ligne'), findsOneWidget);
+      expect(find.textContaining('Partager'), findsOneWidget);
+      expect(find.textContaining('Glisse'), findsNothing, reason: 'phone');
+
+      await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Un lien par ligne'), findsNothing);
+    });
+
+    testWidgets('searches again in one tap', (tester) async {
+      List<MediaEntry>? handedOver;
+      await pumpApp(
+        tester,
+        AddLinksScreen(
+          onPreview: (entries) => handedOver = entries,
+          recentSearches: const ['Mahaleo', 'Erick Manana'],
+        ),
+      );
+      await tester.tap(find.text('Recherche YouTube'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Recherches récentes'), findsOneWidget);
+      await tester.tap(find.text('Erick Manana'));
+
+      expect((handedOver!.single as SearchEntry).query, 'Erick Manana');
+    });
+
+    testWidgets('forgets the recent searches when asked', (tester) async {
+      var cleared = false;
+      await pumpApp(
+        tester,
+        AddLinksScreen(
+          onPreview: (_) {},
+          recentSearches: const ['Mahaleo'],
+          onClearRecent: () => cleared = true,
+        ),
+      );
+      await tester.tap(find.text('Recherche YouTube'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Effacer les recherches récentes'));
+
+      expect(cleared, isTrue);
+    });
   });
 }

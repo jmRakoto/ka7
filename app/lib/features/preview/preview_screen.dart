@@ -5,7 +5,9 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/failure_text.dart';
 import '../../widgets/ka7_page.dart';
 import '../../widgets/status_pill.dart';
+import '../../widgets/video_thumbnail.dart';
 import 'durations.dart';
+import 'loading.dart';
 
 /// Flow 2: what each link contains, before anything is downloaded.
 class PreviewScreen extends StatefulWidget {
@@ -19,7 +21,20 @@ class PreviewScreen extends StatefulWidget {
     this.isFollowed,
     this.onFollow,
     this.thumbnail,
+    this.queueStatus,
+    this.queueChanges,
+    this.onSearch,
   });
+
+  /// A new search made here, to remember it.
+  final ValueChanged<String>? onSearch;
+
+  /// Where a video stands in the queue, in a format; null when not there.
+  final RunItemStatus? Function(String videoId, MediaFormat format)?
+  queueStatus;
+
+  /// Ticks when anything in the queue moves.
+  final Listenable? queueChanges;
 
   /// Picture of a video, by id (YouTube's thumbnail); none when null.
   final ImageProvider Function(String videoId)? thumbnail;
@@ -72,6 +87,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   @override
   void dispose() {
+    widget.queueChanges?.removeListener(_queueMoved);
     _query.dispose();
     super.dispose();
   }
@@ -81,14 +97,31 @@ class _PreviewScreenState extends State<PreviewScreen> {
     if (query.isEmpty) return;
     final entry = SearchEntry(query, query: query);
     _query.clear();
+    widget.onSearch?.call(query);
     if (_entries.any((e) => e.url == entry.url)) return;
     setState(() => _entries.insert(0, entry));
     _read(entry);
   }
 
+  /// A video ended in the queue: what is on disk may have changed too.
+  Future<void> _queueMoved() async {
+    final format = _format;
+    final present = <String>{};
+    for (final probe in _probes.values) {
+      present.addAll(await _presentIn(probe));
+    }
+    if (!mounted || format != _format) return;
+    setState(
+      () => _present
+        ..clear()
+        ..addAll(present),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    widget.queueChanges?.addListener(_queueMoved);
     widget.entries.forEach(_read);
   }
 
@@ -135,7 +168,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
         item.videoId,
   ];
 
-  /// Another format: what is already there changes, so does the selection.
+  /// Another format: what is already there changes. The user's picks stay;
+  /// only videos already there in the new format are unchecked, and those
+  /// unchecked for being there in the old one are checked again.
   Future<void> _changeFormat(MediaFormat format) async {
     setState(() => _format = format);
     final present = <String>{};
@@ -144,12 +179,18 @@ class _PreviewScreenState extends State<PreviewScreen> {
     }
     if (!mounted || format != _format) return;
     setState(() {
+      final freed = _present.difference(present);
       _present
         ..clear()
         ..addAll(present);
       _selected
-        ..clear()
-        ..addAll(_probes.values.where((p) => !p.isSearch).expand(_wanted));
+        ..removeAll(present)
+        ..addAll(
+          _probes.values
+              .where((p) => !p.isSearch)
+              .expand(_wanted)
+              .where(freed.contains),
+        );
     });
   }
 
@@ -161,6 +202,13 @@ class _PreviewScreenState extends State<PreviewScreen> {
           if (_selected.contains(item.videoId))
             PlannedDownload(source: probe, item: item, index: i + 1),
   ];
+
+  void _download() {
+    widget.onDownload(_planned, _format);
+    // Links: the preview closes. Search: it stays, to pick more.
+    if (!_searching) return;
+    setState(_selected.clear);
+  }
 
   String _total(AppLocalizations l10n) {
     final kept = _planned;
@@ -198,9 +246,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
       ),
     );
     final download = FilledButton(
-      onPressed: _selected.isEmpty
-          ? null
-          : () => widget.onDownload(_planned, _format),
+      onPressed: _selected.isEmpty ? null : _download,
       child: Text(l10n.downloadButton),
     );
     final stacked = Column(
@@ -237,13 +283,21 @@ class _PreviewScreenState extends State<PreviewScreen> {
         if (_searching)
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: TextField(
-              controller: _query,
-              textInputAction: TextInputAction.search,
-              onSubmitted: (_) => _searchAgain(),
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                hintText: l10n.searchAgain,
+            child: SearchGlow(
+              active: _entries.any(
+                (e) =>
+                    e is SearchEntry &&
+                    !_probes.containsKey(e) &&
+                    !_failures.containsKey(e),
+              ),
+              child: TextField(
+                controller: _query,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (_) => _searchAgain(),
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  hintText: l10n.searchAgain,
+                ),
               ),
             ),
           ),
@@ -253,6 +307,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
               probe: probe,
               selected: _selected,
               present: _present,
+              queued: (id) => widget.queueStatus?.call(id, _format),
               thumbnail: widget.thumbnail,
               followed: switch ((followLinkOf(probe), widget.isFollowed)) {
                 (final link?, final isFollowed?) => isFollowed(link),
@@ -283,9 +338,11 @@ class _PreviewScreenState extends State<PreviewScreen> {
               subtitle: Text(failureText(l10n, failure.reason)),
             )
           else
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: LinearProgressIndicator(),
+            LoadingRows(
+              label: switch (entry) {
+                SearchEntry(:final query) => l10n.loadingSearch(query),
+                _ => l10n.loadingLink,
+              },
             ),
       ],
     );
@@ -297,6 +354,7 @@ class _ProbeGroup extends StatelessWidget {
     required this.probe,
     required this.selected,
     required this.present,
+    required this.queued,
     required this.onToggle,
     required this.onToggleAll,
     required this.followed,
@@ -316,24 +374,47 @@ class _ProbeGroup extends StatelessWidget {
   final Probe probe;
   final Set<String> selected;
   final Set<String> present;
+
+  /// Where a video stands in the queue, in the chosen format.
+  final RunItemStatus? Function(String videoId) queued;
   final void Function(String videoId, bool keep) onToggle;
 
-  /// Duration, and « Déjà là » when downloaded before in this format.
+  /// Duration, with what became of the video in the queue (« Dans la
+  /// file », « Réussi », « Échoué »…), or « Déjà là » when downloaded before
+  /// in this format. Cancelled: nothing, it can be picked again.
   Widget? _details(BuildContext context, ProbeItem item) {
     final duration = item.duration;
-    if (!present.contains(item.videoId)) {
+    final l10n = AppLocalizations.of(context);
+    final pill = switch (queued(item.videoId)) {
+      RunItemStatus.waiting || RunItemStatus.running => StatusPill(
+        l10n.statusQueued,
+        tone: PillTone.accent,
+      ),
+      // Made here, unless the file was deleted since.
+      RunItemStatus.succeeded =>
+        present.contains(item.videoId)
+            ? StatusPill(l10n.statusSucceeded, tone: PillTone.ok)
+            : null,
+      RunItemStatus.failed => StatusPill(
+        l10n.statusFailed,
+        tone: PillTone.danger,
+      ),
+      RunItemStatus.skipped => StatusPill(
+        l10n.statusSkipped,
+        tone: PillTone.warn,
+      ),
+      RunItemStatus.cancelled || null =>
+        present.contains(item.videoId)
+            ? StatusPill(l10n.statusSkipped, tone: PillTone.warn)
+            : null,
+    };
+    if (pill == null) {
       return duration == null ? null : Text(clock(duration));
     }
     return Wrap(
       spacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        StatusPill(
-          AppLocalizations.of(context).statusSkipped,
-          tone: PillTone.warn,
-        ),
-        if (duration != null) Text(clock(duration)),
-      ],
+      children: [pill, if (duration != null) Text(clock(duration))],
     );
   }
 
@@ -386,10 +467,14 @@ class _ProbeGroup extends StatelessWidget {
             CheckboxListTile(
               value: selected.contains(item.videoId),
               onChanged: (keep) => onToggle(item.videoId, keep ?? false),
-              title: _Title(item.title),
+              title: _Title(
+                item.title,
+                onLongPress: () =>
+                    _showVideo(context, item, thumbnail?.call(item.videoId)),
+              ),
               subtitle: _details(context, item),
               secondary: switch (thumbnail) {
-                final thumbnail? => _Thumbnail(
+                final thumbnail? => VideoThumbnail(
                   image: thumbnail(item.videoId),
                   onLongPress: () =>
                       _showVideo(context, item, thumbnail(item.videoId)),
@@ -413,58 +498,27 @@ class _ProbeGroup extends StatelessWidget {
 }
 
 /// The video's picture, 16:9; a neutral tile when it cannot load.
-class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.image, this.onLongPress});
-
-  final ImageProvider image;
-
-  /// Opens the larger view; a tap still checks the row.
-  final VoidCallback? onLongPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final placeholder = ColoredBox(
-      color: scheme.surfaceContainerHighest,
-      child: Icon(Icons.music_video_outlined, color: scheme.onSurfaceVariant),
-    );
-    return GestureDetector(
-      onLongPress: onLongPress,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: SizedBox(
-          width: 96,
-          height: 54,
-          child: Image(
-            image: image,
-            fit: BoxFit.cover,
-            excludeFromSemantics: true,
-            frameBuilder: (context, child, frame, _) =>
-                frame == null ? placeholder : child,
-            errorBuilder: (context, _, _) => placeholder,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Two lines at most; the whole title on a long press (phone) or under the
 /// pointer (desktop). Screen readers read it whole either way.
 class _Title extends StatelessWidget {
-  const _Title(this.text);
+  const _Title(this.text, {required this.onLongPress});
 
   final String text;
 
+  /// Opens the larger view, like a long press on the picture.
+  final VoidCallback onLongPress;
+
   @override
-  Widget build(BuildContext context) => Tooltip(
-    message: text,
-    triggerMode: TooltipTriggerMode.longPress,
-    waitDuration: const Duration(milliseconds: 500),
-    // Long titles take a moment to read once the finger is lifted.
-    showDuration: const Duration(seconds: 4),
-    excludeFromSemantics: true,
-    child: Text(text, maxLines: 2, overflow: TextOverflow.ellipsis),
+  Widget build(BuildContext context) => GestureDetector(
+    onLongPress: onLongPress,
+    // Pointer over it (desktop): the whole title in a bubble.
+    child: Tooltip(
+      message: text,
+      triggerMode: TooltipTriggerMode.manual,
+      waitDuration: const Duration(milliseconds: 500),
+      excludeFromSemantics: true,
+      child: Text(text, maxLines: 2, overflow: TextOverflow.ellipsis),
+    ),
   );
 }
 
@@ -473,12 +527,20 @@ class _Title extends StatelessWidget {
 Future<void> _showVideo(
   BuildContext context,
   ProbeItem item,
-  ImageProvider image,
+  ImageProvider? image,
 ) => showDialog<void>(
   context: context,
   builder: (context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final placeholder = ColoredBox(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Icon(
+        Icons.music_video_outlined,
+        size: 48,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+    );
     final details = [
       if (item.duration case final duration?) clock(duration),
       ?item.channel?.trim(),
@@ -493,19 +555,15 @@ Future<void> _showVideo(
           children: [
             AspectRatio(
               aspectRatio: 16 / 9,
-              child: Image(
-                image: image,
-                fit: BoxFit.cover,
-                excludeFromSemantics: true,
-                errorBuilder: (context, _, _) => ColoredBox(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  child: Icon(
-                    Icons.music_video_outlined,
-                    size: 48,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+              child: switch (image) {
+                final image? => Image(
+                  image: image,
+                  fit: BoxFit.cover,
+                  excludeFromSemantics: true,
+                  errorBuilder: (context, _, _) => placeholder,
                 ),
-              ),
+                null => placeholder,
+              },
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ka7/features/preview/loading.dart';
 import 'package:ka7/features/preview/preview_screen.dart';
 import 'package:ka7_core/ka7_core.dart';
 
@@ -24,6 +26,18 @@ class _Archive implements Archive {
   @override
   Future<void> add(String videoId, MediaFormat format) async =>
       kept.add((videoId, format));
+}
+
+/// Answers only when told to.
+class _Pending implements Extractor {
+  final answers = <String, Completer<Probe>>{};
+
+  @override
+  String get name => 'pending';
+
+  @override
+  Future<Probe> probe(MediaEntry entry) =>
+      (answers[entry.url] = Completer<Probe>()).future;
 }
 
 void main() {
@@ -200,6 +214,106 @@ void main() {
     expect(find.text('Lecture impossible'), findsOneWidget);
   });
 
+  testWidgets('follows what becomes of each video sent to the queue', (
+    tester,
+  ) async {
+    final statuses = <String, RunItemStatus>{};
+    final archive = _Archive({});
+    final changes = ValueNotifier(0);
+    addTearDown(changes.dispose);
+    await pumpApp(
+      tester,
+      PreviewScreen(
+        entries: [playlist],
+        extractor: extractor,
+        archive: archive,
+        queueStatus: (id, format) =>
+            format == MediaFormat.mp3 ? statuses[id] : null,
+        queueChanges: changes,
+        onDownload: (_, _) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+    Future<void> becomes(RunItemStatus status) async {
+      statuses['aB3dE5fG7hI'] = status;
+      changes.value++;
+      await tester.pumpAndSettle();
+    }
+
+    await becomes(RunItemStatus.running);
+    expect(find.text('Dans la file'), findsOneWidget);
+    await becomes(RunItemStatus.failed);
+    expect(find.text('Dans la file'), findsNothing);
+    expect(find.text('Échoué'), findsOneWidget);
+    await archive.add('aB3dE5fG7hI', MediaFormat.mp3);
+    await becomes(RunItemStatus.succeeded);
+    await tester.pumpAndSettle();
+    expect(find.text('Réussi'), findsOneWidget);
+    archive.kept.clear();
+    changes.value++;
+    await tester.pumpAndSettle();
+    expect(find.text('Réussi'), findsNothing, reason: 'file deleted since');
+    await becomes(RunItemStatus.cancelled);
+    expect(find.text('Réussi'), findsNothing);
+    expect(find.text('Annulé'), findsNothing, reason: 'free to pick again');
+
+    await tester.tap(find.text('MP4 · vidéo'));
+    await tester.pumpAndSettle();
+    await becomes(RunItemStatus.running);
+    expect(find.text('Dans la file'), findsNothing, reason: 'other format');
+  });
+
+  group('loading', () {
+    testWidgets('shows what is being read, with rows to come', (tester) async {
+      final pending = _Pending();
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [video],
+          extractor: pending,
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Lecture du lien…'), findsOneWidget);
+      expect(find.byType(LoadingRows), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+
+      pending.answers[video.url]!.complete(hafatraVideo);
+      await tester.pumpAndSettle();
+      expect(find.byType(LoadingRows), findsNothing);
+      expect(find.text('Hafatra'), findsNWidgets(2));
+    });
+
+    testWidgets('a search glows around its field while it runs', (
+      tester,
+    ) async {
+      const search = SearchEntry('Hafatra', query: 'Hafatra');
+      final pending = _Pending();
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [search],
+          extractor: pending,
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Recherche de « Hafatra »…'), findsOneWidget);
+      bool glowing() =>
+          tester.widget<SearchGlow>(find.byType(SearchGlow)).active;
+      expect(glowing(), isTrue);
+
+      pending.answers[search.url]!.complete(
+        Probe(title: 'Hafatra', isSearch: true, items: hafatraVideo.items),
+      );
+      await tester.pumpAndSettle();
+      expect(glowing(), isFalse);
+    });
+  });
+
   group('already downloaded', () {
     CheckboxListTile row(WidgetTester tester, String text) =>
         tester.widget(find.widgetWithText(CheckboxListTile, text));
@@ -243,6 +357,88 @@ void main() {
 
       expect(row(tester, "Tsara Ny Hiran' Ny Taniko").value, isTrue);
       expect(find.text('Déjà là'), findsNothing);
+    });
+
+    testWidgets('keeps what the user unchecked when the format changes', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [playlist],
+          extractor: extractor,
+          archive: _Archive({}),
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Tsy Ferana'));
+      await tester.pump();
+      await tester.tap(find.text('MP4 · vidéo'));
+      await tester.pumpAndSettle();
+
+      expect(row(tester, 'Tsy Ferana').value, isFalse);
+      expect(row(tester, "Tsara Ny Hiran' Ny Taniko").value, isTrue);
+    });
+
+    testWidgets('keeps checked search results when the format changes', (
+      tester,
+    ) async {
+      const search = SearchEntry('Hafatra', query: 'Hafatra');
+      List<PlannedDownload>? planned;
+      MediaFormat? chosen;
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [search],
+          extractor: FakeExtractor({
+            search.url: Probe(
+              title: 'Hafatra',
+              isSearch: true,
+              items: [...hafatraVideo.items, ...ericMananaPlaylist.items],
+            ),
+          }),
+          archive: _Archive({}),
+          onDownload: (kept, format) {
+            planned = kept;
+            chosen = format;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Tsy Ferana'));
+      await tester.pump();
+      await tester.tap(find.text('MP4 · vidéo'));
+      await tester.pumpAndSettle();
+
+      expect(row(tester, 'Tsy Ferana').value, isTrue);
+      await tester.tap(find.textContaining('Télécharger'));
+      await tester.pump();
+      expect(planned!.map((p) => p.item.title), ['Tsy Ferana']);
+      expect(chosen, MediaFormat.mp4);
+    });
+
+    testWidgets('unchecks a picked video already there in the new format', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [playlist],
+          extractor: extractor,
+          archive: _Archive({('aB3dE5fG7hI', MediaFormat.mp4)}),
+          onDownload: (_, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('MP4 · vidéo'));
+      await tester.pumpAndSettle();
+
+      expect(row(tester, "Tsara Ny Hiran' Ny Taniko").value, isFalse);
+      expect(find.text('Déjà là'), findsOneWidget);
     });
   });
 
@@ -312,6 +508,33 @@ void main() {
       isFalse,
     );
     expect(find.textContaining('0 titre'), findsOneWidget);
+  });
+
+  testWidgets('tells each new search, to remember it', (tester) async {
+    const first = SearchEntry('Hafatra', query: 'Hafatra');
+    final searched = <String>[];
+    await pumpApp(
+      tester,
+      PreviewScreen(
+        entries: const [first],
+        extractor: FakeExtractor({
+          first.url: Probe(
+            title: 'Hafatra',
+            isSearch: true,
+            items: hafatraVideo.items,
+          ),
+        }),
+        onSearch: searched.add,
+        onDownload: (_, _) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '  Tsy   Ferana ');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pump();
+
+    expect(searched, ['Tsy Ferana']);
   });
 
   testWidgets('searches again from the preview, keeping what is checked', (
@@ -568,13 +791,21 @@ void main() {
       expect(title.overflow, TextOverflow.ellipsis);
     });
 
-    testWidgets('shows the whole title on a long press', (tester) async {
+    testWidgets('a long press on the title opens the larger view', (
+      tester,
+    ) async {
       await pumpLong(tester);
 
       await tester.longPress(find.text(long));
       await tester.pumpAndSettle();
 
-      expect(find.text(long), findsNWidgets(2));
+      expect(
+        find.descendant(of: find.byType(Dialog), matching: find.text(long)),
+        findsOneWidget,
+        reason: 'the same view as a long press on the picture',
+      );
+      await tester.tap(find.text('Fermer'));
+      await tester.pumpAndSettle();
       final box = tester.widget<CheckboxListTile>(
         find.byType(CheckboxListTile),
       );
