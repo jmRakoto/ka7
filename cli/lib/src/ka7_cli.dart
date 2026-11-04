@@ -85,14 +85,8 @@ final class Ka7Cli {
       out.writeln(say.missingFile(path));
       return ExitCode.noInput;
     }
-    // Searches need someone to pick results: left to the app.
-    final entries = [
-      for (final entry in parseLinks(await links.readAsString()))
-        if (entry is SearchEntry)
-          InvalidEntry(entry.source, reason: InvalidReason.freeText)
-        else
-          entry,
-    ];
+    // Plain words are not links: searching is left to the app.
+    final entries = parseLinks(await links.readAsString());
     final media = entries.whereType<MediaEntry>().toList();
     out.writeln(
       say.readLinks(
@@ -122,7 +116,11 @@ final class Ka7Cli {
         downloader: downloader,
         folder: _resolve(options.option('out')!),
         format: format,
-        archive: store,
+        // Deleted by hand since: downloaded again.
+        archive: VerifiedArchive(
+          store,
+          exists: (path, _) => File(path).exists(),
+        ),
         concurrency: jobs,
       ),
       say,

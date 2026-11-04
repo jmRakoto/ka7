@@ -93,6 +93,32 @@ final class Ka7Store implements Archive {
         ArchiveEntriesCompanion.insert(videoId: videoId, format: format.name),
       );
 
+  /// Lets [videoId] in [format] be downloaded again; the history stays.
+  Future<void> unarchive(String videoId, MediaFormat format) =>
+      (_db.delete(_db.archiveEntries)..where(
+            (a) => a.videoId.equals(videoId) & a.format.equals(format.name),
+          ))
+          .go();
+
+  /// The file the latest successful download of [videoId] in [format] made;
+  /// null when none is known (skipped, or kept before paths were).
+  Future<String?> lastPath(String videoId, MediaFormat format) async {
+    final query = _db.select(_db.historyEntries)
+      ..where(
+        (h) =>
+            h.videoId.equals(videoId) &
+            h.format.equals(format.name) &
+            h.status.equals(HistoryStatus.succeeded.name) &
+            h.path.isNotNull(),
+      )
+      ..orderBy([
+        (h) => OrderingTerm.desc(h.at),
+        (h) => OrderingTerm.desc(h.id),
+      ])
+      ..limit(1);
+    return (await query.getSingleOrNull())?.path;
+  }
+
   /// Keeps how [event] ended; progress events are not kept.
   Future<void> record(JobEvent event, MediaFormat format, DateTime at) async {
     final (status, path, failure) = switch (event) {

@@ -79,6 +79,10 @@ final class FakeDownloader implements Downloader {
     onStart?.call(request);
     yield* Stream.fromIterable(progress);
     if (failures[request.videoId] case final failure?) throw failure;
+    // Like the real engine: the file is there once done.
+    File(request.destination)
+      ..createSync(recursive: true)
+      ..writeAsStringSync('audio');
   }
 }
 
@@ -341,6 +345,18 @@ void main() {
 
     expect(downloader.requests, hasLength(1));
     expect(out.toString(), contains('= already downloaded'));
+  });
+
+  test('downloads again what was deleted since', () async {
+    writeLinks(_zooLink);
+    await cli().run(['links.txt']);
+    File(downloader.requests.single.destination).deleteSync();
+    out.clear();
+
+    await cli().run(['links.txt']);
+
+    expect(downloader.requests, hasLength(2));
+    expect(out.toString(), isNot(contains('= already downloaded')));
   });
 
   test('keeps the history of the run', () async {

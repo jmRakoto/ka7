@@ -168,17 +168,23 @@ Qm7tR2vLx9A
     });
   });
 
-  group('search', () {
-    test('turns a line of plain words into one search', () {
-      final [first, second] = parseLinks('Mahaleo\n  Erick Manana  ');
+  group('plain words', () {
+    test('a line of plain words is one entry, not a link', () {
+      final [first, second] = parseLinks('Mahaleo\n  Erick   Manana  ');
 
-      expect(first, isA<SearchEntry>());
-      expect((first as SearchEntry).query, 'Mahaleo');
-      expect((second as SearchEntry).query, 'Erick Manana');
-      expect(
-        second.url,
-        'https://www.youtube.com/results?search_query=Erick+Manana',
+      expect(first, isA<InvalidEntry>());
+      expect((first as InvalidEntry).reason, InvalidReason.freeText);
+      expect(first.source, 'Mahaleo');
+      expect((second as InvalidEntry).source, 'Erick Manana');
+    });
+
+    test('a pasted message gives one entry per line, never a search', () {
+      final entries = parseLinks(
+        'Bonsoir,\nManao point miaraka amin DG rapitso\nMisaotra tompoko',
       );
+
+      expect(entries, hasLength(3));
+      expect(entries.whereType<SearchEntry>(), isEmpty);
     });
 
     test('still ignores plain words next to links on the same line', () {
@@ -187,12 +193,6 @@ Qm7tR2vLx9A
       expect(entries.first, isA<VideoEntry>());
       expect(entries.last, isA<InvalidEntry>());
       expect((entries.last as InvalidEntry).reason, InvalidReason.freeText);
-    });
-
-    test('merges the same search typed twice', () {
-      final entries = parseLinks('Mahaleo\nMahaleo');
-
-      expect(entries.last, isA<DuplicateEntry>());
     });
   });
 }

@@ -1,6 +1,7 @@
 /// Ka7 core: pure Dart logic shared by the app and the CLI.
 library;
 
+export 'src/app_release.dart';
 export 'src/download.dart';
 export 'src/download_queue.dart';
 export 'src/failed_links.dart';

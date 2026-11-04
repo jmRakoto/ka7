@@ -16,7 +16,7 @@ sealed class MediaEntry extends LinkEntry {
 
 const _base = 'https://www.youtube.com';
 
-/// Plain words: a YouTube search, the user picks among the results.
+/// A YouTube search, typed in the search field: the user picks results.
 final class SearchEntry extends MediaEntry {
   const SearchEntry(super.source, {required this.query});
 
@@ -98,7 +98,7 @@ enum InvalidReason {
   /// A YouTube link with neither a video nor a playlist.
   noVideoOrPlaylist,
 
-  /// Plain words, not a link (search comes later).
+  /// Plain words, not a link (searching has its own field).
   freeText,
 }
 
@@ -171,7 +171,8 @@ List<LinkEntry> parseLinks(String text) {
   ];
 }
 
-/// Each word of [line] on its own; a line of plain words only is a search.
+/// Each word of [line] on its own; a line of plain words only (a pasted
+/// message, a title) is one entry, not a link: searching has its own field.
 List<LinkEntry> _entriesOf(String line) {
   final entries = [
     for (final word in line.split(_spaces))
@@ -181,8 +182,8 @@ List<LinkEntry> _entriesOf(String line) {
     (e) => e is InvalidEntry && e.reason == InvalidReason.freeText,
   );
   if (entries.isEmpty || !plainWords) return entries;
-  final query = line.trim().replaceAll(_spaces, ' ');
-  return [SearchEntry(query, query: query)];
+  final text = line.trim().replaceAll(_spaces, ' ');
+  return [InvalidEntry(text, reason: InvalidReason.freeText)];
 }
 
 final _spaces = RegExp(r'\s+');
