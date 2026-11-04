@@ -115,7 +115,21 @@ void main() {
       ..apply(JobCancelled(_hafatra));
     await pumpRun(tester, expanded: true);
 
-    await tester.tap(find.text('Réessayer'));
+    await tester.tap(find.text('Tout réessayer'));
+
+    expect(retried.single.map((d) => d.item.title), ['Tsy Ferana', 'Hafatra']);
+  });
+
+  testWidgets('offers to retry everything without unfolding', (tester) async {
+    run
+      ..apply(JobSucceeded(_tsara, '/music/a.mp3'))
+      ..apply(JobFailed(_tsy, FailureReason.private))
+      ..apply(JobCancelled(_hafatra));
+    await pumpRun(tester);
+
+    expect(find.text('Tsy Ferana'), findsNothing, reason: 'folded');
+    expect(find.text("2 titres n'ont pas abouti"), findsOneWidget);
+    await tester.tap(find.text('Tout réessayer'));
 
     expect(retried.single.map((d) => d.item.title), ['Tsy Ferana', 'Hafatra']);
   });
@@ -150,7 +164,7 @@ void main() {
     expect(find.text('Hafatra'), findsNothing);
     expect(find.text('1 annulé'), findsNothing);
     expect(find.byTooltip('Réessayer ce titre'), findsOneWidget);
-    await tester.tap(find.text('Réessayer'));
+    await tester.tap(find.text('Tout réessayer'));
     expect(retried.single.map((d) => d.item.title), ['Tsy Ferana']);
   });
 
@@ -168,7 +182,7 @@ void main() {
     runToEnd();
     await pumpRun(tester, expanded: true);
 
-    await tester.tap(find.text('Copier les liens échoués'));
+    await tester.tap(find.byTooltip('Copier les liens échoués'));
     await tester.pump();
 
     expect(copied, contains('https://www.youtube.com/watch?v=jK9lM1nO3pQ'));
@@ -182,7 +196,7 @@ void main() {
     await pumpRun(tester, expanded: true);
 
     expect(find.text('3 réussis'), findsOneWidget);
-    expect(find.text('Réessayer'), findsNothing);
+    expect(find.text('Tout réessayer'), findsNothing);
   });
 
   testWidgets('shows the thumbnail of each video', (tester) async {

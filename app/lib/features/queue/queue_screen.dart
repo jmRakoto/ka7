@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:ka7_core/ka7_core.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -39,6 +40,7 @@ class QueueScreen extends StatelessWidget {
     required this.runs,
     required this.onRetry,
     this.onClear,
+    this.onRemove,
     this.thumbnail,
     this.shownFolder,
     this.interrupted = 0,
@@ -53,6 +55,9 @@ class QueueScreen extends StatelessWidget {
 
   /// Forgets the ended runs.
   final VoidCallback? onClear;
+
+  /// Forgets one ended run (slid away).
+  final void Function(QueuedRun run)? onRemove;
 
   final ImageProvider Function(String videoId)? thumbnail;
 
@@ -115,24 +120,78 @@ class QueueScreen extends StatelessWidget {
             onClear: onClear,
             children: [
               for (final (i, run) in ended.indexed)
-                FinishedRun(
-                  key: ObjectKey(run),
-                  run: run.progress,
-                  where: where(run),
-                  endedAt: run.endedAt,
-                  thumbnail: thumbnail,
-                  // Just ended with nothing else going: show what came of it.
-                  initiallyExpanded: run.expanded ??= i == 0 && active.isEmpty,
-                  onExpansionChanged: (open) => run.expanded = open,
-                  retried: run.retried,
-                  onRetry: (downloads) {
-                    run.retried.addAll(downloads);
-                    onRetry(run, downloads);
-                  },
+                _Removable(
+                  key: ValueKey(run),
+                  onRemove: onRemove == null ? null : () => onRemove!(run),
+                  child: FinishedRun(
+                    key: ObjectKey(run),
+                    run: run.progress,
+                    where: where(run),
+                    endedAt: run.endedAt,
+                    thumbnail: thumbnail,
+                    // Just ended with nothing else going: show what came of it.
+                    initiallyExpanded: run.expanded ??=
+                        i == 0 && active.isEmpty,
+                    onExpansionChanged: (open) => run.expanded = open,
+                    retried: run.retried,
+                    onRetry: (downloads) {
+                      run.retried.addAll(downloads);
+                      onRetry(run, downloads);
+                    },
+                  ),
                 ),
             ],
           ),
       ],
+    );
+  }
+}
+
+/// An ended run that slides away, either way, to be removed; screen
+/// readers get the same as an action.
+class _Removable extends StatelessWidget {
+  const _Removable({super.key, required this.onRemove, required this.child});
+
+  final VoidCallback? onRemove;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final remove = onRemove;
+    if (remove == null) return child;
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    Widget behind(Alignment alignment) => Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      alignment: alignment,
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.delete_outline, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(
+            l10n.removeButton,
+            style: TextStyle(color: scheme.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+    return Semantics(
+      customSemanticsActions: {
+        CustomSemanticsAction(label: l10n.removeRun): remove,
+      },
+      child: Dismissible(
+        key: key!,
+        background: behind(Alignment.centerLeft),
+        secondaryBackground: behind(Alignment.centerRight),
+        onDismissed: (_) => remove(),
+        child: child,
+      ),
     );
   }
 }

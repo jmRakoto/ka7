@@ -65,7 +65,6 @@ class FinishedRun extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colors = theme.extension<Ka7StatusColors>()!;
     final succeeded = _ended(RunItemStatus.succeeded).length;
@@ -89,69 +88,86 @@ class FinishedRun extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        initiallyExpanded: initiallyExpanded,
-        onExpansionChanged: onExpansionChanged,
-        shape: const Border(),
-        collapsedShape: const Border(),
-        leading: Icon(icon, color: color),
-        title: Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            if (succeeded > 0)
-              StatusPill(l10n.countSucceeded(succeeded), tone: PillTone.ok),
-            if (skipped > 0)
-              StatusPill(l10n.countSkipped(skipped), tone: PillTone.warn),
-            if (failed.isNotEmpty)
-              StatusPill(
-                l10n.countFailed(failed.length),
-                tone: PillTone.danger,
-              ),
-            if (cancelled.isNotEmpty)
-              StatusPill(l10n.countCancelled(cancelled.length)),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(
-            '$where$time',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 8, 8),
-        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final item in _kept.reversed)
-            _EndedTile(
-              item: item,
-              thumbnail: thumbnail,
-              onRetry: toRetry.contains(item)
-                  ? () => onRetry([item.download])
-                  : null,
-            ),
+          _tile(
+            context,
+            icon,
+            color,
+            succeeded,
+            skipped,
+            failed,
+            cancelled,
+            time,
+          ),
+          // Folded or not, what can go again is offered at once.
           if (toRetry.isNotEmpty)
-            Wrap(
-              spacing: 4,
-              children: [
-                TextButton.icon(
-                  onPressed: () =>
-                      onRetry([for (final item in toRetry) item.download]),
-                  icon: const Icon(Icons.refresh),
-                  label: Text(l10n.retryButton),
-                ),
-                if (failed.isNotEmpty)
-                  TextButton.icon(
-                    onPressed: () => _copyFailed(context),
-                    icon: const Icon(Icons.content_copy),
-                    label: Text(l10n.copyFailed),
-                  ),
-              ],
+            _RetryBar(
+              count: toRetry.length,
+              onRetry: () =>
+                  onRetry([for (final item in toRetry) item.download]),
+              onCopy: failed.isEmpty ? null : () => _copyFailed(context),
             ),
         ],
       ),
+    );
+  }
+
+  Widget _tile(
+    BuildContext context,
+    IconData icon,
+    Color color,
+    int succeeded,
+    int skipped,
+    List<RunItem> failed,
+    List<RunItem> cancelled,
+    String time,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final toRetry = [...failed, ...cancelled];
+    return ExpansionTile(
+      initiallyExpanded: initiallyExpanded,
+      onExpansionChanged: onExpansionChanged,
+      shape: const Border(),
+      collapsedShape: const Border(),
+      leading: Icon(icon, color: color),
+      title: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          if (succeeded > 0)
+            StatusPill(l10n.countSucceeded(succeeded), tone: PillTone.ok),
+          if (skipped > 0)
+            StatusPill(l10n.countSkipped(skipped), tone: PillTone.warn),
+          if (failed.isNotEmpty)
+            StatusPill(l10n.countFailed(failed.length), tone: PillTone.danger),
+          if (cancelled.isNotEmpty)
+            StatusPill(l10n.countCancelled(cancelled.length)),
+        ],
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Text(
+          '$where$time',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+      childrenPadding: const EdgeInsets.fromLTRB(16, 0, 8, 8),
+      expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final item in _kept.reversed)
+          _EndedTile(
+            item: item,
+            thumbnail: thumbnail,
+            onRetry: toRetry.contains(item)
+                ? () => onRetry([item.download])
+                : null,
+          ),
+      ],
     );
   }
 }
@@ -206,6 +222,79 @@ class _EndedTile extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Under a run where something failed or was cancelled: how many, and one
+/// clear button to send them all again.
+class _RetryBar extends StatelessWidget {
+  const _RetryBar({
+    required this.count,
+    required this.onRetry,
+    required this.onCopy,
+  });
+
+  final int count;
+  final VoidCallback onRetry;
+
+  /// Copies the failed links (failed.txt); null when none failed.
+  final VoidCallback? onCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colors = theme.extension<Ka7StatusColors>()!;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 2, 4, 2),
+      decoration: BoxDecoration(
+        color: colors.warnSoft,
+        border: Border(
+          top: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.replay_circle_filled_outlined,
+            size: 20,
+            color: colors.warn,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              l10n.retryCount(count),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.warn,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (onCopy != null)
+            IconButton(
+              tooltip: l10n.copyFailed,
+              onPressed: onCopy,
+              visualDensity: VisualDensity.compact,
+              color: colors.warn,
+              icon: const Icon(Icons.content_copy, size: 18),
+            ),
+          // Small, in the strip's tone: clear without taking over the card.
+          TextButton.icon(
+            onPressed: onRetry,
+            style: TextButton.styleFrom(
+              foregroundColor: colors.warn,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              textStyle: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text(l10n.retryAll),
+          ),
         ],
       ),
     );

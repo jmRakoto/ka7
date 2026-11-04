@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ka7/app.dart';
 import 'package:ka7/features/add_links/add_links_screen.dart';
+import 'package:ka7/features/queue/finished_run.dart';
 import 'package:ka7/features/queue/run_view.dart';
 import 'package:ka7/platform/background_work.dart';
 import 'package:ka7/platform/run_notifier.dart';
@@ -471,7 +472,7 @@ void main() {
 
       downloader.fail('Qm7tR2vLx9A', FailureReason.network);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Réessayer'));
+      await tester.tap(find.text('Tout réessayer'));
       await tester.pumpAndSettle();
 
       expect(downloader.requests, hasLength(2));
@@ -564,6 +565,32 @@ void main() {
         tester.getTopLeft(find.text('0 / 2')).dy,
         lessThan(tester.getTopLeft(find.text('Plus tôt')).dy),
       );
+    });
+
+    testWidgets('one is removed by sliding it away, and can come back', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await download(tester, 'Qm7tR2vLx9A');
+      downloader.finish('Qm7tR2vLx9A');
+      await tester.pumpAndSettle();
+      await download(tester, 'Xy7zA9bC1dE');
+      downloader.finish('Xy7zA9bC1dE');
+      await tester.pumpAndSettle();
+      expect(find.byType(FinishedRun), findsNWidgets(2));
+
+      await tester.fling(
+        find.byType(FinishedRun).first,
+        const Offset(-600, 0),
+        1500,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FinishedRun), findsOneWidget);
+      expect(find.text('File retirée'), findsOneWidget);
+      await tester.tap(find.text('Annuler'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FinishedRun), findsNWidgets(2));
     });
 
     testWidgets('fade away when cleared, instead of vanishing', (tester) async {

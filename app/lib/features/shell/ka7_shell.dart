@@ -491,6 +491,29 @@ class _Ka7ShellState extends State<Ka7Shell> {
     ),
   );
 
+  /// Slid away in the queue: gone, with a moment to bring it back.
+  void _removeRun(QueuedRun run) {
+    final at = _runs.indexOf(run);
+    setState(() => _runs.remove(run));
+    _queueChanges.value++;
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.runRemoved),
+          action: SnackBarAction(
+            label: l10n.cancelButton,
+            onPressed: () {
+              if (!mounted) return;
+              setState(() => _runs.insert(at.clamp(0, _runs.length), run));
+              _queueChanges.value++;
+            },
+          ),
+        ),
+      );
+  }
+
   /// The latest run holding [videoId] in [format] says where it stands.
   RunItemStatus? _queueStatus(String videoId, MediaFormat format) {
     for (final run in _runs) {
@@ -580,6 +603,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
             runs: _runs,
             shownFolder: widget._shownFolder,
             thumbnail: widget.thumbnail,
+            onRemove: _removeRun,
             onClear: () {
               setState(() => _runs.removeWhere((run) => run.progress.isDone));
               _queueChanges.value++;

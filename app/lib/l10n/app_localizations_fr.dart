@@ -219,6 +219,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get retryOne => 'Réessayer ce titre';
 
   @override
+  String get retryAll => 'Tout réessayer';
+
+  @override
+  String retryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count titres n\'ont pas abouti',
+      one: '$count titre n\'a pas abouti',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get copyFailed => 'Copier les liens échoués';
 
   @override
@@ -267,6 +281,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get navSettings => 'Réglages';
+
+  @override
+  String get runRemoved => 'File retirée';
+
+  @override
+  String get removeRun => 'Retirer cette file';
 
   @override
   String get queueEarlier => 'Plus tôt';

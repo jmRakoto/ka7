@@ -121,6 +121,15 @@
   },
   "retryButton": "Réessayer",
   "retryOne": "Réessayer ce titre",
+  "retryAll": "Tout réessayer",
+  "retryCount": "{count, plural, one{{count} titre n'a pas abouti} other{{count} titres n'ont pas abouti}}",
+  "@retryCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "copyFailed": "Copier les liens échoués",
   "copiedFailed": "Liens copiés : colle-les dans Ajouter pour réessayer plus tard.",
   "formatMp3": "MP3 · audio",
@@ -146,6 +155,8 @@
   "navQueue": "File",
   "navLibrary": "Bibliothèque",
   "navSettings": "Réglages",
+  "runRemoved": "File retirée",
+  "removeRun": "Retirer cette file",
   "queueEarlier": "Plus tôt",
   "queueClear": "Effacer",
   "queueClearHint": "Retirer les files terminées",

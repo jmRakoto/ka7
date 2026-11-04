@@ -207,6 +207,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retryOne => 'Retry this one';
 
   @override
+  String get retryAll => 'Retry all';
+
+  @override
+  String retryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count videos didn\'t finish',
+      one: '$count video didn\'t finish',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get copyFailed => 'Copy failed links';
 
   @override
@@ -254,6 +268,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navSettings => 'Settings';
+
+  @override
+  String get runRemoved => 'Run removed';
+
+  @override
+  String get removeRun => 'Remove this run';
 
   @override
   String get queueEarlier => 'Earlier';

@@ -386,6 +386,18 @@ abstract class AppLocalizations {
   /// **'Réessayer ce titre'**
   String get retryOne;
 
+  /// No description provided for @retryAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout réessayer'**
+  String get retryAll;
+
+  /// No description provided for @retryCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} titre n\'a pas abouti} other{{count} titres n\'ont pas abouti}}'**
+  String retryCount(int count);
+
   /// No description provided for @copyFailed.
   ///
   /// In fr, this message translates to:
@@ -475,6 +487,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Réglages'**
   String get navSettings;
+
+  /// No description provided for @runRemoved.
+  ///
+  /// In fr, this message translates to:
+  /// **'File retirée'**
+  String get runRemoved;
+
+  /// No description provided for @removeRun.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer cette file'**
+  String get removeRun;
 
   /// No description provided for @queueEarlier.
   ///
