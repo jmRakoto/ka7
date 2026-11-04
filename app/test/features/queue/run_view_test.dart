@@ -16,16 +16,16 @@ final _planned = [
     index: 1,
   ),
 ];
-final _tsara = _planned[0], _tsy = _planned[1], _hafatra = _planned[2];
+final _tsara = _planned[0];
 
 void main() {
   late RunProgress run;
-  late List<List<PlannedDownload>> retried;
   late int cancels;
+  ImageProvider Function(String videoId)? thumbnail;
   setUp(() {
     run = RunProgress(_planned);
-    retried = [];
     cancels = 0;
+    thumbnail = null;
   });
 
   Future<void> pumpRun(WidgetTester tester, {Locale? locale}) {
@@ -40,18 +40,13 @@ void main() {
           child: RunView(
             run: run,
             onCancel: () => cancels++,
-            onRetry: retried.add,
+            thumbnail: thumbnail,
           ),
         ),
       ),
       locale: locale ?? const Locale('fr'),
     );
   }
-
-  void runToEnd() => run
-    ..apply(JobSucceeded(_tsara, '/music/a.mp3'))
-    ..apply(JobFailed(_tsy, FailureReason.private))
-    ..apply(JobSucceeded(_hafatra, '/music/b.mp3'));
 
   testWidgets('shows what runs, what waits, and the whole progress', (
     tester,
@@ -92,57 +87,12 @@ void main() {
     expect(cancels, 1);
   });
 
-  testWidgets('sums up once done, with the reason of each failure', (
-    tester,
-  ) async {
-    runToEnd();
+  testWidgets('shows the thumbnail of each video', (tester) async {
+    thumbnail = (_) => MemoryImage(Uint8List(0));
+    run.apply(JobStarted(_tsara));
     await pumpRun(tester);
 
-    expect(find.text('Terminé'), findsOneWidget);
-    expect(find.text('2 réussis'), findsOneWidget);
-    expect(find.text('1 échoué'), findsOneWidget);
-    expect(find.text('Vidéo privée'), findsOneWidget);
-    expect(find.text('Tout annuler'), findsNothing);
-  });
-
-  testWidgets('retries the failed videos', (tester) async {
-    runToEnd();
-    await pumpRun(tester);
-
-    await tester.tap(find.text('Réessayer'));
-
-    expect(retried.single.map((d) => d.item.title), ['Tsy Ferana']);
-  });
-
-  testWidgets('copies the failed links as a failed.txt', (tester) async {
-    String? copied;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (call) async {
-        if (call.method == 'Clipboard.setData') {
-          copied = (call.arguments as Map)['text'] as String;
-        }
-        return null;
-      },
-    );
-    runToEnd();
-    await pumpRun(tester);
-
-    await tester.tap(find.text('Copier les liens échoués'));
-    await tester.pump();
-
-    expect(copied, contains('https://www.youtube.com/watch?v=jK9lM1nO3pQ'));
-    expect(parseLinks(copied!), hasLength(1));
-  });
-
-  testWidgets('offers no retry when nothing failed', (tester) async {
-    for (final download in _planned) {
-      run.apply(JobSucceeded(download, '/music/x.mp3'));
-    }
-    await pumpRun(tester);
-
-    expect(find.text('3 réussis'), findsOneWidget);
-    expect(find.text('Réessayer'), findsNothing);
+    expect(find.byType(Image), findsNWidgets(3));
   });
 
   testWidgets('speaks English', (tester) async {
