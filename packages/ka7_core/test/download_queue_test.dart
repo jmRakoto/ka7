@@ -82,8 +82,10 @@ DownloadQueue _queue(
   Archive? archive,
   int concurrency = 1,
   FolderLayout layout = FolderLayout.playlist,
+  Quality quality = Quality.standard,
 }) => DownloadQueue(
   layout: layout,
+  quality: quality,
   downloader: downloader,
   folder: '/music',
   format: MediaFormat.mp3,
@@ -130,6 +132,31 @@ void main() {
     expect(request.tags.artist, 'Erick Manana');
     expect(request.tags.album, 'Erick Manana · Sélection');
     expect(request.tags.trackNumber, 1);
+  });
+
+  test('asks for 192 kbit/s and 1080p unless told otherwise', () async {
+    final downloader = FakeDownloader();
+
+    await _queue(downloader).run(_planned([_first])).drain<void>();
+
+    final request = downloader.requests.single;
+    expect(request.quality.audio, AudioQuality.kbps192);
+    expect(request.quality.video, VideoQuality.p1080);
+  });
+
+  test('asks the engine for the chosen quality', () async {
+    final downloader = FakeDownloader();
+
+    await _queue(
+      downloader,
+      quality: const Quality(
+        audio: AudioQuality.kbps320,
+        video: VideoQuality.best,
+      ),
+    ).run(_planned([_first])).drain<void>();
+
+    expect(downloader.requests.single.quality.audio.kbps, 320);
+    expect(downloader.requests.single.quality.video.height, isNull);
   });
 
   test('files by artist when asked to', () async {

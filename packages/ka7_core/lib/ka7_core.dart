@@ -4,6 +4,7 @@ library;
 export 'src/app_release.dart';
 export 'src/download.dart';
 export 'src/download_queue.dart';
+export 'src/quality.dart';
 export 'src/failed_links.dart';
 export 'src/fallback.dart';
 export 'src/file_naming.dart';

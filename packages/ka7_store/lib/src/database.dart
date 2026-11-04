@@ -67,6 +67,10 @@ class PendingDownloads extends Table {
 
   /// 1-based position in the source.
   IntColumn get position => integer()();
+
+  /// [AudioQuality.name] and [VideoQuality.name]; null before v6 (default).
+  TextColumn get audioQuality => text().nullable()();
+  TextColumn get videoQuality => text().nullable()();
 }
 
 /// Playlists and channels followed: their new videos are offered at launch.
@@ -92,7 +96,7 @@ class Ka7Database extends _$Ka7Database {
   Ka7Database(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -103,6 +107,17 @@ class Ka7Database extends _$Ka7Database {
         await migrator.addColumn(historyEntries, historyEntries.playlistId);
       }
       if (from < 5) await migrator.createTable(subscriptions);
+      // Made with these columns when created above (before v3).
+      if (from >= 3 && from < 6) {
+        await migrator.addColumn(
+          pendingDownloads,
+          pendingDownloads.audioQuality,
+        );
+        await migrator.addColumn(
+          pendingDownloads,
+          pendingDownloads.videoQuality,
+        );
+      }
     },
   );
 }

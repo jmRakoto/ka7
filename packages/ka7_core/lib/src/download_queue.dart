@@ -6,6 +6,7 @@ import 'download.dart';
 import 'file_naming.dart';
 import 'job_event.dart';
 import 'probe.dart';
+import 'quality.dart';
 
 /// Runs planned downloads with one engine, a few at a time (flow 3).
 final class DownloadQueue {
@@ -16,7 +17,11 @@ final class DownloadQueue {
     this.archive,
     this.concurrency = 2,
     this.layout = FolderLayout.playlist,
+    this.quality = Quality.standard,
   });
+
+  /// Asked of the engine for every video of this run.
+  final Quality quality;
 
   final FolderLayout layout;
 
@@ -140,6 +145,7 @@ final class DownloadQueue {
     return DownloadRequest(
       videoId: download.item.videoId,
       format: format,
+      quality: quality,
       destination: destination,
       tags: TrackTags(
         title: download.item.title,

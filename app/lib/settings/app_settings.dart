@@ -20,6 +20,7 @@ class AppSettings extends ChangeNotifier {
     this._onboarded,
     this._layout,
     this._destinations,
+    this._quality,
   );
 
   /// Reads the saved choices; [defaultFolders] fill what was never chosen.
@@ -50,6 +51,14 @@ class AppSettings extends ChangeNotifier {
             case (final uri?, final label?))
           format: (uri: uri, label: label),
     },
+    Quality(
+      audio:
+          AudioQuality.values.asNameMap()[await store.setting(_audioKey)] ??
+          Quality.standard.audio,
+      video:
+          VideoQuality.values.asNameMap()[await store.setting(_videoKey)] ??
+          Quality.standard.video,
+    ),
   );
 
   final Ka7Store _store;
@@ -62,6 +71,28 @@ class AppSettings extends ChangeNotifier {
   bool _onboarded;
   FolderLayout _layout;
   final Map<MediaFormat, Destination> _destinations;
+  Quality _quality;
+
+  /// Picked at first in the preview.
+  Quality get quality => _quality;
+
+  Future<void> setAudioQuality(AudioQuality audio) async {
+    _quality = Quality(audio: audio, video: _quality.video);
+    notifyListeners();
+    await _store.setSetting(
+      _audioKey,
+      audio == Quality.standard.audio ? null : audio.name,
+    );
+  }
+
+  Future<void> setVideoQuality(VideoQuality video) async {
+    _quality = Quality(audio: _quality.audio, video: video);
+    notifyListeners();
+    await _store.setSetting(
+      _videoKey,
+      video == Quality.standard.video ? null : video.name,
+    );
+  }
 
   /// Where files of [format] are filed in the end (Android); null for the
   /// system's default (Music/Ka7, Movies/Ka7).
@@ -167,6 +198,8 @@ const _mixLimitKey = 'mix.limit';
 const _themeKey = 'theme';
 const _onboardedKey = 'onboarding.done';
 const _layoutKey = 'folders.layout';
+const _audioKey = 'quality.audio';
+const _videoKey = 'quality.video';
 
 /// Choices offered in Settings.
 const concurrencyChoices = [1, 2, 3, 4];

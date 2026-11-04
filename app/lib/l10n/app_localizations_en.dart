@@ -414,6 +414,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearRecent => 'Clear recent searches';
 
   @override
+  String qualityKbps(int kbps) {
+    return '$kbps kbit/s';
+  }
+
+  @override
+  String get qualityBest => 'Max';
+
+  @override
+  String get qualityOriginal => 'Original audio, not re-encoded';
+
+  @override
+  String get settingsQuality => 'Quality';
+
+  @override
+  String get settingsQualityHelp =>
+      'Picked in advance in the preview. Beyond 192 kbit/s, an MP3 from YouTube hardly sounds better, it only weighs more.';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

@@ -238,6 +238,18 @@
   "addTipImport": "Ou importe une liste de liens depuis un fichier .txt.",
   "recentSearches": "Recherches récentes",
   "clearRecent": "Effacer les recherches récentes",
+  "qualityKbps": "{kbps} kbit/s",
+  "@qualityKbps": {
+    "placeholders": {
+      "kbps": {
+        "type": "int"
+      }
+    }
+  },
+  "qualityBest": "Max",
+  "qualityOriginal": "Audio d'origine, sans réencodage",
+  "settingsQuality": "Qualité",
+  "settingsQualityHelp": "Choisie d'avance dans l'aperçu. Au-delà de 192 kbit/s, un MP3 tiré de YouTube ne sonne guère mieux, il pèse juste plus lourd.",
   "settingsTitle": "Réglages",
   "settingsLanguage": "Langue",
   "languageSystem": "Système",

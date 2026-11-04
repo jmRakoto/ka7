@@ -205,12 +205,19 @@ class _Ka7ShellState extends State<Ka7Shell> {
   /// chosen in Settings), or starts a new one.
   Future<void> _download(
     List<PlannedDownload> downloads,
-    MediaFormat format, [
+    MediaFormat format, {
     String? folder,
-  ]) async {
+    Quality? quality,
+  }) async {
     folder ??= widget.settings.folderFor(format);
+    quality ??= widget.settings.quality;
     // Kept before it starts: a crash from here on can be resumed.
-    final ids = await widget.store.keepPending(downloads, format, folder);
+    final ids = await widget.store.keepPending(
+      downloads,
+      format,
+      folder,
+      quality: quality,
+    );
     if (!mounted) return;
     for (final (i, download) in downloads.indexed) {
       _pendingIds[download] = ids[i];
@@ -220,6 +227,8 @@ class _Ka7ShellState extends State<Ka7Shell> {
           (run) =>
               run.format == format &&
               run.folder == folder &&
+              run.quality.audio == quality!.audio &&
+              run.quality.video == quality.video &&
               !run.progress.isDone,
         )
         .firstOrNull;
@@ -239,11 +248,13 @@ class _Ka7ShellState extends State<Ka7Shell> {
         format: format,
         archive: _archive,
         concurrency: widget.settings.concurrency,
+        quality: quality,
         layout: widget.settings.layout,
       ),
       progress: RunProgress(downloads),
       format: format,
       folder: folder,
+      quality: quality,
     );
     _subscriptions.add(
       run.queue.run(downloads).listen((event) async {
@@ -276,15 +287,30 @@ class _Ka7ShellState extends State<Ka7Shell> {
   /// Queues again what a previous launch left unfinished, where it was going.
   Future<void> _resume() async {
     final interrupted = _forgetInterrupted();
-    final runs = <(MediaFormat, String), List<PlannedDownload>>{};
+    final runs =
+        <
+          (MediaFormat, String, AudioQuality, VideoQuality),
+          List<PlannedDownload>
+        >{};
     for (final pending in interrupted) {
+      final q = pending.quality;
       runs
-          .putIfAbsent((pending.format, pending.folder), () => [])
+          .putIfAbsent((
+            pending.format,
+            pending.folder,
+            q.audio,
+            q.video,
+          ), () => [])
           .add(pending.download);
     }
-    for (final MapEntry(key: (format, folder), value: downloads)
+    for (final MapEntry(key: (format, folder, audio, video), value: downloads)
         in runs.entries) {
-      await _download(downloads, format, folder);
+      await _download(
+        downloads,
+        format,
+        folder: folder,
+        quality: Quality(audio: audio, video: video),
+      );
     }
     // Only now: a crash while queuing again still finds them next time.
     for (final pending in interrupted) {
@@ -476,16 +502,17 @@ class _Ka7ShellState extends State<Ka7Shell> {
         archive: _archive,
         isFollowed: _isFollowed,
         thumbnail: widget.thumbnail,
+        quality: widget.settings.quality,
         queueStatus: _queueStatus,
         onSearch: (query) => unawaited(_remember(query)),
         queueChanges: _queueChanges,
         onFollow: _follow,
-        onDownload: (downloads, format) {
+        onDownload: (downloads, format, quality) {
           // A search stays open: back on Add, the results are still there.
           if (!entries.any((e) => e is SearchEntry)) {
             Navigator.of(context).pop();
           }
-          unawaited(_download(downloads, format));
+          unawaited(_download(downloads, format, quality: quality));
         },
       ),
     ),
@@ -608,8 +635,14 @@ class _Ka7ShellState extends State<Ka7Shell> {
               setState(() => _runs.removeWhere((run) => run.progress.isDone));
               _queueChanges.value++;
             },
-            onRetry: (run, downloads) =>
-                unawaited(_download(downloads, run.format, run.folder)),
+            onRetry: (run, downloads) => unawaited(
+              _download(
+                downloads,
+                run.format,
+                folder: run.folder,
+                quality: run.quality,
+              ),
+            ),
             interrupted: _interrupted.length,
             onResume: _resume,
             onDiscard: _discard,

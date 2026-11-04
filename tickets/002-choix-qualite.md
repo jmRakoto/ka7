@@ -1,6 +1,6 @@
 # 002 · Choix de la qualité audio et vidéo
 
-- **État** : À faire
+- **État** : Fait (2026-11-05)
 - **Taille** : moyenne
 - **Plateformes** : toutes (moteur yt-dlp) ; youtube_explode limité (voir Risques)
 

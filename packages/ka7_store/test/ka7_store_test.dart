@@ -260,7 +260,40 @@ void main() {
     expect(await upgraded.subscriptions(), hasLength(1));
   });
 
+  test('upgrades a store from before download quality', () async {
+    final folder = Directory.systemTemp.createTempSync('ka7_store_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}/ka7.sqlite');
+    sqlite3.open(file.path)
+      ..execute(File('test/fixtures/schema_v5.sql').readAsStringSync())
+      ..close();
+
+    final upgraded = Ka7Store.open(file);
+    addTearDown(upgraded.close);
+
+    final [kept] = await upgraded.pending();
+    expect(kept.download.item.title, 'Me at the zoo');
+    expect(kept.quality.audio, AudioQuality.kbps192);
+    expect(kept.quality.video, VideoQuality.p1080);
+  });
+
   group('pending downloads', () {
+    test('keeps the quality they were asked in', () async {
+      await store.keepPending(
+        [_songDownload],
+        MediaFormat.mp4,
+        '/home/me/Vidéos',
+        quality: const Quality(
+          audio: AudioQuality.kbps320,
+          video: VideoQuality.p720,
+        ),
+      );
+
+      final [kept] = await store.pending();
+      expect(kept.quality.audio, AudioQuality.kbps320);
+      expect(kept.quality.video, VideoQuality.p720);
+    });
+
     test('keeps queued videos, with their source, until they end', () async {
       final ids = await store.keepPending(
         [_songDownload, _otherDownload],

@@ -973,6 +973,10 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).last,
       );
+      await tester.ensureVisible(
+        find.byTooltip('Changer le dossier de la musique'),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Changer le dossier de la musique'));
       await tester.pumpAndSettle();
       await download(tester, 'Qm7tR2vLx9A');
@@ -993,6 +997,10 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).last,
       );
+      await tester.ensureVisible(
+        find.byTooltip('Changer le dossier de la musique'),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Changer le dossier de la musique'));
       await tester.pumpAndSettle();
 
@@ -1044,6 +1052,8 @@ void main() {
       await pumpKa7(tester);
       await openSettings(tester);
 
+      await tester.ensureVisible(find.text('1').first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('1').first);
       await tester.pumpAndSettle();
       await download(tester, 'PLe7rK2mErickManana01');
@@ -1073,6 +1083,27 @@ void main() {
       );
 
       expect(find.text('Version de développement'), findsOneWidget);
+    });
+
+    testWidgets('downloads in the default quality chosen here', (tester) async {
+      await pumpKa7(tester);
+      await openSettings(tester);
+      await tester.scrollUntilVisible(
+        find.text('320 kbit/s'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+
+      await tester.tap(find.text('320 kbit/s'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('720p'));
+      await tester.pumpAndSettle();
+
+      expect(await store.setting('quality.audio'), 'kbps320');
+      expect(await store.setting('quality.video'), 'p720');
+      await download(tester, 'Qm7tR2vLx9A');
+      expect(downloader.requests.single.quality.audio, AudioQuality.kbps320);
+      expect(downloader.requests.single.quality.video, VideoQuality.p720);
     });
 
     testWidgets('explains what a YouTube mix is', (tester) async {
@@ -1385,6 +1416,10 @@ void main() {
       ],
       MediaFormat.mp3,
       '/data/Mozika',
+      quality: const Quality(
+        audio: AudioQuality.kbps320,
+        video: VideoQuality.p1080,
+      ),
     );
 
     testWidgets('keeps queued videos until they end, to resume them later', (
@@ -1442,6 +1477,11 @@ void main() {
         '/data/Mozika/Erick Manana · Sélection/02 - Tsy Ferana.mp3',
       ]);
       expect(ids(await store.pending()), ['aB3dE5fG7hI', 'jK9lM1nO3pQ']);
+      expect(
+        downloader.requests.map((r) => r.quality.audio),
+        everyElement(AudioQuality.kbps320),
+        reason: 'the quality they were queued in',
+      );
     });
 
     testWidgets('discards into the history as cancelled', (tester) async {
@@ -1604,6 +1644,10 @@ void main() {
           200,
           scrollable: find.byType(Scrollable).last,
         );
+        await tester.ensureVisible(
+          find.byTooltip('Changer le dossier de la musique'),
+        );
+        await tester.pumpAndSettle();
       }
 
       setUp(() => chosen = null);

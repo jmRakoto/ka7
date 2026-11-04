@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../settings/app_settings.dart';
 import '../../widgets/ka7_logo.dart';
 import '../../widgets/ka7_page.dart';
+import '../../widgets/quality_picker.dart';
 
 /// Settings, in cards: appearance, downloads, folders, subscriptions, about.
 class SettingsScreen extends StatelessWidget {
@@ -139,6 +140,29 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ],
+                ),
+              ),
+              _Setting(
+                icon: Icons.high_quality_outlined,
+                title: l10n.settingsQuality,
+                help: l10n.settingsQualityHelp,
+                below: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('MP3', style: Theme.of(context).textTheme.labelMedium),
+                    const SizedBox(height: 6),
+                    AudioQualityPicker(
+                      value: settings.quality.audio,
+                      onChanged: settings.setAudioQuality,
+                    ),
+                    const SizedBox(height: 12),
+                    Text('MP4', style: Theme.of(context).textTheme.labelMedium),
+                    const SizedBox(height: 6),
+                    VideoQualityPicker(
+                      value: settings.quality.video,
+                      onChanged: settings.setVideoQuality,
+                    ),
                   ],
                 ),
               ),

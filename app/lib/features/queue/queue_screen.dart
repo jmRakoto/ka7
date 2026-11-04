@@ -15,7 +15,11 @@ class QueuedRun {
     required this.progress,
     required this.format,
     required this.folder,
+    this.quality = Quality.standard,
   });
+
+  /// Asked of the engine for every video of this run.
+  final Quality quality;
 
   final DownloadQueue queue;
   final RunProgress progress;

@@ -54,7 +54,7 @@ void main() {
       PreviewScreen(
         entries: [playlist, video],
         extractor: extractor,
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -75,7 +75,7 @@ void main() {
       PreviewScreen(
         entries: [playlist],
         extractor: extractor,
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -98,7 +98,7 @@ void main() {
       PreviewScreen(
         entries: [playlist, video],
         extractor: extractor,
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -123,7 +123,7 @@ void main() {
           broken.url: const ProbeFailure(FailureReason.network),
           video.url: hafatraVideo,
         }),
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -142,7 +142,7 @@ void main() {
       PreviewScreen(
         entries: [playlist, video],
         extractor: extractor,
-        onDownload: (downloads, _) => planned = downloads,
+        onDownload: (downloads, _, _) => planned = downloads,
       ),
     );
     await tester.pumpAndSettle();
@@ -164,7 +164,7 @@ void main() {
       PreviewScreen(
         entries: [video],
         extractor: extractor,
-        onDownload: (_, format) => formats.add(format),
+        onDownload: (_, format, _) => formats.add(format),
       ),
     );
     await tester.pumpAndSettle();
@@ -177,6 +177,67 @@ void main() {
     expect(formats, [MediaFormat.mp3, MediaFormat.mp4]);
   });
 
+  group('quality', () {
+    Future<Quality?> pick(
+      WidgetTester tester,
+      List<String> taps, {
+      Quality preset = Quality.standard,
+    }) async {
+      Quality? chosen;
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [video],
+          extractor: extractor,
+          formats: const [MediaFormat.mp3, MediaFormat.m4a, MediaFormat.mp4],
+          quality: preset,
+          onDownload: (_, _, quality) => chosen = quality,
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final text in taps) {
+        await tester.tap(find.text(text));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Télécharger'));
+      return chosen;
+    }
+
+    testWidgets('starts from the default of Settings', (tester) async {
+      final chosen = await pick(
+        tester,
+        const [],
+        preset: const Quality(
+          audio: AudioQuality.kbps128,
+          video: VideoQuality.p480,
+        ),
+      );
+
+      expect(chosen!.audio, AudioQuality.kbps128);
+    });
+
+    testWidgets('offers bitrates for MP3', (tester) async {
+      final chosen = await pick(tester, const ['192 kbit/s', '320 kbit/s']);
+
+      expect(chosen!.audio, AudioQuality.kbps320);
+    });
+
+    testWidgets('offers heights for MP4', (tester) async {
+      final chosen = await pick(tester, const ['MP4 · vidéo', '1080p', '720p']);
+
+      expect(chosen!.video, VideoQuality.p720);
+      expect(find.text('192 kbit/s'), findsNothing);
+    });
+
+    testWidgets('says the original audio has no choice', (tester) async {
+      await pick(tester, const ["M4A · d'origine"]);
+
+      expect(find.textContaining('sans réencodage'), findsOneWidget);
+      expect(find.text('192 kbit/s'), findsNothing);
+      expect(find.text('1080p'), findsNothing);
+    });
+  });
+
   testWidgets('offers only the formats the engine can make', (tester) async {
     final formats = <MediaFormat>[];
     await pumpApp(
@@ -185,7 +246,7 @@ void main() {
         entries: [video],
         extractor: extractor,
         formats: const [MediaFormat.m4a, MediaFormat.mp4],
-        onDownload: (_, format) => formats.add(format),
+        onDownload: (_, format, _) => formats.add(format),
       ),
     );
     await tester.pumpAndSettle();
@@ -205,7 +266,7 @@ void main() {
       PreviewScreen(
         entries: [video],
         extractor: FakeExtractor({video.url: StateError('engine bug')}),
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -230,7 +291,7 @@ void main() {
         queueStatus: (id, format) =>
             format == MediaFormat.mp3 ? statuses[id] : null,
         queueChanges: changes,
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -271,7 +332,7 @@ void main() {
         PreviewScreen(
           entries: [video],
           extractor: pending,
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pump();
@@ -296,7 +357,7 @@ void main() {
         PreviewScreen(
           entries: const [search],
           extractor: pending,
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pump();
@@ -327,7 +388,7 @@ void main() {
           entries: [playlist],
           extractor: extractor,
           archive: _Archive({('aB3dE5fG7hI', MediaFormat.mp3)}),
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pumpAndSettle();
@@ -347,7 +408,7 @@ void main() {
           entries: [playlist],
           extractor: extractor,
           archive: _Archive({('aB3dE5fG7hI', MediaFormat.mp3)}),
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pumpAndSettle();
@@ -368,7 +429,7 @@ void main() {
           entries: [playlist],
           extractor: extractor,
           archive: _Archive({}),
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pumpAndSettle();
@@ -400,7 +461,7 @@ void main() {
             ),
           }),
           archive: _Archive({}),
-          onDownload: (kept, format) {
+          onDownload: (kept, format, _) {
             planned = kept;
             chosen = format;
           },
@@ -429,7 +490,7 @@ void main() {
           entries: [playlist],
           extractor: extractor,
           archive: _Archive({('aB3dE5fG7hI', MediaFormat.mp4)}),
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pumpAndSettle();
@@ -450,7 +511,7 @@ void main() {
       PreviewScreen(
         entries: [playlist],
         extractor: extractor,
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -493,7 +554,7 @@ void main() {
             items: [...hafatraVideo.items, ...ericMananaPlaylist.items.take(2)],
           ),
         }),
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -525,7 +586,7 @@ void main() {
           ),
         }),
         onSearch: searched.add,
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -559,7 +620,7 @@ void main() {
             items: [ericMananaPlaylist.items[1]],
           ),
         }),
-        onDownload: (downloads, _) => planned = downloads,
+        onDownload: (downloads, _, _) => planned = downloads,
       ),
     );
     await tester.pumpAndSettle();
@@ -587,7 +648,7 @@ void main() {
       PreviewScreen(
         entries: [playlist],
         extractor: extractor,
-        onDownload: (_, _) {},
+        onDownload: (_, _, _) {},
       ),
     );
     await tester.pumpAndSettle();
@@ -680,7 +741,7 @@ void main() {
             asked.add(videoId);
             return MemoryImage(pixel);
           },
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pumpAndSettle();
@@ -704,7 +765,7 @@ void main() {
           entries: [playlist],
           extractor: extractor,
           thumbnail: (_) => MemoryImage(pixel),
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pumpAndSettle();
@@ -747,7 +808,7 @@ void main() {
         PreviewScreen(
           entries: [playlist],
           extractor: extractor,
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pumpAndSettle();
@@ -777,7 +838,7 @@ void main() {
               items: [ProbeItem(videoId: 'Xy7zA9bC1dE', title: long)],
             ),
           }),
-          onDownload: (_, _) {},
+          onDownload: (_, _, _) {},
         ),
       );
       await tester.pumpAndSettle();

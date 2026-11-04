@@ -77,9 +77,11 @@ DownloadRequest _request({
   String destination = "/music/Mahaleo playlist/03 - It's: a-test.mp3",
   String? album = 'Mahaleo playlist',
   int? trackNumber = 3,
+  Quality quality = Quality.standard,
 }) => DownloadRequest(
   videoId: 'jNQXAC9IVRw',
   format: format,
+  quality: quality,
   destination: destination,
   tags: TrackTags(
     title: "It's: a/test",
@@ -149,6 +151,10 @@ void main() {
             destination: '/videos/Me at the zoo.mp4',
             album: null,
             trackNumber: null,
+            quality: const Quality(
+              audio: AudioQuality.kbps192,
+              video: VideoQuality.best,
+            ),
           ),
         )
         .drain<void>();
@@ -168,6 +174,49 @@ void main() {
             "-metadata artist='jawed'",
         '-o',
         '/videos/Me at the zoo.%(ext)s',
+      ]),
+    );
+  });
+
+  test('asks for the chosen MP3 bitrate', () async {
+    final start = FakeStart(FakeProcess());
+
+    await YtDlpDownloader(start: start.call)
+        .download(
+          _request(
+            quality: const Quality(
+              audio: AudioQuality.kbps320,
+              video: VideoQuality.p1080,
+            ),
+          ),
+        )
+        .drain<void>();
+
+    expect(start.arguments, containsAllInOrder(['--audio-quality', '320K']));
+  });
+
+  test('caps the video height, falling back to what exists', () async {
+    final start = FakeStart(FakeProcess());
+
+    await YtDlpDownloader(start: start.call)
+        .download(
+          _request(
+            format: MediaFormat.mp4,
+            destination: '/videos/Me at the zoo.mp4',
+            quality: const Quality(
+              audio: AudioQuality.kbps192,
+              video: VideoQuality.p720,
+            ),
+          ),
+        )
+        .drain<void>();
+
+    expect(
+      start.arguments,
+      containsAllInOrder([
+        '-f',
+        'bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/'
+            'bv*[height<=720]+ba/b[height<=720]/bv*+ba/b',
       ]),
     );
   });

@@ -24,6 +24,7 @@ class PreviewScreen extends StatefulWidget {
     this.queueStatus,
     this.queueChanges,
     this.onSearch,
+    this.quality = Quality.standard,
   });
 
   /// A new search made here, to remember it.
@@ -56,8 +57,15 @@ class PreviewScreen extends StatefulWidget {
 
   /// Called with the checked videos and the chosen format when the user
   /// starts the download.
-  final void Function(List<PlannedDownload> downloads, MediaFormat format)
+  final void Function(
+    List<PlannedDownload> downloads,
+    MediaFormat format,
+    Quality quality,
+  )
   onDownload;
+
+  /// Picked at first: the default of Settings.
+  final Quality quality;
 
   @override
   State<PreviewScreen> createState() => _PreviewScreenState();
@@ -77,6 +85,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
   final Set<String> _present = {};
 
   late var _format = widget.formats.first;
+  late var _quality = widget.quality;
 
   /// The entries, then the searches made from here, newest first.
   late final List<MediaEntry> _entries = [...widget.entries];
@@ -204,7 +213,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
   ];
 
   void _download() {
-    widget.onDownload(_planned, _format);
+    widget.onDownload(_planned, _format, _quality);
     // Links: the preview closes. Search: it stays, to pick more.
     if (!_searching) return;
     setState(_selected.clear);
@@ -240,6 +249,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
     );
     final total = Text(
       _total(l10n),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
       style: TextStyle(
         color: Theme.of(context).colorScheme.onSurfaceVariant,
         fontFeatures: const [FontFeature.tabularFigures()],
@@ -249,6 +260,12 @@ class _PreviewScreenState extends State<PreviewScreen> {
       onPressed: _selected.isEmpty ? null : _download,
       child: Text(l10n.downloadButton),
     );
+    // Beside the total, the choice the format has: bitrate, height, or none.
+    final quality = _QualityMenu(
+      format: _format,
+      quality: _quality,
+      onChanged: (quality) => setState(() => _quality = quality),
+    );
     final stacked = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -257,6 +274,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
         const SizedBox(height: 10),
         Row(
           children: [
+            // Narrow screen: the quality and the total give way, never the
+            // button.
+            Flexible(child: quality),
+            const SizedBox(width: 8),
             Expanded(child: total),
             download,
           ],
@@ -273,6 +294,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
             : Row(
                 children: [
                   Expanded(child: total),
+                  Flexible(child: quality),
+                  const SizedBox(width: 12),
                   format,
                   const SizedBox(width: 12),
                   download,
@@ -595,3 +618,88 @@ Future<void> _showVideo(
     );
   },
 );
+
+/// The quality of the chosen format, as a small menu: « 192 kbit/s ▾ » for
+/// MP3, « 1080p ▾ » for MP4; M4A is the original sound, nothing to pick.
+class _QualityMenu extends StatelessWidget {
+  const _QualityMenu({
+    required this.format,
+    required this.quality,
+    required this.onChanged,
+  });
+
+  final MediaFormat format;
+  final Quality quality;
+  final ValueChanged<Quality> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    String height(VideoQuality video) => switch (video.height) {
+      final h? => '${h}p',
+      null => l10n.qualityBest,
+    };
+    final List<(String, Quality)> choices = switch (format) {
+      MediaFormat.mp3 => [
+        for (final audio in AudioQuality.values)
+          (
+            l10n.qualityKbps(audio.kbps),
+            Quality(audio: audio, video: quality.video),
+          ),
+      ],
+      MediaFormat.mp4 => [
+        for (final video in VideoQuality.values)
+          (height(video), Quality(audio: quality.audio, video: video)),
+      ],
+      MediaFormat.m4a => const [],
+    };
+    if (choices.isEmpty) {
+      return Text(
+        l10n.qualityOriginal,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
+    final current = format == MediaFormat.mp3
+        ? l10n.qualityKbps(quality.audio.kbps)
+        : height(quality.video);
+    return PopupMenuButton<Quality>(
+      tooltip: l10n.settingsQuality,
+      onSelected: onChanged,
+      itemBuilder: (context) => [
+        for (final (label, choice) in choices)
+          CheckedPopupMenuItem(
+            value: choice,
+            checked: label == current,
+            child: Text(label),
+          ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: theme.colorScheme.outline),
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.tune, size: 16, color: theme.colorScheme.primary),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                current,
+                style: theme.textTheme.labelLarge,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}

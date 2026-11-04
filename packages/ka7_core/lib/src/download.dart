@@ -1,5 +1,6 @@
 import 'file_naming.dart';
 import 'probe.dart';
+import 'quality.dart';
 
 /// Tags written into the file once downloaded.
 final class TrackTags {
@@ -25,9 +26,13 @@ final class DownloadRequest {
     required this.format,
     required this.destination,
     required this.tags,
+    this.quality = Quality.standard,
   });
 
   final String videoId;
+
+  /// MP3 bitrate and video height; ignored by formats without a choice.
+  final Quality quality;
   final MediaFormat format;
 
   /// Absolute path of the final file, extension included.

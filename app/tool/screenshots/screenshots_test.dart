@@ -88,7 +88,7 @@ void main() {
                   SearchEntry('Erick Manana', query: 'Erick Manana'),
                 ],
                 extractor: _Pending(),
-                onDownload: (_, _) {},
+                onDownload: (_, _, _) {},
               ),
             ),
           ),

@@ -105,7 +105,7 @@ final class YtDlpDownloader implements Downloader {
           '--audio-format',
           'mp3',
           '--audio-quality',
-          '192K',
+          '${request.quality.audio.kbps}K',
         ],
         MediaFormat.m4a => [
           '-f',
@@ -116,7 +116,7 @@ final class YtDlpDownloader implements Downloader {
         ],
         MediaFormat.mp4 => [
           '-f',
-          'bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b',
+          _videoFormat(request.quality.video.height),
           '--merge-output-format',
           'mp4',
         ],
@@ -190,4 +190,13 @@ Future<void> _removePartialFiles(String destination, DateTime since) async {
       await entity.delete();
     }
   }
+}
+
+/// Best MP4 video with m4a audio; with [height], none taller, and still
+/// something when nothing fits (a 240p upload).
+String _videoFormat(int? height) {
+  if (height == null) return 'bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b';
+  final cap = '[height<=$height]';
+  return 'bv*$cap[ext=mp4]+ba[ext=m4a]/b$cap[ext=mp4]/'
+      'bv*$cap+ba/b$cap/bv*+ba/b';
 }

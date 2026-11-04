@@ -1195,6 +1195,28 @@ class $PendingDownloadsTable extends PendingDownloads
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _audioQualityMeta = const VerificationMeta(
+    'audioQuality',
+  );
+  @override
+  late final GeneratedColumn<String> audioQuality = GeneratedColumn<String>(
+    'audio_quality',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _videoQualityMeta = const VerificationMeta(
+    'videoQuality',
+  );
+  @override
+  late final GeneratedColumn<String> videoQuality = GeneratedColumn<String>(
+    'video_quality',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1208,6 +1230,8 @@ class $PendingDownloadsTable extends PendingDownloads
     channel,
     durationSeconds,
     position,
+    audioQuality,
+    videoQuality,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1310,6 +1334,24 @@ class $PendingDownloadsTable extends PendingDownloads
     } else if (isInserting) {
       context.missing(_positionMeta);
     }
+    if (data.containsKey('audio_quality')) {
+      context.handle(
+        _audioQualityMeta,
+        audioQuality.isAcceptableOrUnknown(
+          data['audio_quality']!,
+          _audioQualityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('video_quality')) {
+      context.handle(
+        _videoQualityMeta,
+        videoQuality.isAcceptableOrUnknown(
+          data['video_quality']!,
+          _videoQualityMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1363,6 +1405,14 @@ class $PendingDownloadsTable extends PendingDownloads
         DriftSqlType.int,
         data['${effectivePrefix}position'],
       )!,
+      audioQuality: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}audio_quality'],
+      ),
+      videoQuality: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}video_quality'],
+      ),
     );
   }
 
@@ -1390,6 +1440,10 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
 
   /// 1-based position in the source.
   final int position;
+
+  /// [AudioQuality.name] and [VideoQuality.name]; null before v6 (default).
+  final String? audioQuality;
+  final String? videoQuality;
   const PendingRow({
     required this.id,
     required this.format,
@@ -1402,6 +1456,8 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
     this.channel,
     this.durationSeconds,
     required this.position,
+    this.audioQuality,
+    this.videoQuality,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1423,6 +1479,12 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
       map['duration_seconds'] = Variable<int>(durationSeconds);
     }
     map['position'] = Variable<int>(position);
+    if (!nullToAbsent || audioQuality != null) {
+      map['audio_quality'] = Variable<String>(audioQuality);
+    }
+    if (!nullToAbsent || videoQuality != null) {
+      map['video_quality'] = Variable<String>(videoQuality);
+    }
     return map;
   }
 
@@ -1445,6 +1507,12 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
           ? const Value.absent()
           : Value(durationSeconds),
       position: Value(position),
+      audioQuality: audioQuality == null && nullToAbsent
+          ? const Value.absent()
+          : Value(audioQuality),
+      videoQuality: videoQuality == null && nullToAbsent
+          ? const Value.absent()
+          : Value(videoQuality),
     );
   }
 
@@ -1465,6 +1533,8 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
       channel: serializer.fromJson<String?>(json['channel']),
       durationSeconds: serializer.fromJson<int?>(json['durationSeconds']),
       position: serializer.fromJson<int>(json['position']),
+      audioQuality: serializer.fromJson<String?>(json['audioQuality']),
+      videoQuality: serializer.fromJson<String?>(json['videoQuality']),
     );
   }
   @override
@@ -1482,6 +1552,8 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
       'channel': serializer.toJson<String?>(channel),
       'durationSeconds': serializer.toJson<int?>(durationSeconds),
       'position': serializer.toJson<int>(position),
+      'audioQuality': serializer.toJson<String?>(audioQuality),
+      'videoQuality': serializer.toJson<String?>(videoQuality),
     };
   }
 
@@ -1497,6 +1569,8 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
     Value<String?> channel = const Value.absent(),
     Value<int?> durationSeconds = const Value.absent(),
     int? position,
+    Value<String?> audioQuality = const Value.absent(),
+    Value<String?> videoQuality = const Value.absent(),
   }) => PendingRow(
     id: id ?? this.id,
     format: format ?? this.format,
@@ -1513,6 +1587,8 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
         ? durationSeconds.value
         : this.durationSeconds,
     position: position ?? this.position,
+    audioQuality: audioQuality.present ? audioQuality.value : this.audioQuality,
+    videoQuality: videoQuality.present ? videoQuality.value : this.videoQuality,
   );
   PendingRow copyWithCompanion(PendingDownloadsCompanion data) {
     return PendingRow(
@@ -1535,6 +1611,12 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
           ? data.durationSeconds.value
           : this.durationSeconds,
       position: data.position.present ? data.position.value : this.position,
+      audioQuality: data.audioQuality.present
+          ? data.audioQuality.value
+          : this.audioQuality,
+      videoQuality: data.videoQuality.present
+          ? data.videoQuality.value
+          : this.videoQuality,
     );
   }
 
@@ -1551,7 +1633,9 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
           ..write('title: $title, ')
           ..write('channel: $channel, ')
           ..write('durationSeconds: $durationSeconds, ')
-          ..write('position: $position')
+          ..write('position: $position, ')
+          ..write('audioQuality: $audioQuality, ')
+          ..write('videoQuality: $videoQuality')
           ..write(')'))
         .toString();
   }
@@ -1569,6 +1653,8 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
     channel,
     durationSeconds,
     position,
+    audioQuality,
+    videoQuality,
   );
   @override
   bool operator ==(Object other) =>
@@ -1584,7 +1670,9 @@ class PendingRow extends DataClass implements Insertable<PendingRow> {
           other.title == this.title &&
           other.channel == this.channel &&
           other.durationSeconds == this.durationSeconds &&
-          other.position == this.position);
+          other.position == this.position &&
+          other.audioQuality == this.audioQuality &&
+          other.videoQuality == this.videoQuality);
 }
 
 class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
@@ -1599,6 +1687,8 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
   final Value<String?> channel;
   final Value<int?> durationSeconds;
   final Value<int> position;
+  final Value<String?> audioQuality;
+  final Value<String?> videoQuality;
   const PendingDownloadsCompanion({
     this.id = const Value.absent(),
     this.format = const Value.absent(),
@@ -1611,6 +1701,8 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
     this.channel = const Value.absent(),
     this.durationSeconds = const Value.absent(),
     this.position = const Value.absent(),
+    this.audioQuality = const Value.absent(),
+    this.videoQuality = const Value.absent(),
   });
   PendingDownloadsCompanion.insert({
     this.id = const Value.absent(),
@@ -1624,6 +1716,8 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
     this.channel = const Value.absent(),
     this.durationSeconds = const Value.absent(),
     required int position,
+    this.audioQuality = const Value.absent(),
+    this.videoQuality = const Value.absent(),
   }) : format = Value(format),
        folder = Value(folder),
        sourceTitle = Value(sourceTitle),
@@ -1643,6 +1737,8 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
     Expression<String>? channel,
     Expression<int>? durationSeconds,
     Expression<int>? position,
+    Expression<String>? audioQuality,
+    Expression<String>? videoQuality,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1656,6 +1752,8 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
       if (channel != null) 'channel': channel,
       if (durationSeconds != null) 'duration_seconds': durationSeconds,
       if (position != null) 'position': position,
+      if (audioQuality != null) 'audio_quality': audioQuality,
+      if (videoQuality != null) 'video_quality': videoQuality,
     });
   }
 
@@ -1671,6 +1769,8 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
     Value<String?>? channel,
     Value<int?>? durationSeconds,
     Value<int>? position,
+    Value<String?>? audioQuality,
+    Value<String?>? videoQuality,
   }) {
     return PendingDownloadsCompanion(
       id: id ?? this.id,
@@ -1684,6 +1784,8 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
       channel: channel ?? this.channel,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       position: position ?? this.position,
+      audioQuality: audioQuality ?? this.audioQuality,
+      videoQuality: videoQuality ?? this.videoQuality,
     );
   }
 
@@ -1723,6 +1825,12 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
     if (position.present) {
       map['position'] = Variable<int>(position.value);
     }
+    if (audioQuality.present) {
+      map['audio_quality'] = Variable<String>(audioQuality.value);
+    }
+    if (videoQuality.present) {
+      map['video_quality'] = Variable<String>(videoQuality.value);
+    }
     return map;
   }
 
@@ -1739,7 +1847,9 @@ class PendingDownloadsCompanion extends UpdateCompanion<PendingRow> {
           ..write('title: $title, ')
           ..write('channel: $channel, ')
           ..write('durationSeconds: $durationSeconds, ')
-          ..write('position: $position')
+          ..write('position: $position, ')
+          ..write('audioQuality: $audioQuality, ')
+          ..write('videoQuality: $videoQuality')
           ..write(')'))
         .toString();
   }
@@ -2621,6 +2731,8 @@ typedef $$PendingDownloadsTableCreateCompanionBuilder =
       Value<String?> channel,
       Value<int?> durationSeconds,
       required int position,
+      Value<String?> audioQuality,
+      Value<String?> videoQuality,
     });
 typedef $$PendingDownloadsTableUpdateCompanionBuilder =
     PendingDownloadsCompanion Function({
@@ -2635,6 +2747,8 @@ typedef $$PendingDownloadsTableUpdateCompanionBuilder =
       Value<String?> channel,
       Value<int?> durationSeconds,
       Value<int> position,
+      Value<String?> audioQuality,
+      Value<String?> videoQuality,
     });
 
 class $$PendingDownloadsTableFilterComposer
@@ -2698,6 +2812,16 @@ class $$PendingDownloadsTableFilterComposer
 
   ColumnFilters<int> get position => $composableBuilder(
     column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get audioQuality => $composableBuilder(
+    column: $table.audioQuality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get videoQuality => $composableBuilder(
+    column: $table.videoQuality,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2765,6 +2889,16 @@ class $$PendingDownloadsTableOrderingComposer
     column: $table.position,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get audioQuality => $composableBuilder(
+    column: $table.audioQuality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get videoQuality => $composableBuilder(
+    column: $table.videoQuality,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PendingDownloadsTableAnnotationComposer
@@ -2816,6 +2950,16 @@ class $$PendingDownloadsTableAnnotationComposer
 
   GeneratedColumn<int> get position =>
       $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get audioQuality => $composableBuilder(
+    column: $table.audioQuality,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get videoQuality => $composableBuilder(
+    column: $table.videoQuality,
+    builder: (column) => column,
+  );
 }
 
 class $$PendingDownloadsTableTableManager
@@ -2862,6 +3006,8 @@ class $$PendingDownloadsTableTableManager
                 Value<String?> channel = const Value.absent(),
                 Value<int?> durationSeconds = const Value.absent(),
                 Value<int> position = const Value.absent(),
+                Value<String?> audioQuality = const Value.absent(),
+                Value<String?> videoQuality = const Value.absent(),
               }) => PendingDownloadsCompanion(
                 id: id,
                 format: format,
@@ -2874,6 +3020,8 @@ class $$PendingDownloadsTableTableManager
                 channel: channel,
                 durationSeconds: durationSeconds,
                 position: position,
+                audioQuality: audioQuality,
+                videoQuality: videoQuality,
               ),
           createCompanionCallback:
               ({
@@ -2888,6 +3036,8 @@ class $$PendingDownloadsTableTableManager
                 Value<String?> channel = const Value.absent(),
                 Value<int?> durationSeconds = const Value.absent(),
                 required int position,
+                Value<String?> audioQuality = const Value.absent(),
+                Value<String?> videoQuality = const Value.absent(),
               }) => PendingDownloadsCompanion.insert(
                 id: id,
                 format: format,
@@ -2900,6 +3050,8 @@ class $$PendingDownloadsTableTableManager
                 channel: channel,
                 durationSeconds: durationSeconds,
                 position: position,
+                audioQuality: audioQuality,
+                videoQuality: videoQuality,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

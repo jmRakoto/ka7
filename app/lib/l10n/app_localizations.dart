@@ -734,6 +734,36 @@ abstract class AppLocalizations {
   /// **'Effacer les recherches récentes'**
   String get clearRecent;
 
+  /// No description provided for @qualityKbps.
+  ///
+  /// In fr, this message translates to:
+  /// **'{kbps} kbit/s'**
+  String qualityKbps(int kbps);
+
+  /// No description provided for @qualityBest.
+  ///
+  /// In fr, this message translates to:
+  /// **'Max'**
+  String get qualityBest;
+
+  /// No description provided for @qualityOriginal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Audio d\'origine, sans réencodage'**
+  String get qualityOriginal;
+
+  /// No description provided for @settingsQuality.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qualité'**
+  String get settingsQuality;
+
+  /// No description provided for @settingsQualityHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisie d\'avance dans l\'aperçu. Au-delà de 192 kbit/s, un MP3 tiré de YouTube ne sonne guère mieux, il pèse juste plus lourd.'**
+  String get settingsQualityHelp;
+
   /// No description provided for @settingsTitle.
   ///
   /// In fr, this message translates to:

@@ -46,10 +46,14 @@ final class PendingDownload {
     required this.download,
     required this.format,
     required this.folder,
+    this.quality = Quality.standard,
   });
 
   final int id;
   final PlannedDownload download;
+
+  /// Resumed in the same quality.
+  final Quality quality;
   final MediaFormat format;
 
   /// Absolute folder it was queued to.
@@ -201,8 +205,9 @@ final class Ka7Store implements Archive {
   Future<List<int>> keepPending(
     List<PlannedDownload> downloads,
     MediaFormat format,
-    String folder,
-  ) => _db.transaction(() async {
+    String folder, {
+    Quality quality = Quality.standard,
+  }) => _db.transaction(() async {
     return [
       for (final download in downloads)
         await _db
@@ -217,6 +222,8 @@ final class Ka7Store implements Archive {
                 videoId: download.item.videoId,
                 title: download.item.title,
                 channel: Value(download.item.channel),
+                audioQuality: Value(quality.audio.name),
+                videoQuality: Value(quality.video.name),
                 durationSeconds: Value(download.item.duration?.inSeconds),
                 position: download.index,
               ),
@@ -279,6 +286,15 @@ PendingDownload _pendingOf(PendingRow row) => PendingDownload(
   id: row.id,
   format: MediaFormat.values.byName(row.format),
   folder: row.folder,
+  // Kept before v6: the default.
+  quality: Quality(
+    audio:
+        AudioQuality.values.asNameMap()[row.audioQuality] ??
+        Quality.standard.audio,
+    video:
+        VideoQuality.values.asNameMap()[row.videoQuality] ??
+        Quality.standard.video,
+  ),
   download: PlannedDownload(
     source: Probe(
       title: row.sourceTitle,
