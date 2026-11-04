@@ -3,6 +3,10 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_store/ka7_store.dart';
 
+/// A folder picked in the system's picker (Android): its address, and how
+/// to show it (`SD/Mozika`).
+typedef Destination = ({String uri, String label});
+
 /// The user's choices, kept in the store and applied at once.
 class AppSettings extends ChangeNotifier {
   AppSettings._(
@@ -15,6 +19,7 @@ class AppSettings extends ChangeNotifier {
     this._theme,
     this._onboarded,
     this._layout,
+    this._destinations,
   );
 
   /// Reads the saved choices; [defaultFolders] fill what was never chosen.
@@ -36,6 +41,15 @@ class AppSettings extends ChangeNotifier {
     await store.setting(_onboardedKey) != null,
     FolderLayout.values.asNameMap()[await store.setting(_layoutKey)] ??
         FolderLayout.playlist,
+    {
+      for (final format in [MediaFormat.mp3, MediaFormat.mp4])
+        if ((
+              await store.setting(_destinationKey(format)),
+              await store.setting('${_destinationKey(format)}.label'),
+            )
+            case (final uri?, final label?))
+          format: (uri: uri, label: label),
+    },
   );
 
   final Ka7Store _store;
@@ -47,6 +61,31 @@ class AppSettings extends ChangeNotifier {
   ThemeMode _theme;
   bool _onboarded;
   FolderLayout _layout;
+  final Map<MediaFormat, Destination> _destinations;
+
+  /// Where files of [format] are filed in the end (Android); null for the
+  /// system's default (Music/Ka7, Movies/Ka7).
+  Destination? destinationFor(MediaFormat format) =>
+      _destinations[_folderKind(format)];
+
+  /// [destination] null: back to the default.
+  Future<void> setDestination(
+    MediaFormat format,
+    Destination? destination,
+  ) async {
+    final kind = _folderKind(format);
+    if (destination == null) {
+      _destinations.remove(kind);
+    } else {
+      _destinations[kind] = destination;
+    }
+    notifyListeners();
+    await _store.setSetting(_destinationKey(kind), destination?.uri);
+    await _store.setSetting(
+      '${_destinationKey(kind)}.label',
+      destination?.label,
+    );
+  }
 
   /// Folders per playlist, or per artist.
   FolderLayout get layout => _layout;
@@ -133,6 +172,7 @@ const _layoutKey = 'folders.layout';
 const concurrencyChoices = [1, 2, 3, 4];
 const mixLimitChoices = [25, 50, 100, 200];
 String _folderKey(MediaFormat format) => 'folder.${format.name}';
+String _destinationKey(MediaFormat format) => 'destination.${format.name}';
 
 MediaFormat _folderKind(MediaFormat format) =>
     format == MediaFormat.mp4 ? MediaFormat.mp4 : MediaFormat.mp3;
