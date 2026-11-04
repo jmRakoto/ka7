@@ -116,19 +116,22 @@ void main() {
     test('is ready once the engine is unpacked', () async {
       final status = await AndroidEngineSetup(AndroidYtDlp()).check();
 
-      expect(calls.map((c) => c.method), ['init', 'update']);
+      // Updating is left to DailyUpdate: once a day, not at every launch.
+      expect(calls.map((c) => c.method), ['init']);
       expect(status.isReady, isTrue);
     });
 
-    test('stays ready when yt-dlp cannot be updated (offline)', () async {
-      answer = (call) {
-        if (call.method == 'update') throw PlatformException(code: 'net');
-        return {};
-      };
+    test('updates yt-dlp when asked to', () async {
+      final updated = await AndroidEngineSetup(AndroidYtDlp()).updateYtDlp();
 
-      final status = await AndroidEngineSetup(AndroidYtDlp()).check();
+      expect(updated, isTrue);
+      expect(calls.map((c) => c.method), ['update']);
+    });
 
-      expect(status.isReady, isTrue);
+    test('reports a failed update (offline)', () async {
+      answer = (call) => throw PlatformException(code: 'net');
+
+      expect(await AndroidEngineSetup(AndroidYtDlp()).updateYtDlp(), isFalse);
     });
 
     test('reports both tools missing when unpacking fails', () async {

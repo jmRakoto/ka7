@@ -83,4 +83,6 @@ dependencies {
     val youtubedlAndroid = "0.18.1"
     implementation("io.github.junkfood02.youtubedl-android:library:$youtubedlAndroid")
     implementation("io.github.junkfood02.youtubedl-android:ffmpeg:$youtubedlAndroid")
+    // Writing into a folder the user picked (SD card included).
+    implementation("androidx.documentfile:documentfile:1.0.1")
 }

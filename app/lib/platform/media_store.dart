@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:ka7_core/ka7_core.dart';
+import 'package:ka7_store/ka7_store.dart' show FileExists;
 
 /// Moves a finished file to the shared library ("Music/Ka7/…" on Android),
 /// [relative] being its path under the download folder.
@@ -30,9 +31,8 @@ final class PublishingDownloader implements Downloader {
       throw error;
     });
     if (failed) return;
-    final root = '${folders(request.format)}/';
     final path = request.destination;
-    final relative = path.startsWith(root) ? path.substring(root.length) : path;
+    final relative = _relative(folders(request.format), path);
     try {
       await publish(path, relative, request.format);
     } on Object catch (error) {
@@ -50,11 +50,58 @@ class AndroidMediaStore {
 
   final MethodChannel _channel;
 
-  Future<void> publish(String path, String relative, MediaFormat format) {
+  /// Whether files made under [folders] are still in the shared library
+  /// (or still in the app's folder, [stillLocal], when they were not moved).
+  FileExists existsFor(
+    String Function(MediaFormat format) folders, {
+    required Future<bool> Function(String path) stillLocal,
+    String? Function(MediaFormat format)? tree,
+  }) => (path, format) async {
+    if (await stillLocal(path)) return true;
+    final relative = _relative(folders(format), path);
+    if (tree?.call(format) case final tree?) {
+      return await _channel.invokeMethod<bool>('existsTree', {
+            'tree': tree,
+            ..._inFolder(relative),
+          }) ??
+          false;
+    }
+    final where = _place(relative, format);
+    return await _channel.invokeMethod<bool>('exists', where) ?? false;
+  };
+
+  Future<void> publish(
+    String path,
+    String relative,
+    MediaFormat format, {
+    String? tree,
+  }) => tree == null
+      ? _channel.invokeMethod<void>('publish', {
+          'path': path,
+          ..._place(relative, format),
+        })
+      // A folder the user chose: subfolders kept, under it.
+      : _channel.invokeMethod<void>('publishTree', {
+          'path': path,
+          'tree': tree,
+          ..._inFolder(relative),
+        });
+
+  /// Subfolder and name of [relative].
+  static Map<String, String> _inFolder(String relative) {
+    final slash = relative.lastIndexOf('/');
+    return {
+      'folder': slash < 0 ? '' : relative.substring(0, slash),
+      'name': relative.substring(slash + 1),
+    };
+  }
+
+  /// Folder, name and type in the shared library of a file filed under
+  /// [relative] in the app's folder.
+  static Map<String, String> _place(String relative, MediaFormat format) {
     final slash = relative.lastIndexOf('/');
     final subfolder = slash < 0 ? '' : '/${relative.substring(0, slash)}';
-    return _channel.invokeMethod<void>('publish', {
-      'path': path,
+    return {
       'folder':
           '${format == MediaFormat.mp4 ? 'Movies' : 'Music'}/Ka7$subfolder',
       'name': relative.substring(slash + 1),
@@ -63,6 +110,10 @@ class AndroidMediaStore {
         MediaFormat.m4a => 'audio/mp4',
         MediaFormat.mp4 => 'video/mp4',
       },
-    });
+    };
   }
 }
+
+/// [path] under [root], or [path] itself when elsewhere.
+String _relative(String root, String path) =>
+    path.startsWith('$root/') ? path.substring(root.length + 1) : path;

@@ -141,8 +141,6 @@ class AndroidEngineSetup implements EngineSetup {
 
   final AndroidYtDlp ytDlp;
 
-  static const _updateTimeout = Duration(minutes: 1);
-
   /// Where the embedded tools live: Kotlin knows, Dart only needs a value.
   static const embedded = 'embedded';
 
@@ -153,12 +151,19 @@ class AndroidEngineSetup implements EngineSetup {
     } on PlatformException {
       return const EngineStatus();
     }
-    try {
-      await ytDlp.update().timeout(_updateTimeout);
-    } on Object {
-      // Offline or GitHub unreachable: the embedded yt-dlp still runs.
-    }
     return const EngineStatus(ytDlp: embedded, ffmpeg: embedded);
+  }
+
+  /// Fetches the latest yt-dlp; false when it could not (offline).
+  /// Run through DailyUpdate: at most once a day, a minute at most.
+  Future<bool> updateYtDlp() async {
+    try {
+      await ytDlp.update();
+      return true;
+    } on PlatformException {
+      // Offline or GitHub unreachable: the embedded yt-dlp still runs.
+      return false;
+    }
   }
 
   /// Nothing to download: unpacking again is the only repair.

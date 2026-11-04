@@ -105,6 +105,10 @@ void main() {
       calls = [];
       messenger.setMockMethodCallHandler(channel, (call) async {
         calls.add(call);
+        // The shared library holds only Hafatra.
+        if (call.method == 'exists') {
+          return (call.arguments as Map)['name'] == 'Hafatra.m4a';
+        }
         return null;
       });
     });
@@ -147,6 +151,66 @@ void main() {
           'mime': 'video/mp4',
         },
       ]);
+    });
+
+    test('finds a file where it was filed, from where it was made', () async {
+      final exists = AndroidMediaStore().existsFor(
+        (format) => format == MediaFormat.mp4 ? '/app/Movies' : '/app/Music',
+        stillLocal: (path) async => path == '/app/Music/Kept here.mp3',
+      );
+
+      expect(await exists('/app/Music/Hafatra.m4a', MediaFormat.m4a), isTrue);
+      expect(
+        await exists('/app/Music/Mahaleo/01 - Gone.mp3', MediaFormat.mp3),
+        isFalse,
+      );
+      expect(
+        await exists('/app/Music/Kept here.mp3', MediaFormat.mp3),
+        isTrue,
+        reason: 'not moved (storage refused): still in the app folder',
+      );
+      expect(calls.map((c) => c.arguments), [
+        {'folder': 'Music/Ka7', 'name': 'Hafatra.m4a', 'mime': 'audio/mp4'},
+        {
+          'folder': 'Music/Ka7/Mahaleo',
+          'name': '01 - Gone.mp3',
+          'mime': 'audio/mpeg',
+        },
+      ]);
+    });
+
+    test('files in the folder the user chose, keeping subfolders', () async {
+      await AndroidMediaStore().publish(
+        '/app/Music/Mahaleo/01 - Tanalahy.mp3',
+        'Mahaleo/01 - Tanalahy.mp3',
+        MediaFormat.mp3,
+        tree: 'content://tree/primary%3AMozika',
+      );
+
+      expect(calls.single.method, 'publishTree');
+      expect(calls.single.arguments, {
+        'path': '/app/Music/Mahaleo/01 - Tanalahy.mp3',
+        'tree': 'content://tree/primary%3AMozika',
+        'folder': 'Mahaleo',
+        'name': '01 - Tanalahy.mp3',
+      });
+    });
+
+    test('looks for a file in the folder the user chose', () async {
+      final exists = AndroidMediaStore().existsFor(
+        (format) => '/app/Music',
+        stillLocal: (_) async => false,
+        tree: (format) => 'content://tree/primary%3AMozika',
+      );
+
+      await exists('/app/Music/Hafatra.m4a', MediaFormat.m4a);
+
+      expect(calls.single.method, 'existsTree');
+      expect(calls.single.arguments, {
+        'tree': 'content://tree/primary%3AMozika',
+        'folder': '',
+        'name': 'Hafatra.m4a',
+      });
     });
   });
 }

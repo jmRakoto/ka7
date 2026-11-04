@@ -14,8 +14,20 @@ import 'platform/android_background.dart';
 import 'platform/android_ytdlp.dart';
 import 'platform/desktop_notifier.dart';
 import 'platform/media_store.dart';
+import 'platform/open_url.dart';
 import 'platform/shared_links.dart';
+import 'platform/android_folders.dart';
 import 'platform/user_folders.dart';
+import 'settings/app_settings.dart';
+
+/// This build's version, given by the packaging scripts
+/// (`--dart-define=KA7_VERSION=…`); none in `flutter run`, so no update
+/// check while developing.
+String? get _appVersion =>
+    switch (const String.fromEnvironment('KA7_VERSION')) {
+      '' => null,
+      final version => version,
+    };
 
 /// YouTube's own picture of a video, 320×180.
 ImageProvider _thumbnail(String videoId) =>
@@ -45,15 +57,7 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
   );
   return Ka7App(
     thumbnail: _thumbnail,
-    engineSetup: DailyUpdate(
-      binaries,
-      update: binaries.updateYtDlp,
-      lastUpdate: () async =>
-          DateTime.tryParse(await store.setting(_ytDlpUpdatedKey) ?? ''),
-      saveUpdate: (at) =>
-          store.setSetting(_ytDlpUpdatedKey, at.toUtc().toIso8601String()),
-      now: DateTime.now,
-    ),
+    engineSetup: _daily(store, binaries, (b) => b.updateYtDlp()),
     enginesFor: (status, settings) => (
       extractor: YtDlpExtractor(run: Process.run, executable: status!.ytDlp!),
       downloader: YtDlpDownloader(
@@ -70,8 +74,13 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
     pickFolder: FilePicker.getDirectoryPath,
     openFolder: (path) => Process.run('xdg-open', [path]),
     acceptDrops: true,
+    appVersion: _appVersion,
+    latestRelease: fetchLatestRelease,
+    openUrl: (url) => Process.run('xdg-open', [url]),
     pickLinksFile: _pickLinksFile,
     notifier: DesktopNotifier(run: Process.run),
+    // Deleted by hand: no longer « already there ».
+    fileExists: (path, _) => File(path).exists(),
   );
 }
 
@@ -93,32 +102,62 @@ Future<Ka7App> _mobile(Ka7Store store) async {
     // youtube_explode takes over when yt-dlp breaks (m4a and mp4 only).
     final explode = ExplodeEngine(source: YoutubeExplodeSource());
     final notifier = AndroidRunNotifier();
+    final mediaStore = AndroidMediaStore();
+    // Loaded by Ka7App, handed over with the engines, before any download.
+    AppSettings? destinations;
+    String folderOf(MediaFormat format) =>
+        folders[format == MediaFormat.mp4 ? format : MediaFormat.mp3]!;
     return Ka7App(
       thumbnail: _thumbnail,
-      engineSetup: AndroidEngineSetup(ytDlp),
-      enginesFor: (_, settings) => (
-        extractor: FallbackExtractor([YtDlpExtractor(run: ytDlp.run), explode]),
-        // Then moved to Music/Ka7 or Movies/Ka7, seen by every player.
-        downloader: PublishingDownloader(
-          FallbackDownloader({
-            'yt-dlp': YtDlpDownloader(start: ytDlp.start),
-            explode.name: explode,
-          }),
-          folders: (format) =>
-              folders[format == MediaFormat.mp4 ? format : MediaFormat.mp3]!,
-          publish: AndroidMediaStore().publish,
-        ),
+      engineSetup: _daily(
+        store,
+        AndroidEngineSetup(ytDlp),
+        (s) => s.updateYtDlp(),
       ),
+      enginesFor: (_, settings) {
+        destinations = settings;
+        return (
+          extractor: FallbackExtractor([
+            YtDlpExtractor(run: ytDlp.run),
+            explode,
+          ]),
+          // Then moved to Music/Ka7 or Movies/Ka7, seen by every player.
+          downloader: PublishingDownloader(
+            FallbackDownloader({
+              'yt-dlp': YtDlpDownloader(start: ytDlp.start),
+              explode.name: explode,
+            }),
+            folders: folderOf,
+            // Where the user chose, or Music/Ka7 and Movies/Ka7.
+            publish: (path, relative, format) => mediaStore.publish(
+              path,
+              relative,
+              format,
+              tree: settings.destinationFor(format)?.uri,
+            ),
+          ),
+        );
+      },
       store: store,
       formats: const [MediaFormat.mp3, MediaFormat.m4a, MediaFormat.mp4],
       sharedLinks: sharedLinks(),
       background: AndroidBackgroundWork(),
       notifier: notifier,
       askNotifications: notifier.askPermission,
+      appVersion: _appVersion,
+      latestRelease: fetchLatestRelease,
+      openUrl: openUrlOnAndroid,
       // Downloaded to the app's own folder, then moved by MediaStore.
       shownFolder: (format) =>
           format == MediaFormat.mp4 ? 'Movies/Ka7' : 'Music/Ka7',
       pickLinksFile: _pickLinksFile,
+      // Deleted by hand from Music/Ka7: no longer « already there ».
+      fileExists: mediaStore.existsFor(
+        folderOf,
+        stillLocal: (path) => File(path).exists(),
+        tree: (format) => destinations?.destinationFor(format)?.uri,
+      ),
+      pickDestination: pickAndroidFolder,
       // Downloaded first to the app's own folder, no picker: MediaStore files them.
       defaultFolders: folders,
     );
@@ -147,3 +186,19 @@ Future<String?> _pickLinksFile() async {
   if (files.isEmpty) return null;
   return utf8.decode(await files.first.readAsBytes(), allowMalformed: true);
 }
+
+/// [setup], with yt-dlp updated at most once a day when the tools are
+/// checked (desktop: the app's own copy; Android: the embedded one).
+DailyUpdate _daily<S extends EngineSetup>(
+  Ka7Store store,
+  S setup,
+  Future<bool> Function(S setup) update,
+) => DailyUpdate(
+  setup,
+  update: () => update(setup),
+  lastUpdate: () async =>
+      DateTime.tryParse(await store.setting(_ytDlpUpdatedKey) ?? ''),
+  saveUpdate: (at) =>
+      store.setSetting(_ytDlpUpdatedKey, at.toUtc().toIso8601String()),
+  now: DateTime.now,
+);
