@@ -42,7 +42,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reasonFreeText =>
-      'Texte libre : la recherche n\'est pas encore disponible';
+      'Pas un lien : pour chercher, passe par « Recherche YouTube »';
 
   @override
   String get detailDuplicate => 'Déjà présent plus haut';
@@ -121,6 +121,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get runTitle => 'File d\'attente';
 
   @override
+  String get runActive => 'Téléchargement en cours';
+
+  @override
   String get runRunning => 'En cours';
 
   @override
@@ -155,6 +158,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get statusSkipped => 'Déjà là';
+
+  @override
+  String get statusQueued => 'Dans la file';
 
   @override
   String get statusFailed => 'Échoué';
@@ -210,6 +216,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get retryButton => 'Réessayer';
 
   @override
+  String get retryOne => 'Réessayer ce titre';
+
+  @override
   String get copyFailed => 'Copier les liens échoués';
 
   @override
@@ -260,6 +269,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navSettings => 'Réglages';
 
   @override
+  String get queueEarlier => 'Plus tôt';
+
+  @override
+  String get queueClear => 'Effacer';
+
+  @override
+  String get queueClearHint => 'Retirer les files terminées';
+
+  @override
   String get queueEmpty => 'Aucun téléchargement en cours.';
 
   @override
@@ -267,6 +285,44 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get librarySearch => 'Chercher un titre ou une playlist';
+
+  @override
+  String get selectEntries => 'Sélectionner';
+
+  @override
+  String get stopSelecting => 'Arrêter la sélection';
+
+  @override
+  String selectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sélectionnés',
+      one: '$count sélectionné',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get removeButton => 'Retirer';
+
+  @override
+  String removeTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Retirer ces $count titres de la bibliothèque ?',
+      one: 'Retirer ce titre de la bibliothèque ?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get removeBody =>
+      'Les fichiers restent sur l\'appareil. Ces titres pourront être téléchargés de nouveau.';
+
+  @override
+  String get cancelButton => 'Annuler';
 
   @override
   String get libraryEmpty => 'Rien n\'a encore été téléchargé.';
@@ -279,6 +335,84 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get forget => 'Oublier';
+
+  @override
+  String get settingsAppearance => 'Apparence';
+
+  @override
+  String get settingsDownloads => 'Téléchargements';
+
+  @override
+  String get settingsFolders => 'Dossiers';
+
+  @override
+  String get settingsAbout => 'À propos';
+
+  @override
+  String get settingsConcurrencyHelp =>
+      'Combien de titres à la fois, pour les prochaines files.';
+
+  @override
+  String aboutVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get aboutDevVersion => 'Version de développement';
+
+  @override
+  String get aboutEngine => 'Téléchargements par yt-dlp et ffmpeg.';
+
+  @override
+  String get resetFolder => 'Revenir au dossier par défaut';
+
+  @override
+  String get today => 'Aujourd\'hui';
+
+  @override
+  String get yesterday => 'Hier';
+
+  @override
+  String filterAll(int count) {
+    return 'Tout · $count';
+  }
+
+  @override
+  String filterSucceeded(int count) {
+    return 'Réussis · $count';
+  }
+
+  @override
+  String filterFailed(int count) {
+    return 'Échoués · $count';
+  }
+
+  @override
+  String get actions => 'Actions';
+
+  @override
+  String get pasteLinks => 'Coller';
+
+  @override
+  String get addTipLines =>
+      'Un lien par ligne : vidéo, playlist, chaîne ou mix YouTube.';
+
+  @override
+  String get addTipShare => 'Depuis l\'app YouTube : Partager → Ka7.';
+
+  @override
+  String get addTipDrop =>
+      'Glisse des liens ou un fichier .txt sur la fenêtre.';
+
+  @override
+  String get addTipImport =>
+      'Ou importe une liste de liens depuis un fichier .txt.';
+
+  @override
+  String get recentSearches => 'Recherches récentes';
+
+  @override
+  String get clearRecent => 'Effacer les recherches récentes';
 
   @override
   String get settingsTitle => 'Réglages';
@@ -347,7 +481,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dropHint => 'Dépose tes liens ou un fichier .txt';
 
   @override
-  String get importFile => 'Importer un fichier';
+  String get importFile => 'Importer';
 
   @override
   String get clearLinks => 'Effacer';
@@ -461,6 +595,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get searchFooter => '20 résultats, à cocher dans l\'aperçu';
+
+  @override
+  String get loadingLink => 'Lecture du lien…';
+
+  @override
+  String loadingSearch(String query) {
+    return 'Recherche de « $query »…';
+  }
 
   @override
   String get searchAgain => 'Nouvelle recherche';
@@ -586,4 +728,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get close => 'Fermer';
+
+  @override
+  String updateAvailable(String version) {
+    return 'Ka7 $version est disponible';
+  }
+
+  @override
+  String updateCurrent(String version) {
+    return 'Tu as la $version.';
+  }
+
+  @override
+  String get updateDownload => 'Télécharger la mise à jour';
 }

@@ -42,7 +42,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'YouTube link without a video or playlist';
 
   @override
-  String get reasonFreeText => 'Free text: search is not available yet';
+  String get reasonFreeText => 'Not a link: to search, use “YouTube search”';
 
   @override
   String get detailDuplicate => 'Already listed above';
@@ -109,6 +109,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get runTitle => 'Queue';
 
   @override
+  String get runActive => 'Download in progress';
+
+  @override
   String get runRunning => 'Downloading';
 
   @override
@@ -143,6 +146,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statusSkipped => 'Already there';
+
+  @override
+  String get statusQueued => 'In the queue';
 
   @override
   String get statusFailed => 'Failed';
@@ -198,6 +204,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retryButton => 'Retry';
 
   @override
+  String get retryOne => 'Retry this one';
+
+  @override
   String get copyFailed => 'Copy failed links';
 
   @override
@@ -247,6 +256,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Settings';
 
   @override
+  String get queueEarlier => 'Earlier';
+
+  @override
+  String get queueClear => 'Clear';
+
+  @override
+  String get queueClearHint => 'Remove finished runs';
+
+  @override
   String get queueEmpty => 'Nothing downloading.';
 
   @override
@@ -254,6 +272,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get librarySearch => 'Search a title or a playlist';
+
+  @override
+  String get selectEntries => 'Select';
+
+  @override
+  String get stopSelecting => 'Stop selecting';
+
+  @override
+  String selectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get removeButton => 'Remove';
+
+  @override
+  String removeTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Remove these $count entries from the library?',
+      one: 'Remove this entry from the library?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get removeBody =>
+      'The files stay on the device. These videos can be downloaded again.';
+
+  @override
+  String get cancelButton => 'Cancel';
 
   @override
   String get libraryEmpty => 'Nothing downloaded yet.';
@@ -266,6 +316,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get forget => 'Forget';
+
+  @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsDownloads => 'Downloads';
+
+  @override
+  String get settingsFolders => 'Folders';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String get settingsConcurrencyHelp =>
+      'How many videos at once, for the next runs.';
+
+  @override
+  String aboutVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get aboutDevVersion => 'Development build';
+
+  @override
+  String get aboutEngine => 'Downloads by yt-dlp and ffmpeg.';
+
+  @override
+  String get resetFolder => 'Back to the default folder';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get yesterday => 'Yesterday';
+
+  @override
+  String filterAll(int count) {
+    return 'All · $count';
+  }
+
+  @override
+  String filterSucceeded(int count) {
+    return 'Succeeded · $count';
+  }
+
+  @override
+  String filterFailed(int count) {
+    return 'Failed · $count';
+  }
+
+  @override
+  String get actions => 'Actions';
+
+  @override
+  String get pasteLinks => 'Paste';
+
+  @override
+  String get addTipLines =>
+      'One link per line: a YouTube video, playlist, channel or mix.';
+
+  @override
+  String get addTipShare => 'From the YouTube app: Share → Ka7.';
+
+  @override
+  String get addTipDrop => 'Drop links or a .txt file on the window.';
+
+  @override
+  String get addTipImport => 'Or import a list of links from a .txt file.';
+
+  @override
+  String get recentSearches => 'Recent searches';
+
+  @override
+  String get clearRecent => 'Clear recent searches';
 
   @override
   String get settingsTitle => 'Settings';
@@ -334,7 +460,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dropHint => 'Drop your links or a .txt file';
 
   @override
-  String get importFile => 'Import a file';
+  String get importFile => 'Import';
 
   @override
   String get clearLinks => 'Clear';
@@ -448,6 +574,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchFooter => '20 results, to tick in the preview';
+
+  @override
+  String get loadingLink => 'Reading the link…';
+
+  @override
+  String loadingSearch(String query) {
+    return 'Searching “$query”…';
+  }
 
   @override
   String get searchAgain => 'New search';
@@ -569,4 +703,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get close => 'Close';
+
+  @override
+  String updateAvailable(String version) {
+    return 'Ka7 $version is out';
+  }
+
+  @override
+  String updateCurrent(String version) {
+    return 'You have $version.';
+  }
+
+  @override
+  String get updateDownload => 'Download the update';
 }

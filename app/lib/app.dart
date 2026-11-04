@@ -35,8 +35,30 @@ class Ka7App extends StatefulWidget {
     this.shownFolder,
     this.askNotifications,
     this.thumbnail,
+    this.appVersion,
+    this.latestRelease,
+    this.openUrl,
+    this.fileExists,
+    this.pickDestination,
     this.now = DateTime.now,
   });
+
+  /// Android: the system's folder picker, for where files are filed in the
+  /// end; null where the download folder is the final one (desktop) or none
+  /// can be chosen.
+  final Future<Destination?> Function()? pickDestination;
+
+  /// Whether a downloaded file is still there; null to trust the archive.
+  final FileExists? fileExists;
+
+  /// This build's version (`0.2.0`); null where unknown (tests, debug).
+  final String? appVersion;
+
+  /// The latest published Ka7 (GitHub); null to never ask.
+  final Future<AppRelease?> Function()? latestRelease;
+
+  /// Opens a web page in the browser.
+  final void Function(String url)? openUrl;
 
   /// Picture of a video in the preview, by id; none when null (tests).
   final ImageProvider Function(String videoId)? thumbnail;
@@ -124,6 +146,11 @@ class _Ka7AppState extends State<Ka7App> {
       notifier: widget.notifier,
       shownFolder: widget.shownFolder,
       thumbnail: widget.thumbnail,
+      appVersion: widget.appVersion,
+      latestRelease: widget.latestRelease,
+      openUrl: widget.openUrl,
+      fileExists: widget.fileExists,
+      pickDestination: widget.pickDestination,
       pickFolder: widget.pickFolder,
       openFolder: widget.openFolder,
       now: widget.now,

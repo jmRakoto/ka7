@@ -41,7 +41,19 @@ class Ka7Shell extends StatefulWidget {
     this.notifier,
     this.shownFolder,
     this.thumbnail,
+    this.fileExists,
+    this.pickDestination,
+    this.appVersion,
+    this.latestRelease,
+    this.openUrl,
   });
+
+  /// This build's version; null where unknown.
+  final String? appVersion;
+
+  /// The latest published Ka7; null to never ask.
+  final Future<AppRelease?> Function()? latestRelease;
+  final void Function(String url)? openUrl;
 
   /// Picture of a video in the preview, by id; none when null (tests).
   final ImageProvider Function(String videoId)? thumbnail;
@@ -52,6 +64,21 @@ class Ka7Shell extends StatefulWidget {
   final Extractor extractor;
   final Downloader downloader;
   final Ka7Store store;
+
+  /// Whether a downloaded file is still there; null to trust the archive.
+  final FileExists? fileExists;
+
+  /// Android: picks where files are filed in the end.
+  final Future<Destination?> Function()? pickDestination;
+
+  /// The folder the user finds a format's files in: the one they chose, or
+  /// the system's default.
+  String Function(MediaFormat format)? get _shownFolder =>
+      switch (shownFolder) {
+        final shown? =>
+          (format) => settings.destinationFor(format)?.label ?? shown(format),
+        null => null,
+      };
   final AppSettings settings;
   final Future<String?> Function()? pickFolder;
   final void Function(String folder)? openFolder;
@@ -85,6 +112,15 @@ class _Ka7ShellState extends State<Ka7Shell> {
   final _runs = <QueuedRun>[];
   final _subscriptions = <StreamSubscription<JobEvent>>[];
   final _historyChanges = ValueNotifier(0);
+
+  /// « Already there » only while the file is: deleted, it can come again.
+  late final Archive _archive = switch (widget.fileExists) {
+    final exists? => VerifiedArchive(widget.store, exists: exists),
+    null => widget.store,
+  };
+
+  /// Ticks when anything in the queue moves, for the open preview.
+  final _queueChanges = ValueNotifier(0);
   final _links = TextEditingController();
   StreamSubscription<String>? _shared;
 
@@ -94,6 +130,9 @@ class _Ka7ShellState extends State<Ka7Shell> {
   /// Followed playlists and channels, and their new videos found at launch.
   var _followed = <Subscription>[];
   final _news = ValueNotifier(<News>[]);
+
+  /// A newer Ka7 to offer, until downloaded or put off.
+  final _update = ValueNotifier<AppRelease?>(null);
 
   /// Videos a previous launch left unfinished, until resumed or discarded.
   var _interrupted = <PendingDownload>[];
@@ -106,6 +145,8 @@ class _Ka7ShellState extends State<Ka7Shell> {
     super.initState();
     _shared = widget.sharedLinks?.listen(_receive);
     _loadSubscriptions().then((_) => _checkNews());
+    _checkUpdate();
+    _loadRecent();
     widget.store.pending().then((pending) {
       if (!mounted || pending.isEmpty) return;
       setState(() {
@@ -151,7 +192,10 @@ class _Ka7ShellState extends State<Ka7Shell> {
     }
     widget.background?.release();
     _historyChanges.dispose();
+    _queueChanges.dispose();
+    _recent.dispose();
     _news.dispose();
+    _update.dispose();
     _shared?.cancel();
     _links.dispose();
     super.dispose();
@@ -185,6 +229,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
         _section = _Section.queue;
       });
       _keepAwake();
+      _queueChanges.value++;
       return;
     }
     final run = QueuedRun(
@@ -192,7 +237,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
         downloader: widget.downloader,
         folder: folder,
         format: format,
-        archive: widget.store,
+        archive: _archive,
         concurrency: widget.settings.concurrency,
         layout: widget.settings.layout,
       ),
@@ -203,7 +248,12 @@ class _Ka7ShellState extends State<Ka7Shell> {
     _subscriptions.add(
       run.queue.run(downloads).listen((event) async {
         if (mounted) {
-          setState(() => run.progress.apply(event));
+          setState(() {
+            run.progress.apply(event);
+            if (run.progress.isDone) run.endedAt ??= widget.now();
+          });
+          // A video moved to another state; progress alone changes nothing.
+          if (event is! JobProgressed) _queueChanges.value++;
           _keepAwake();
           if (run.progress.isDone) _notifyEnd(run.progress);
         }
@@ -220,6 +270,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
       _section = _Section.queue;
     });
     _keepAwake();
+    _queueChanges.value++;
   }
 
   /// Queues again what a previous launch left unfinished, where it was going.
@@ -310,10 +361,48 @@ class _Ka7ShellState extends State<Ka7Shell> {
     final news = await findNews(
       [for (final s in _followed) (link: s.link, title: s.title)],
       extractor: widget.extractor,
-      archive: widget.store,
+      archive: _archive,
       format: widget.formats.first,
     );
     if (mounted) _news.value = news;
+  }
+
+  /// GitHub is asked at most once a day; its answer is kept in between.
+  Future<void> _checkUpdate() async {
+    final current = widget.appVersion;
+    final ask = widget.latestRelease;
+    if (current == null || ask == null) return;
+    final store = widget.store;
+    final now = widget.now();
+    final checked = DateTime.tryParse(
+      await store.setting(_updateCheckedKey) ?? '',
+    );
+    if (checked == null || now.difference(checked) >= const Duration(days: 1)) {
+      try {
+        final latest = await ask();
+        await store.setSetting(
+          _updateCheckedKey,
+          now.toUtc().toIso8601String(),
+        );
+        await store.setSetting(_updateLatestKey, latest?.version);
+        await store.setSetting(_updateUrlKey, latest?.url);
+      } on Object {
+        return; // Offline: maybe next launch.
+      }
+    }
+    final version = await store.setting(_updateLatestKey);
+    final url = await store.setting(_updateUrlKey);
+    if (version == null || url == null || !isNewer(version, current)) return;
+    if (await store.setting(_updateDismissedKey) == version) return;
+    if (mounted) _update.value = AppRelease(version: version, url: url);
+  }
+
+  Future<void> _putOffUpdate() async {
+    final update = _update.value;
+    _update.value = null;
+    if (update != null) {
+      await widget.store.setSetting(_updateDismissedKey, update.version);
+    }
   }
 
   bool _isFollowed(String link) => _followed.any((s) => s.link == link);
@@ -347,23 +436,71 @@ class _Ka7ShellState extends State<Ka7Shell> {
     _preview([parseEntry(playlistId) as MediaEntry]);
   }
 
-  void _preview(List<MediaEntry> entries) => _addNavigator.currentState!.push(
+  /// Latest searches, newest first (setting `search.recent`, one a line).
+  final _recent = ValueNotifier<List<String>>(const []);
+
+  Future<void> _loadRecent() async {
+    final saved = await widget.store.setting(_recentKey);
+    if (!mounted || saved == null) return;
+    _recent.value = saved.split('\n');
+  }
+
+  Future<void> _remember(String query) async {
+    final recent = [
+      query,
+      for (final old in _recent.value)
+        if (old.toLowerCase() != query.toLowerCase()) old,
+    ].take(_recentMax).toList();
+    _recent.value = recent;
+    await widget.store.setSetting(_recentKey, recent.join('\n'));
+  }
+
+  Future<void> _clearRecent() async {
+    _recent.value = const [];
+    await widget.store.setSetting(_recentKey, null);
+  }
+
+  void _preview(List<MediaEntry> entries) {
+    for (final entry in entries) {
+      if (entry is SearchEntry) unawaited(_remember(entry.query));
+    }
+    _push(entries);
+  }
+
+  void _push(List<MediaEntry> entries) => _addNavigator.currentState!.push(
     MaterialPageRoute<void>(
       builder: (context) => PreviewScreen(
         entries: entries,
         extractor: widget.extractor,
         formats: widget.formats,
-        archive: widget.store,
+        archive: _archive,
         isFollowed: _isFollowed,
         thumbnail: widget.thumbnail,
+        queueStatus: _queueStatus,
+        onSearch: (query) => unawaited(_remember(query)),
+        queueChanges: _queueChanges,
         onFollow: _follow,
         onDownload: (downloads, format) {
-          Navigator.of(context).pop();
+          // A search stays open: back on Add, the results are still there.
+          if (!entries.any((e) => e is SearchEntry)) {
+            Navigator.of(context).pop();
+          }
           unawaited(_download(downloads, format));
         },
       ),
     ),
   );
+
+  /// The latest run holding [videoId] in [format] says where it stands.
+  RunItemStatus? _queueStatus(String videoId, MediaFormat format) {
+    for (final run in _runs) {
+      if (run.format != format) continue;
+      for (final item in run.progress.items) {
+        if (item.download.item.videoId == videoId) return item.status;
+      }
+    }
+    return null;
+  }
 
   /// Asks Android to keep the app alive while something is left to do.
   void _keepAwake() {
@@ -411,7 +548,12 @@ class _Ka7ShellState extends State<Ka7Shell> {
             key: _addNavigator,
             onGenerateRoute: (_) => MaterialPageRoute<void>(
               builder: (_) => ListenableBuilder(
-                listenable: Listenable.merge([widget.settings, _news]),
+                listenable: Listenable.merge([
+                  widget.settings,
+                  _news,
+                  _update,
+                  _recent,
+                ]),
                 builder: (_, _) => AddLinksScreen(
                   onPreview: _preview,
                   links: _links,
@@ -420,13 +562,28 @@ class _Ka7ShellState extends State<Ka7Shell> {
                   news: _news.value,
                   onShowNews: _showNews,
                   onDismissNews: () => _news.value = const [],
+                  update: _update.value,
+                  currentVersion: widget.appVersion,
+                  onOpenUpdate: widget.openUrl == null
+                      ? null
+                      : () => widget.openUrl!(_update.value!.url),
+                  onPutOffUpdate: _putOffUpdate,
+                  canShare: widget.sharedLinks != null,
+                  canDrop: widget.acceptDrops,
+                  recentSearches: _recent.value,
+                  onClearRecent: _clearRecent,
                 ),
               ),
             ),
           ),
           QueueScreen(
             runs: _runs,
-            shownFolder: widget.shownFolder,
+            shownFolder: widget._shownFolder,
+            thumbnail: widget.thumbnail,
+            onClear: () {
+              setState(() => _runs.removeWhere((run) => run.progress.isDone));
+              _queueChanges.value++;
+            },
             onRetry: (run, downloads) =>
                 unawaited(_download(downloads, run.format, run.folder)),
             interrupted: _interrupted.length,
@@ -438,12 +595,17 @@ class _Ka7ShellState extends State<Ka7Shell> {
             changes: _historyChanges,
             openFolder: widget.openFolder,
             onUpdatePlaylist: _updatePlaylist,
+            thumbnail: widget.thumbnail,
+            now: widget.now,
           ),
           SettingsScreen(
             settings: widget.settings,
             pickFolder: widget.pickFolder,
             subscriptions: _followed,
             onUnfollow: _unfollow,
+            appVersion: widget.appVersion,
+            pickDestination: widget.pickDestination,
+            defaultDestination: widget.shownFolder,
           ),
         ],
       ),
@@ -593,3 +755,14 @@ class _SectionFadeState extends State<_SectionFade>
 
 /// When the followed playlists and channels were last read (UTC).
 const _newsCheckedKey = 'news.checked';
+
+/// When GitHub was last asked for the latest Ka7, and what it said.
+const _updateCheckedKey = 'update.checked';
+const _updateLatestKey = 'update.latest';
+const _updateUrlKey = 'update.url';
+
+/// The version the user put off: not offered again, a newer one will be.
+const _updateDismissedKey = 'update.dismissed';
+
+const _recentKey = 'search.recent';
+const _recentMax = 8;

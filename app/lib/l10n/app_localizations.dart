@@ -161,7 +161,7 @@ abstract class AppLocalizations {
   /// No description provided for @reasonFreeText.
   ///
   /// In fr, this message translates to:
-  /// **'Texte libre : la recherche n\'est pas encore disponible'**
+  /// **'Pas un lien : pour chercher, passe par « Recherche YouTube »'**
   String get reasonFreeText;
 
   /// No description provided for @detailDuplicate.
@@ -266,6 +266,12 @@ abstract class AppLocalizations {
   /// **'File d\'attente'**
   String get runTitle;
 
+  /// No description provided for @runActive.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléchargement en cours'**
+  String get runActive;
+
   /// No description provided for @runRunning.
   ///
   /// In fr, this message translates to:
@@ -326,6 +332,12 @@ abstract class AppLocalizations {
   /// **'Déjà là'**
   String get statusSkipped;
 
+  /// No description provided for @statusQueued.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dans la file'**
+  String get statusQueued;
+
   /// No description provided for @statusFailed.
   ///
   /// In fr, this message translates to:
@@ -367,6 +379,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Réessayer'**
   String get retryButton;
+
+  /// No description provided for @retryOne.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réessayer ce titre'**
+  String get retryOne;
 
   /// No description provided for @copyFailed.
   ///
@@ -458,6 +476,24 @@ abstract class AppLocalizations {
   /// **'Réglages'**
   String get navSettings;
 
+  /// No description provided for @queueEarlier.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus tôt'**
+  String get queueEarlier;
+
+  /// No description provided for @queueClear.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer'**
+  String get queueClear;
+
+  /// No description provided for @queueClearHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer les files terminées'**
+  String get queueClearHint;
+
   /// No description provided for @queueEmpty.
   ///
   /// In fr, this message translates to:
@@ -475,6 +511,48 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Chercher un titre ou une playlist'**
   String get librarySearch;
+
+  /// No description provided for @selectEntries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sélectionner'**
+  String get selectEntries;
+
+  /// No description provided for @stopSelecting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrêter la sélection'**
+  String get stopSelecting;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} sélectionné} other{{count} sélectionnés}}'**
+  String selectedCount(int count);
+
+  /// No description provided for @removeButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer'**
+  String get removeButton;
+
+  /// No description provided for @removeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{Retirer ce titre de la bibliothèque ?} other{Retirer ces {count} titres de la bibliothèque ?}}'**
+  String removeTitle(int count);
+
+  /// No description provided for @removeBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les fichiers restent sur l\'appareil. Ces titres pourront être téléchargés de nouveau.'**
+  String get removeBody;
+
+  /// No description provided for @cancelButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler'**
+  String get cancelButton;
 
   /// No description provided for @libraryEmpty.
   ///
@@ -499,6 +577,138 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Oublier'**
   String get forget;
+
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence'**
+  String get settingsAppearance;
+
+  /// No description provided for @settingsDownloads.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléchargements'**
+  String get settingsDownloads;
+
+  /// No description provided for @settingsFolders.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossiers'**
+  String get settingsFolders;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In fr, this message translates to:
+  /// **'À propos'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsConcurrencyHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Combien de titres à la fois, pour les prochaines files.'**
+  String get settingsConcurrencyHelp;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Version {version}'**
+  String aboutVersion(String version);
+
+  /// No description provided for @aboutDevVersion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Version de développement'**
+  String get aboutDevVersion;
+
+  /// No description provided for @aboutEngine.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléchargements par yt-dlp et ffmpeg.'**
+  String get aboutEngine;
+
+  /// No description provided for @resetFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revenir au dossier par défaut'**
+  String get resetFolder;
+
+  /// No description provided for @today.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aujourd\'hui'**
+  String get today;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Hier'**
+  String get yesterday;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout · {count}'**
+  String filterAll(int count);
+
+  /// No description provided for @filterSucceeded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réussis · {count}'**
+  String filterSucceeded(int count);
+
+  /// No description provided for @filterFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Échoués · {count}'**
+  String filterFailed(int count);
+
+  /// No description provided for @actions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Actions'**
+  String get actions;
+
+  /// No description provided for @pasteLinks.
+  ///
+  /// In fr, this message translates to:
+  /// **'Coller'**
+  String get pasteLinks;
+
+  /// No description provided for @addTipLines.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un lien par ligne : vidéo, playlist, chaîne ou mix YouTube.'**
+  String get addTipLines;
+
+  /// No description provided for @addTipShare.
+  ///
+  /// In fr, this message translates to:
+  /// **'Depuis l\'app YouTube : Partager → Ka7.'**
+  String get addTipShare;
+
+  /// No description provided for @addTipDrop.
+  ///
+  /// In fr, this message translates to:
+  /// **'Glisse des liens ou un fichier .txt sur la fenêtre.'**
+  String get addTipDrop;
+
+  /// No description provided for @addTipImport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ou importe une liste de liens depuis un fichier .txt.'**
+  String get addTipImport;
+
+  /// No description provided for @recentSearches.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherches récentes'**
+  String get recentSearches;
+
+  /// No description provided for @clearRecent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer les recherches récentes'**
+  String get clearRecent;
 
   /// No description provided for @settingsTitle.
   ///
@@ -617,7 +827,7 @@ abstract class AppLocalizations {
   /// No description provided for @importFile.
   ///
   /// In fr, this message translates to:
-  /// **'Importer un fichier'**
+  /// **'Importer'**
   String get importFile;
 
   /// No description provided for @clearLinks.
@@ -823,6 +1033,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'20 résultats, à cocher dans l\'aperçu'**
   String get searchFooter;
+
+  /// No description provided for @loadingLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture du lien…'**
+  String get loadingLink;
+
+  /// No description provided for @loadingSearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherche de « {query} »…'**
+  String loadingSearch(String query);
 
   /// No description provided for @searchAgain.
   ///
@@ -1033,6 +1255,24 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Fermer'**
   String get close;
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ka7 {version} est disponible'**
+  String updateAvailable(String version);
+
+  /// No description provided for @updateCurrent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu as la {version}.'**
+  String updateCurrent(String version);
+
+  /// No description provided for @updateDownload.
+  ///
+  /// In fr, this message translates to:
+  /// **'Télécharger la mise à jour'**
+  String get updateDownload;
 }
 
 class _AppLocalizationsDelegate

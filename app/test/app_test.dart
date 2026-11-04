@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -31,7 +32,14 @@ const _sungByErick = Probe(
   ],
 );
 
+const _erickSearch = SearchEntry('Erick', query: 'Erick');
+
 final _extractor = FakeExtractor({
+  _erickSearch.url: Probe(
+    title: 'Erick',
+    isSearch: true,
+    items: [..._sungByErick.items, ...hafatraVideo.items],
+  ),
   'https://www.youtube.com/watch?v=Xy7zA9bC1dE': _sungByErick,
   'https://www.youtube.com/watch?v=Qm7tR2vLx9A': hafatraVideo,
   'https://www.youtube.com/playlist?list=PLe7rK2mErickManana01':
@@ -68,6 +76,11 @@ void main() {
     void Function(AppSettings settings)? onEngines,
     String Function(MediaFormat format)? shownFolder,
     VoidCallback? askNotifications,
+    String? appVersion,
+    Future<AppRelease?> Function()? latestRelease,
+    void Function(String url)? openUrl,
+    FileExists? fileExists,
+    Future<Destination?> Function()? pickDestination,
     Size size = const Size(1280, 900),
   }) async {
     tester.view
@@ -84,6 +97,11 @@ void main() {
         notifier: notifier,
         shownFolder: shownFolder,
         askNotifications: askNotifications,
+        appVersion: appVersion,
+        latestRelease: latestRelease,
+        openUrl: openUrl,
+        fileExists: fileExists,
+        pickDestination: pickDestination,
         enginesFor: (status, settings) {
           onEngines?.call(settings);
           return (extractor: _extractor, downloader: downloader);
@@ -112,6 +130,91 @@ void main() {
     await tester.tap(find.text('Télécharger'));
     await tester.pumpAndSettle();
   }
+
+  group('search', () {
+    Future<void> searchAndDownload(WidgetTester tester) async {
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Recherche YouTube'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Erick');
+      await tester.pump();
+      await tester.tap(find.text('Rechercher'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tsara'));
+      await tester.pump();
+      await tester.tap(find.text('Télécharger'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('Add shows the last results again after a download', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await searchAndDownload(tester);
+      expect(find.text('Tsara'), findsWidgets, reason: 'in the queue');
+
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Recherche : Erick'), findsOneWidget);
+      final sent = tester.widget<CheckboxListTile>(
+        find.widgetWithText(CheckboxListTile, 'Tsara'),
+      );
+      expect(sent.value, isFalse);
+      expect(find.text('Dans la file'), findsOneWidget);
+    });
+
+    testWidgets('the results tell when a video sent failed', (tester) async {
+      await pumpKa7(tester);
+      await searchAndDownload(tester);
+      downloader.fail('Xy7zA9bC1dE', FailureReason.network);
+      await tester.pumpAndSettle();
+
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dans la file'), findsNothing);
+      expect(find.text('Échoué'), findsOneWidget);
+    });
+
+    testWidgets('remembers the searches, newest first, across launches', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await searchAndDownload(tester);
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Erick'), findsOneWidget, reason: 'a chip');
+      expect(await store.setting('search.recent'), 'Erick');
+
+      await tester.tap(find.byTooltip('Effacer les recherches récentes'));
+      await tester.pumpAndSettle();
+      expect(find.text('Recherches récentes'), findsNothing);
+      expect(await store.setting('search.recent'), isNull);
+    });
+
+    testWidgets('leaving the results gives an empty search field', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await searchAndDownload(tester);
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Rechercher'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
+    });
+  });
 
   group('welcome', () {
     testWidgets('presents Ka7 on first launch, then opens on Add', (
@@ -375,7 +478,145 @@ void main() {
     });
   });
 
+  group('deleted files', () {
+    Future<void> previewHafatraAgain(WidgetTester tester) async {
+      await download(tester, 'Qm7tR2vLx9A');
+      downloader.finish('Qm7tR2vLx9A');
+      await tester.pumpAndSettle();
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Qm7tR2vLx9A');
+      await tester.pump();
+      await tester.tap(find.text("Voir l'aperçu"));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a video whose file is there is already there', (tester) async {
+      await pumpKa7(tester, fileExists: (_, _) async => true);
+      await previewHafatraAgain(tester);
+
+      expect(find.text('Réussi'), findsOneWidget, reason: 'this session');
+      expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+    });
+
+    testWidgets('a video whose file was deleted is offered again', (
+      tester,
+    ) async {
+      await pumpKa7(tester, fileExists: (_, _) async => false);
+      await previewHafatraAgain(tester);
+
+      expect(find.text('Déjà là'), findsNothing);
+      expect(find.text('Réussi'), findsNothing);
+      expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    });
+  });
+
+  group('earlier runs', () {
+    testWidgets('retry one video, then it is not offered again', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await download(tester, 'PLe7rK2mErickManana01');
+      downloader
+        ..fail('aB3dE5fG7hI', FailureReason.network)
+        ..fail('jK9lM1nO3pQ', FailureReason.network);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Réessayer ce titre').first);
+      await tester.pumpAndSettle();
+
+      expect(downloader.requests, hasLength(3));
+      expect(find.byTooltip('Réessayer ce titre'), findsOneWidget);
+      expect(find.text('1 échoué'), findsOneWidget, reason: 'one left');
+    });
+
+    testWidgets('a run whose videos all went again leaves the list', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await download(tester, 'Qm7tR2vLx9A');
+      downloader.fail('Qm7tR2vLx9A', FailureReason.network);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Réessayer ce titre'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Plus tôt'), findsNothing);
+      expect(find.text('0 / 1'), findsOneWidget);
+    });
+
+    testWidgets('fold under Earlier once done, the running one above', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await download(tester, 'Qm7tR2vLx9A');
+      downloader.finish('Qm7tR2vLx9A');
+      await tester.pumpAndSettle();
+      await download(tester, 'PLe7rK2mErickManana01');
+
+      expect(find.text('Plus tôt'), findsOneWidget);
+      expect(find.text('1 réussi'), findsOneWidget);
+      expect(
+        find.text('MP3 · audio · /home/me/Musique · 14:05'),
+        findsOneWidget,
+      );
+      expect(
+        tester.getTopLeft(find.text('0 / 2')).dy,
+        lessThan(tester.getTopLeft(find.text('Plus tôt')).dy),
+      );
+    });
+
+    testWidgets('fade away when cleared, instead of vanishing', (tester) async {
+      await pumpKa7(tester);
+      await download(tester, 'Qm7tR2vLx9A');
+      downloader.finish('Qm7tR2vLx9A');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Retirer les files terminées'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final opacities = tester
+          .widgetList<FadeTransition>(
+            find.ancestor(
+              of: find.text('1 réussi'),
+              matching: find.byType(FadeTransition),
+            ),
+          )
+          .map((fade) => fade.opacity.value);
+      expect(opacities, contains(inExclusiveRange(0, 1)));
+      await tester.pumpAndSettle();
+      expect(find.text('1 réussi'), findsNothing);
+    });
+
+    testWidgets('are cleared, the running one stays', (tester) async {
+      await pumpKa7(tester);
+      await download(tester, 'Qm7tR2vLx9A');
+      downloader.finish('Qm7tR2vLx9A');
+      await tester.pumpAndSettle();
+      await download(tester, 'PLe7rK2mErickManana01');
+
+      await tester.tap(find.byTooltip('Retirer les files terminées'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Plus tôt'), findsNothing);
+      expect(find.text('1 réussi'), findsNothing);
+      expect(find.text('0 / 2'), findsOneWidget);
+    });
+  });
+
   group('library', () {
+    /// Opens the ⋮ menu of the row titled [title].
+    Future<void> openActions(WidgetTester tester, String title) async {
+      await tester.tap(
+        find.descendant(
+          of: find.widgetWithText(ListTile, title),
+          matching: find.byTooltip('Actions'),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
     Future<void> downloadHafatra(WidgetTester tester) async {
       await download(tester, 'Qm7tR2vLx9A');
       downloader.finish('Qm7tR2vLx9A');
@@ -392,8 +633,68 @@ void main() {
       await downloadHafatra(tester);
 
       expect(find.text('Hafatra'), findsOneWidget);
-      expect(find.text('MP3 · 30 oct. 2026'), findsOneWidget);
+      expect(find.text("Aujourd'hui"), findsOneWidget);
+      expect(find.text('MP3'), findsOneWidget);
       expect(find.text('Réussi'), findsOneWidget);
+    });
+
+    testWidgets('groups what was downloaded by day', (tester) async {
+      for (final (i, at) in [
+        DateTime(2026, 10, 30, 9),
+        DateTime(2026, 10, 29, 20),
+        DateTime(2026, 10, 1, 8),
+      ].indexed) {
+        await store.record(
+          JobSucceeded(
+            PlannedDownload(
+              source: ericMananaPlaylist,
+              item: ericMananaPlaylist.items[i],
+              index: i + 1,
+            ),
+            '/home/me/Musique/$i.mp3',
+          ),
+          MediaFormat.mp3,
+          at,
+        );
+      }
+      await pumpKa7(tester);
+      await tester.tap(_nav('Bibliothèque'));
+      await tester.pumpAndSettle();
+
+      final today = tester.getTopLeft(find.text("Aujourd'hui")).dy;
+      final yesterday = tester.getTopLeft(find.text('Hier')).dy;
+      final october = tester.getTopLeft(find.text('jeudi 1 octobre')).dy;
+      expect(today, lessThan(yesterday));
+      expect(yesterday, lessThan(october));
+    });
+
+    testWidgets('shows only the failed ones, counted', (tester) async {
+      PlannedDownload song(int i) => PlannedDownload(
+        source: ericMananaPlaylist,
+        item: ericMananaPlaylist.items[i],
+        index: i + 1,
+      );
+      await store.record(
+        JobSucceeded(song(0), '/home/me/Musique/a.mp3'),
+        MediaFormat.mp3,
+        DateTime(2026, 10, 30, 9),
+      );
+      await store.record(
+        JobFailed(song(1), FailureReason.private),
+        MediaFormat.mp3,
+        DateTime(2026, 10, 30, 10),
+      );
+      await pumpKa7(tester);
+      await tester.tap(_nav('Bibliothèque'));
+      await tester.pumpAndSettle();
+      expect(find.text('Tout · 2'), findsOneWidget);
+      expect(find.text('Réussis · 1'), findsOneWidget);
+
+      await tester.tap(find.text('Échoués · 1'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tsy Ferana'), findsOneWidget);
+      expect(find.text("Tsara Ny Hiran' Ny Taniko"), findsNothing);
     });
 
     testWidgets('finds an entry by its title', (tester) async {
@@ -413,7 +714,8 @@ void main() {
       await pumpKa7(tester);
       await downloadHafatra(tester);
 
-      await tester.tap(find.byTooltip('Ouvrir le dossier'));
+      await openActions(tester, 'Hafatra');
+      await tester.tap(find.text('Ouvrir le dossier'));
 
       expect(opened, ['/home/me/Musique']);
     });
@@ -424,11 +726,117 @@ void main() {
       await pumpKa7(tester);
       await downloadHafatra(tester);
 
-      await tester.tap(find.byTooltip('Oublier'));
+      await openActions(tester, 'Hafatra');
+      await tester.tap(find.text('Oublier'));
       await tester.pumpAndSettle();
 
       expect(find.text("Rien n'a encore été téléchargé."), findsOneWidget);
       expect(await store.contains('Qm7tR2vLx9A', MediaFormat.mp3), isFalse);
+    });
+
+    group('selection', () {
+      /// Hafatra, Tsara and Tsy Ferana, already downloaded.
+      Future<void> openLibraryOfThree(WidgetTester tester) async {
+        for (final (source, item) in [
+          (hafatraVideo, hafatraVideo.items.single),
+          (_sungByErick, _sungByErick.items.single),
+          (ericMananaPlaylist, ericMananaPlaylist.items[1]),
+        ]) {
+          final planned = PlannedDownload(source: source, item: item, index: 1);
+          await store.add(item.videoId, MediaFormat.mp3);
+          await store.record(
+            JobSucceeded(planned, '/home/me/Musique/${item.title}.mp3'),
+            MediaFormat.mp3,
+            DateTime(2026, 10, 30),
+          );
+        }
+        await pumpKa7(tester);
+        await tester.tap(_nav('Bibliothèque'));
+        await tester.pumpAndSettle();
+      }
+
+      Finder boxOf(String title) => find.descendant(
+        of: find.widgetWithText(ListTile, title),
+        matching: find.byType(Checkbox),
+      );
+
+      testWidgets('removes the chosen entries together, once confirmed', (
+        tester,
+      ) async {
+        await openLibraryOfThree(tester);
+
+        await tester.tap(find.text('Sélectionner'));
+        await tester.pumpAndSettle();
+        await tester.tap(boxOf('Hafatra'));
+        await tester.tap(boxOf('Tsara'));
+        await tester.pump();
+        expect(find.text('2 sélectionnés'), findsOneWidget);
+
+        await tester.tap(find.widgetWithText(FilledButton, 'Retirer'));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Les fichiers restent'), findsOneWidget);
+        await tester.tap(find.widgetWithText(FilledButton, 'Retirer').last);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Hafatra'), findsNothing);
+        expect(find.text('Tsara'), findsNothing);
+        expect(find.text('Tsy Ferana'), findsOneWidget);
+        expect(await store.contains('Qm7tR2vLx9A', MediaFormat.mp3), isFalse);
+        expect(find.text('Sélectionner'), findsOneWidget, reason: 'done');
+      });
+
+      testWidgets('keeps everything when the removal is called off', (
+        tester,
+      ) async {
+        await openLibraryOfThree(tester);
+        await tester.tap(find.text('Sélectionner'));
+        await tester.pumpAndSettle();
+        await tester.tap(boxOf('Hafatra'));
+        await tester.pump();
+
+        await tester.tap(find.widgetWithText(FilledButton, 'Retirer'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Annuler'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Hafatra'), findsOneWidget);
+      });
+
+      testWidgets('one box picks all, or none', (tester) async {
+        await openLibraryOfThree(tester);
+        await tester.tap(find.text('Sélectionner'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Tout sélectionner'));
+        await tester.pump();
+        expect(find.text('3 sélectionnés'), findsOneWidget);
+        await tester.tap(find.text('Tout sélectionner'));
+        await tester.pump();
+        expect(find.text('0 sélectionné'), findsOneWidget);
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.widgetWithText(FilledButton, 'Retirer'),
+              )
+              .onPressed,
+          isNull,
+        );
+      });
+
+      testWidgets('a long press starts picking with that entry', (
+        tester,
+      ) async {
+        await openLibraryOfThree(tester);
+
+        await tester.longPress(find.text('Tsara'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('1 sélectionné'), findsOneWidget);
+        expect(tester.widget<Checkbox>(boxOf('Tsara')).value, isTrue);
+        await tester.tap(find.byTooltip('Arrêter la sélection'));
+        await tester.pumpAndSettle();
+        expect(find.byType(Checkbox), findsNothing);
+      });
     });
 
     testWidgets('updates a playlist: only its new videos are checked', (
@@ -449,7 +857,8 @@ void main() {
       await tester.tap(find.text('Bibliothèque'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byTooltip('Mettre à jour la playlist'));
+      await openActions(tester, "Tsara Ny Hiran' Ny Taniko");
+      await tester.tap(find.text('Mettre à jour la playlist'));
       await tester.pumpAndSettle();
 
       expect(find.byType(PreviewScreen), findsOneWidget);
@@ -479,19 +888,20 @@ void main() {
       await tester.tap(find.text('Bibliothèque'));
       await tester.pumpAndSettle();
 
-      final update = find.byTooltip('Mettre à jour la playlist');
-      expect(update, findsNWidgets(2));
+      final actions = find.byTooltip('Actions');
+      expect(actions, findsNWidgets(2));
       expect(
-        tester.getCenter(update.at(0)).dx,
-        tester.getCenter(update.at(1)).dx,
+        tester.getCenter(actions.at(0)).dx,
+        tester.getCenter(actions.at(1)).dx,
       );
     });
 
     testWidgets('offers no update for a single video', (tester) async {
       await pumpKa7(tester);
       await downloadHafatra(tester);
+      await openActions(tester, 'Hafatra');
 
-      expect(find.byTooltip('Mettre à jour la playlist'), findsNothing);
+      expect(find.text('Mettre à jour la playlist'), findsNothing);
     });
   });
 
@@ -531,6 +941,11 @@ void main() {
       await openSettings(tester);
       picked = '/data/Mozika';
 
+      await tester.scrollUntilVisible(
+        find.byTooltip('Changer le dossier de la musique'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.byTooltip('Changer le dossier de la musique'));
       await tester.pumpAndSettle();
       await download(tester, 'Qm7tR2vLx9A');
@@ -546,6 +961,11 @@ void main() {
       await pumpKa7(tester);
       await openSettings(tester);
 
+      await tester.scrollUntilVisible(
+        find.byTooltip('Changer le dossier de la musique'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.byTooltip('Changer le dossier de la musique'));
       await tester.pumpAndSettle();
 
@@ -608,6 +1028,26 @@ void main() {
       expect(await store.setting('downloads.concurrency'), '1');
     });
 
+    testWidgets('tells which version of Ka7 runs', (tester) async {
+      await pumpKa7(tester, appVersion: '0.3.0');
+      await openSettings(tester);
+      await tester.scrollUntilVisible(find.text('Version 0.3.0'), 200);
+
+      expect(find.text('À propos'), findsOneWidget);
+      expect(find.text('Version 0.3.0'), findsOneWidget);
+    });
+
+    testWidgets('says when it is a development build', (tester) async {
+      await pumpKa7(tester);
+      await openSettings(tester);
+      await tester.scrollUntilVisible(
+        find.text('Version de développement'),
+        200,
+      );
+
+      expect(find.text('Version de développement'), findsOneWidget);
+    });
+
     testWidgets('explains what a YouTube mix is', (tester) async {
       await pumpKa7(tester);
       await openSettings(tester);
@@ -664,6 +1104,8 @@ void main() {
       await pumpKa7(tester, onEngines: (settings) => seen = settings);
       await openSettings(tester);
 
+      await tester.ensureVisible(find.text('100'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('100'));
       await tester.pumpAndSettle();
 
@@ -707,6 +1149,8 @@ void main() {
         scrollable: find.byType(Scrollable).last,
       );
       expect(find.text('Erick Manana · Sélection'), findsOneWidget);
+      await tester.ensureVisible(find.byTooltip('Ne plus suivre'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Ne plus suivre'));
       await tester.pumpAndSettle();
       expect(await store.subscriptions(), isEmpty);
@@ -781,6 +1225,87 @@ void main() {
       await pumpKa7(tester);
 
       expect(find.text('Nouveautés'), findsNothing);
+    });
+  });
+
+  group('new version', () {
+    const next = AppRelease(
+      version: '0.3.0',
+      url: 'https://github.com/jmRakoto/ka7/releases/tag/v0.3.0',
+    );
+
+    testWidgets('offers a newer Ka7 and opens its page', (tester) async {
+      final opened = <String>[];
+      await pumpKa7(
+        tester,
+        appVersion: '0.2.0',
+        latestRelease: () async => next,
+        openUrl: opened.add,
+      );
+
+      expect(find.text('Ka7 0.3.0 est disponible'), findsOneWidget);
+      expect(find.text('Tu as la 0.2.0.'), findsOneWidget);
+      await tester.tap(find.text('Télécharger la mise à jour'));
+      await tester.pumpAndSettle();
+
+      expect(opened, [next.url]);
+    });
+
+    testWidgets('says nothing when Ka7 is up to date', (tester) async {
+      await pumpKa7(
+        tester,
+        appVersion: '0.3.0',
+        latestRelease: () async => next,
+      );
+
+      expect(find.textContaining('est disponible'), findsNothing);
+    });
+
+    testWidgets('later hides it until a newer one comes out', (tester) async {
+      await pumpKa7(
+        tester,
+        appVersion: '0.2.0',
+        latestRelease: () async => next,
+      );
+
+      await tester.tap(find.byTooltip('Plus tard'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('est disponible'), findsNothing);
+      expect(await store.setting('update.dismissed'), '0.3.0');
+    });
+
+    testWidgets('asks GitHub at most once a day, remembers the answer', (
+      tester,
+    ) async {
+      var asked = 0;
+      await store.setSetting(
+        'update.checked',
+        DateTime(2026, 10, 30, 9).toUtc().toIso8601String(),
+      );
+      await store.setSetting('update.latest', '0.3.0');
+      await store.setSetting('update.url', next.url);
+      await pumpKa7(
+        tester,
+        appVersion: '0.2.0',
+        latestRelease: () async {
+          asked++;
+          return next;
+        },
+      );
+
+      expect(asked, 0);
+      expect(find.text('Ka7 0.3.0 est disponible'), findsOneWidget);
+    });
+
+    testWidgets('stays quiet when GitHub cannot be reached', (tester) async {
+      await pumpKa7(
+        tester,
+        appVersion: '0.2.0',
+        latestRelease: () async => throw const SocketException('offline'),
+      );
+
+      expect(find.textContaining('est disponible'), findsNothing);
     });
   });
 
@@ -1033,6 +1558,75 @@ void main() {
       expect(find.textContaining('/home/me/Musique'), findsNothing);
     });
 
+    group('chosen folder', () {
+      Destination? chosen;
+      Future<void> pumpPhone(WidgetTester tester) => pumpKa7(
+        tester,
+        builtInEngine: true,
+        canPickFolders: false,
+        formats: const [MediaFormat.m4a, MediaFormat.mp4],
+        shownFolder: (format) =>
+            format == MediaFormat.mp4 ? 'Movies/Ka7' : 'Music/Ka7',
+        pickDestination: () async => chosen,
+      );
+      Future<void> scrollToMusic(WidgetTester tester) async {
+        await tester.tap(_nav('Réglages'));
+        await tester.pumpAndSettle();
+        await tester.scrollUntilVisible(
+          find.byTooltip('Changer le dossier de la musique'),
+          200,
+          scrollable: find.byType(Scrollable).last,
+        );
+      }
+
+      setUp(() => chosen = null);
+
+      testWidgets('files music where the user chose, and says so', (
+        tester,
+      ) async {
+        chosen = (uri: 'content://tree/1234%3AMozika', label: 'SD/Mozika');
+        await pumpPhone(tester);
+        await scrollToMusic(tester);
+        expect(find.text('Music/Ka7'), findsOneWidget, reason: 'default');
+
+        await tester.tap(find.byTooltip('Changer le dossier de la musique'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('SD/Mozika'), findsOneWidget);
+        expect(
+          await store.setting('destination.mp3'),
+          'content://tree/1234%3AMozika',
+        );
+        await download(tester, 'Qm7tR2vLx9A');
+        expect(find.text("M4A · d'origine · SD/Mozika"), findsOneWidget);
+      });
+
+      testWidgets('keeps the folder when the picker is closed', (tester) async {
+        await pumpPhone(tester);
+        await scrollToMusic(tester);
+
+        await tester.tap(find.byTooltip('Changer le dossier de la musique'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Music/Ka7'), findsOneWidget);
+        expect(await store.setting('destination.mp3'), isNull);
+      });
+
+      testWidgets('goes back to the default folder', (tester) async {
+        await store.setSetting('destination.mp3', 'content://tree/x');
+        await store.setSetting('destination.mp3.label', 'SD/Mozika');
+        await pumpPhone(tester);
+        await scrollToMusic(tester);
+        expect(find.text('SD/Mozika'), findsOneWidget);
+
+        await tester.tap(find.byTooltip('Revenir au dossier par défaut').first);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Music/Ka7'), findsOneWidget);
+        expect(await store.setting('destination.mp3'), isNull);
+      });
+    });
+
     testWidgets('hides the folder settings where the system files music', (
       tester,
     ) async {
@@ -1056,8 +1650,10 @@ void main() {
       await tester.tap(find.text('Bibliothèque'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Hafatra'), findsOneWidget);
-      expect(find.byTooltip('Ouvrir le dossier'), findsNothing);
+      expect(find.text('Hafatra'), findsWidgets);
+      await tester.tap(find.byTooltip('Actions'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ouvrir le dossier'), findsNothing);
     });
   });
 

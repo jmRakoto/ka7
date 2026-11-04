@@ -10,7 +10,7 @@
   "kindInvalid": "Ignorée",
   "reasonNotYouTube": "Seul YouTube est pris en charge",
   "reasonNoVideoOrPlaylist": "Lien YouTube sans vidéo ni playlist",
-  "reasonFreeText": "Texte libre : la recherche n'est pas encore disponible",
+  "reasonFreeText": "Pas un lien : pour chercher, passe par « Recherche YouTube »",
   "detailDuplicate": "Déjà présent plus haut",
   "detailVideoInPlaylist": "Choix à l'aperçu : cette vidéo ou toute la playlist",
   "summaryNone": "Aucune entrée reconnue",
@@ -49,6 +49,7 @@
   "downloadButton": "Télécharger",
   "probeEngineMissing": "yt-dlp n'est pas installé",
   "runTitle": "File d'attente",
+  "runActive": "Téléchargement en cours",
   "runRunning": "En cours",
   "runWaiting": "En attente",
   "runFinished": "Traités",
@@ -83,6 +84,7 @@
   "runDone": "Terminé",
   "statusSucceeded": "Réussi",
   "statusSkipped": "Déjà là",
+  "statusQueued": "Dans la file",
   "statusFailed": "Échoué",
   "statusCancelled": "Annulé",
   "countSucceeded": "{count, plural, one{{count} réussi} other{{count} réussis}}",
@@ -118,6 +120,7 @@
     }
   },
   "retryButton": "Réessayer",
+  "retryOne": "Réessayer ce titre",
   "copyFailed": "Copier les liens échoués",
   "copiedFailed": "Liens copiés : colle-les dans Ajouter pour réessayer plus tard.",
   "formatMp3": "MP3 · audio",
@@ -143,13 +146,87 @@
   "navQueue": "File",
   "navLibrary": "Bibliothèque",
   "navSettings": "Réglages",
+  "queueEarlier": "Plus tôt",
+  "queueClear": "Effacer",
+  "queueClearHint": "Retirer les files terminées",
   "queueEmpty": "Aucun téléchargement en cours.",
   "libraryTitle": "Bibliothèque",
   "librarySearch": "Chercher un titre ou une playlist",
+  "selectEntries": "Sélectionner",
+  "stopSelecting": "Arrêter la sélection",
+  "selectedCount": "{count, plural, one{{count} sélectionné} other{{count} sélectionnés}}",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removeButton": "Retirer",
+  "removeTitle": "{count, plural, one{Retirer ce titre de la bibliothèque ?} other{Retirer ces {count} titres de la bibliothèque ?}}",
+  "@removeTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removeBody": "Les fichiers restent sur l'appareil. Ces titres pourront être téléchargés de nouveau.",
+  "cancelButton": "Annuler",
   "libraryEmpty": "Rien n'a encore été téléchargé.",
   "libraryNoMatch": "Aucun résultat.",
   "openFolder": "Ouvrir le dossier",
   "forget": "Oublier",
+  "settingsAppearance": "Apparence",
+  "settingsDownloads": "Téléchargements",
+  "settingsFolders": "Dossiers",
+  "settingsAbout": "À propos",
+  "settingsConcurrencyHelp": "Combien de titres à la fois, pour les prochaines files.",
+  "aboutVersion": "Version {version}",
+  "aboutDevVersion": "Version de développement",
+  "aboutEngine": "Téléchargements par yt-dlp et ffmpeg.",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "resetFolder": "Revenir au dossier par défaut",
+  "today": "Aujourd'hui",
+  "yesterday": "Hier",
+  "filterAll": "Tout · {count}",
+  "@filterAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filterSucceeded": "Réussis · {count}",
+  "@filterSucceeded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filterFailed": "Échoués · {count}",
+  "@filterFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actions": "Actions",
+  "pasteLinks": "Coller",
+  "addTipLines": "Un lien par ligne : vidéo, playlist, chaîne ou mix YouTube.",
+  "addTipShare": "Depuis l'app YouTube : Partager → Ka7.",
+  "addTipDrop": "Glisse des liens ou un fichier .txt sur la fenêtre.",
+  "addTipImport": "Ou importe une liste de liens depuis un fichier .txt.",
+  "recentSearches": "Recherches récentes",
+  "clearRecent": "Effacer les recherches récentes",
   "settingsTitle": "Réglages",
   "settingsLanguage": "Langue",
   "languageSystem": "Système",
@@ -176,7 +253,7 @@
     }
   },
   "dropHint": "Dépose tes liens ou un fichier .txt",
-  "importFile": "Importer un fichier",
+  "importFile": "Importer",
   "clearLinks": "Effacer",
   "settingsConcurrency": "Téléchargements simultanés",
   "settingsMixLimit": "Mix YouTube : titres lus",
@@ -242,6 +319,15 @@
   "searchButton": "Rechercher",
   "searchHint": "Artiste, titre, album…",
   "searchFooter": "20 résultats, à cocher dans l'aperçu",
+  "loadingLink": "Lecture du lien…",
+  "loadingSearch": "Recherche de « {query} »…",
+  "@loadingSearch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
   "searchAgain": "Nouvelle recherche",
   "follow": "Suivre",
   "following": "Suivi",
@@ -283,5 +369,22 @@
   "welcomeSetupLater": "Tu pourras changer ça plus tard dans Réglages.",
   "welcomePoint4e": "Une notification te prévient quand tout est fini",
   "engineChecking": "Préparation du moteur…",
-  "close": "Fermer"
+  "close": "Fermer",
+  "updateAvailable": "Ka7 {version} est disponible",
+  "updateCurrent": "Tu as la {version}.",
+  "updateDownload": "Télécharger la mise à jour",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "@updateCurrent": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  }
 }

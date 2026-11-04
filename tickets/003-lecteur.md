@@ -1,0 +1,38 @@
+# 003 · Lecteur audio / vidéo, avant et après téléchargement
+
+- **État** : À faire
+- **Taille** : grosse
+- **Plateformes** : Android et Linux (iOS plus tard)
+
+## Contexte
+
+Ka7 télécharge mais ne lit pas : pour écouter, il faut une autre app. Le document de conception mettait le lecteur « hors périmètre » ; ce ticket revient sur cette décision. NewPipe montre que c'est l'attente des utilisateurs.
+
+## Objectif
+
+1. **Avant téléchargement (en ligne)** : depuis l'aperçu, écouter ou regarder un titre pour vérifier que c'est le bon, sans le télécharger.
+2. **Après téléchargement (hors ligne)** : depuis la Bibliothèque, lire les fichiers téléchargés.
+3. **Arrière-plan** : l'audio continue écran éteint ou app en arrière-plan, avec les commandes dans la notification et l'écran de verrouillage (lecture, pause, suivant, précédent).
+
+## À faire
+
+- **Choix de la bibliothèque** : `just_audio` + `audio_service` (audio, arrière-plan, notification), `media_kit` (audio et vidéo, Linux et Android). À trancher par un essai court.
+- **Lecture en ligne** : URL du flux par yt-dlp (`-g`) ou youtube_explode ; les URL de YouTube expirent (quelques heures) : les demander au moment de lire.
+- **Lecture hors ligne** : chemin du fichier, déjà dans l'historique (`HistoryItem.path`) ; sur Android, URI MediaStore (`Music/Ka7`).
+- **Arrière-plan Android** : service de premier plan de type `mediaPlayback` (le `DownloadService` existant est `dataSync`), permission et notification média.
+- **Interface** : mini-lecteur en bas (au-dessus de la barre d'onglets), écran plein pour la vidéo ; bouton ▶ sur les lignes de l'aperçu et de la Bibliothèque.
+- **File de lecture** : lire une playlist téléchargée dans l'ordre.
+
+## Critères d'acceptation
+
+- [ ] ▶ dans l'aperçu lit le titre en ligne en moins de 5 s sur une connexion correcte.
+- [ ] ▶ dans la Bibliothèque lit le fichier sans réseau (mode avion).
+- [ ] L'audio continue écran éteint ; pause/suivant marchent depuis la notification et l'écran de verrouillage.
+- [ ] La vidéo se lit en plein écran, rotation comprise.
+- [ ] Un téléchargement en cours ne coupe pas la lecture, et l'inverse.
+
+## Risques
+
+- **Taille** : un lecteur vidéo ajoute plusieurs Mo (à mettre en regard du ticket 001).
+- **Juridique** : lire YouTube hors de YouTube, sans publicité, est contre leurs conditions, comme le téléchargement ; même position que NewPipe.
+- **Deux services Android** (téléchargement et lecture) à faire cohabiter.

@@ -14,7 +14,8 @@ if [[ ! -f app/android/app/src/main/jniLibs/arm64-v8a/libffmpeg.zip.so ]]; then
   tool/android/fix_ffmpeg_16k.sh
 fi
 
-(cd app && fvm flutter build apk --release --split-per-abi)
+(cd app && fvm flutter build apk --release --split-per-abi \
+  --dart-define=KA7_VERSION="$version")
 mkdir -p dist
 for abi in arm64-v8a armeabi-v7a x86_64; do
   cp "app/build/app/outputs/flutter-apk/app-$abi-release.apk" \

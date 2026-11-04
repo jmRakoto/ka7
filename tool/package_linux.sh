@@ -16,8 +16,15 @@ tools=${XDG_CACHE_HOME:-$HOME/.cache}/ka7-tools
 rm -rf "$stage"
 mkdir -p "$stage" "$dist" "$tools"
 
+# Reproducible packages: every date inside them is the last commit's, so the
+# same commit always gives the same files (and the same SHA-256).
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct)}
+same_dates() { find "$1" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +; }
+
 echo "== build app $version"
-(cd app && fvm flutter build linux --release)
+# Leftovers of earlier builds would end up in the packages.
+rm -rf app/build/linux/x64/release/bundle
+(cd app && fvm flutter build linux --release --dart-define=KA7_VERSION="$version")
 app=$root/app/build/linux/x64/release/bundle
 
 echo "== build cli"
@@ -60,6 +67,7 @@ Description: YouTube links to clean, tagged MP3 or MP4 files
  updates the official yt-dlp and ffmpeg (LGPL build) on first launch.
 EOF
 deb_file=$dist/ka7_${version}_amd64.deb
+same_dates "$deb"
 fakeroot dpkg-deb --build --root-owner-group "$deb" "$deb_file" >/dev/null
 echo "   $deb_file"
 
@@ -83,6 +91,7 @@ here="$(dirname "$(readlink -f "$0")")"
 exec "$here/usr/lib/ka7/ka7" "$@"
 EOF
 chmod +x "$appdir/AppRun"
+same_dates "$appdir"
 appimage_file=$dist/Ka7-$version-x86_64.AppImage
 # No FUSE needed to run the tool itself.
 APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 "$appimagetool" --no-appstream \

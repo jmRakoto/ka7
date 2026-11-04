@@ -48,13 +48,15 @@ void main() {
       ),
     );
     await _waitFor(tester, find.byType(TextField));
+    // The page slides in: type once it has settled, as a person would.
+    await tester.pump(const Duration(milliseconds: 600));
 
     await tester.enterText(find.byType(TextField), 'jNQXAC9IVRw');
     await tester.pump();
     await tester.tap(find.text("Voir l'aperçu"));
     await _waitFor(tester, find.text('Me at the zoo'));
     await tester.tap(find.text('Télécharger'));
-    await _waitFor(tester, find.text('Terminé'), timeout: 180);
+    await _waitFor(tester, find.text('1 réussi'), timeout: 180);
 
     expect(find.text('1 réussi'), findsOneWidget);
     expect(File('${folder.path}/Me at the zoo.mp3').existsSync(), isTrue);
@@ -73,6 +75,8 @@ void main() {
     await first.setSetting('onboarding.done', '1');
     await tester.pumpWidget(_realApp(first, folder.path));
     await _waitFor(tester, find.byType(TextField));
+    // The page slides in: type once it has settled, as a person would.
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.enterText(find.byType(TextField), 'jNQXAC9IVRw');
     await tester.pump();
     await tester.tap(find.text("Voir l'aperçu"));
@@ -91,7 +95,7 @@ void main() {
     expect(find.text("1 titre n'a pas fini la dernière fois."), findsOneWidget);
 
     await tester.tap(find.text('Reprendre'));
-    await _waitFor(tester, find.text('Terminé'), timeout: 180);
+    await _waitFor(tester, find.text('1 réussi'), timeout: 180);
 
     expect(find.text('1 réussi'), findsOneWidget);
     expect(File('${folder.path}/Me at the zoo.mp3').existsSync(), isTrue);
@@ -111,6 +115,8 @@ void main() {
     await first.setSetting('onboarding.done', '1');
     await tester.pumpWidget(_realApp(first, folder.path));
     await _waitFor(tester, find.byType(TextField));
+    // The page slides in: type once it has settled, as a person would.
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.enterText(
       find.byType(TextField),
       'PLFVukuZSVj3z2alpuXaNRsepY1uBpbyLy',
@@ -139,10 +145,50 @@ void main() {
     await tester.tap(find.text('Voir'));
     await _waitFor(tester, find.text('Suivi'), timeout: 120);
   });
+
+  testWidgets('an older Ka7 learns from GitHub that a newer one is out', (
+    tester,
+  ) async {
+    final folder = Directory.systemTemp.createTempSync('ka7_e2e_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final store = Ka7Store.inMemory();
+    addTearDown(store.close);
+    await store.setSetting('language', 'fr');
+    await store.setSetting('onboarding.done', '1');
+    final opened = <String>[];
+
+    await tester.pumpWidget(
+      _realApp(
+        store,
+        folder.path,
+        appVersion: '0.1.0',
+        latestRelease: fetchLatestRelease,
+        openUrl: opened.add,
+      ),
+    );
+    await _waitFor(tester, find.textContaining('est disponible'), timeout: 60);
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.tap(find.text('Télécharger la mise à jour'));
+    await tester.pump();
+
+    expect(
+      opened.single,
+      startsWith('https://github.com/jmRakoto/ka7/releases/tag/v'),
+    );
+  });
 }
 
 /// The same real engines, for every journey.
-Ka7App _realApp(Ka7Store store, String folder) => Ka7App(
+Ka7App _realApp(
+  Ka7Store store,
+  String folder, {
+  String? appVersion,
+  Future<AppRelease?> Function()? latestRelease,
+  void Function(String url)? openUrl,
+}) => Ka7App(
+  appVersion: appVersion,
+  latestRelease: latestRelease,
+  openUrl: openUrl,
   engineSetup: EngineBinaries(
     folder: '$folder/bin',
     run: Process.run,
@@ -171,5 +217,8 @@ Future<void> _waitFor(
     await tester.pump(const Duration(milliseconds: 250));
     if (finder.evaluate().isNotEmpty) return;
   }
-  throw TestFailure('Not found after ${timeout}s: $finder');
+  final shown = [
+    for (final text in tester.widgetList<Text>(find.byType(Text))) ?text.data,
+  ];
+  throw TestFailure('Not found after ${timeout}s: $finder\nOn screen: $shown');
 }
