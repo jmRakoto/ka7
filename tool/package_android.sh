@@ -9,9 +9,10 @@ cd "$(dirname "$0")/.."
 root=$PWD
 version=$(sed -n 's/^version: \([0-9.]*\).*/\1/p' app/pubspec.yaml)
 
-# ffmpeg fixed for 16 KB page devices: built once, then reused.
-if [[ ! -f app/android/app/src/main/jniLibs/arm64-v8a/libffmpeg.zip.so ]]; then
-  tool/android/fix_ffmpeg_16k.sh
+# Our small ffmpeg (ticket 001), instead of the 37 MB one of
+# youtubedl-android: built once, then reused.
+if [[ ! -f app/android/app/src/main/jniLibs/arm64-v8a/libffmpeg.so ]]; then
+  tool/android/build_ffmpeg.sh
 fi
 
 (cd app && fvm flutter build apk --release --split-per-abi \

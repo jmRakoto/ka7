@@ -30,9 +30,13 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
-            // Our copy, fixed for 16 KB pages (tool/android/fix_ffmpeg_16k.sh),
-            // replaces the one from youtubedl-android.
-            pickFirsts += "**/libffmpeg.zip.so"
+            // Our small ffmpeg (tool/android/build_ffmpeg.sh) replaces the
+            // 37 MB one of youtubedl-android.
+            pickFirsts += listOf(
+                "**/libffmpeg.so",
+                "**/libffprobe.so",
+                "**/libffmpeg.zip.so",
+            )
         }
     }
 

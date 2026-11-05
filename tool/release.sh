@@ -106,6 +106,10 @@ for apk in "${files[@]:0:2}"; do
 done
 
 # --- Notes, checksums taken from the files about to be sent -----------------
+# « 33 Mo »: what a phone on mobile data is about to download (ticket 001).
+size_of() {
+  awk -v b="$(stat -c %s "$1")" 'BEGIN { printf "%.0f Mo", b / 1e6 }'
+}
 notes=$(mktemp --suffix=.md)
 trap 'rm -f "$notes"' EXIT
 {
@@ -116,11 +120,11 @@ trap 'rm -f "$notes"' EXIT
 
 ### Android (7 ou plus récent)
 
-1. Sur le téléphone, télécharge **\`Ka7-$version-arm64-v8a.apk\`** ci-dessous (bon choix pour presque tous les téléphones depuis 2017).
+1. Sur le téléphone, télécharge **\`Ka7-$version-arm64-v8a.apk\`** ($(size_of "${files[0]}")) ci-dessous (bon choix pour presque tous les téléphones depuis 2017).
 2. Ouvre le fichier. Android demande d'autoriser l'installation depuis cette source (Chrome, Fichiers…) : accepte.
 3. Lance Ka7.
 
-Si Android affiche « app non compatible », prends **\`Ka7-$version-armeabi-v7a.apk\`** (vieux téléphones 32 bits).
+Si Android affiche « app non compatible », prends **\`Ka7-$version-armeabi-v7a.apk\`** ($(size_of "${files[1]}"), vieux téléphones 32 bits).
 
 Tu avais une version précédente ? Installe simplement par-dessus : ton historique est gardé.
 

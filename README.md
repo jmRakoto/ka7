@@ -62,7 +62,7 @@ Au premier lancement, l'app propose d'installer yt-dlp et ffmpeg (environ 180 Mo
 Prérequis :
 
 - La clé de publication `~/.config/ka7/ka7-release.jks` et son mot de passe dans `~/.config/ka7/key.properties` (autre emplacement : variable `KA7_KEY_PROPERTIES`). **Sans eux, l'APK est signé avec la clé de debug et ne peut pas mettre à jour les installations existantes.**
-- Le SDK Android avec le NDK et CMake, la première fois seulement : le script recompile ffmpeg pour les téléphones à pages de 16 Ko.
+- Le SDK Android avec le NDK, la première fois seulement : le script compile un ffmpeg réduit pour Android (`tool/android/build_ffmpeg.sh`, quelques minutes).
 
 ```bash
 tool/package_android.sh     # dist/Ka7-<version>-{arm64-v8a,armeabi-v7a,x86_64}.apk
