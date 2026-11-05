@@ -43,4 +43,20 @@ void main() {
 
     expect(folder, '/home/me/Music');
   });
+
+  test('Ka7 files in its own folder there, as on the phone', () async {
+    final music = await ka7Folder(
+      UserFolder.music,
+      home: '/home/me',
+      run: _answer(0, '/home/me/Musique\n'),
+    );
+    final videos = await ka7Folder(
+      UserFolder.videos,
+      home: '/home/me',
+      run: _answer(0, '/home/me\n'),
+    );
+
+    expect(music, '/home/me/Musique/Ka7');
+    expect(videos, '/home/me/Videos/Ka7');
+  });
 }

@@ -36,3 +36,11 @@ Future<String> userFolder(
     return fallback;
   }
 }
+
+/// Where Ka7 files by default: a Ka7 folder in the user's Music or Videos,
+/// as Music/Ka7 and Movies/Ka7 on the phone.
+Future<String> ka7Folder(
+  UserFolder kind, {
+  required RunProcess run,
+  required String home,
+}) async => '${await userFolder(kind, run: run, home: home)}/Ka7';

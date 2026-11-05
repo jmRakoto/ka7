@@ -48,8 +48,9 @@ Future<void> main() async {
 /// yt-dlp and ffmpeg, installed by the app when missing.
 Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
   final home = Platform.environment['HOME'] ?? support.path;
+  // ~/Musique/Ka7 and ~/Vidéos/Ka7: Ka7's own folders, as on the phone.
   Future<String> folder(UserFolder kind) =>
-      userFolder(kind, run: Process.run, home: home);
+      ka7Folder(kind, run: Process.run, home: home);
   final binaries = EngineBinaries(
     folder: '${support.path}/bin',
     run: Process.run,
