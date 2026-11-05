@@ -764,6 +764,24 @@ abstract class AppLocalizations {
   /// **'Choisie d\'avance dans l\'aperçu. Au-delà de 192 kbit/s, un MP3 tiré de YouTube ne sonne guère mieux, il pèse juste plus lourd.'**
   String get settingsQualityHelp;
 
+  /// No description provided for @entriesForgotten.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{{count} titre oublié} other{{count} titres oubliés}}'**
+  String entriesForgotten(int count);
+
+  /// No description provided for @entryForgotten.
+  ///
+  /// In fr, this message translates to:
+  /// **'« {title} » oublié'**
+  String entryForgotten(String title);
+
+  /// No description provided for @backToTop.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revenir en haut'**
+  String get backToTop;
+
   /// No description provided for @settingsTitle.
   ///
   /// In fr, this message translates to:

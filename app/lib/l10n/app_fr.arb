@@ -250,6 +250,23 @@
   "qualityOriginal": "Audio d'origine, sans réencodage",
   "settingsQuality": "Qualité",
   "settingsQualityHelp": "Choisie d'avance dans l'aperçu. Au-delà de 192 kbit/s, un MP3 tiré de YouTube ne sonne guère mieux, il pèse juste plus lourd.",
+  "entriesForgotten": "{count, plural, one{{count} titre oublié} other{{count} titres oubliés}}",
+  "@entriesForgotten": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "entryForgotten": "« {title} » oublié",
+  "@entryForgotten": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "backToTop": "Revenir en haut",
   "settingsTitle": "Réglages",
   "settingsLanguage": "Langue",
   "languageSystem": "Système",

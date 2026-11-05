@@ -528,6 +528,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
+          persist: false,
           content: Text(l10n.runRemoved),
           action: SnackBarAction(
             label: l10n.cancelButton,

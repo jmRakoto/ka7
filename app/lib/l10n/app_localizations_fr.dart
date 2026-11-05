@@ -453,6 +453,25 @@ class AppLocalizationsFr extends AppLocalizations {
       'Choisie d\'avance dans l\'aperçu. Au-delà de 192 kbit/s, un MP3 tiré de YouTube ne sonne guère mieux, il pèse juste plus lourd.';
 
   @override
+  String entriesForgotten(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count titres oubliés',
+      one: '$count titre oublié',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String entryForgotten(String title) {
+    return '« $title » oublié';
+  }
+
+  @override
+  String get backToTop => 'Revenir en haut';
+
+  @override
   String get settingsTitle => 'Réglages';
 
   @override

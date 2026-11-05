@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -633,6 +635,28 @@ void main() {
   });
 
   group('library', () {
+    /// Hafatra, Tsara and Tsy Ferana, already downloaded, in the library.
+    Future<void> openLibraryOfThreeForSwipes(WidgetTester tester) async {
+      for (final (i, (source, item)) in [
+        (hafatraVideo, hafatraVideo.items.single),
+        (_sungByErick, _sungByErick.items.single),
+        (ericMananaPlaylist, ericMananaPlaylist.items[1]),
+      ].indexed) {
+        await store.add(item.videoId, MediaFormat.mp3);
+        await store.record(
+          JobSucceeded(
+            PlannedDownload(source: source, item: item, index: 1),
+            '/home/me/Musique/${item.title}.mp3',
+          ),
+          MediaFormat.mp3,
+          DateTime(2026, 10, 30, 9 + i),
+        );
+      }
+      await pumpKa7(tester);
+      await tester.tap(_nav('Bibliothèque'));
+      await tester.pumpAndSettle();
+    }
+
     /// Opens the ⋮ menu of the row titled [title].
     Future<void> openActions(WidgetTester tester, String title) async {
       await tester.tap(
@@ -756,9 +780,98 @@ void main() {
       await openActions(tester, 'Hafatra');
       await tester.tap(find.text('Oublier'));
       await tester.pumpAndSettle();
+      expect(find.text('Hafatra'), findsNothing, reason: 'gone at once');
+      expect(find.text('Annuler'), findsOneWidget);
+      // Done once the message is gone without « Annuler ».
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
 
       expect(find.text("Rien n'a encore été téléchargé."), findsOneWidget);
       expect(await store.contains('Qm7tR2vLx9A', MediaFormat.mp3), isFalse);
+
+      await downloadHafatra(tester);
+      expect(find.text('Hafatra'), findsOneWidget, reason: 'downloaded again');
+    });
+
+    testWidgets('forgets an entry slid away, unless called back', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      await downloadHafatra(tester);
+
+      await tester.fling(find.text('Hafatra'), const Offset(-600, 0), 1500);
+      await tester.pumpAndSettle();
+      expect(find.text('Hafatra'), findsNothing);
+      expect(find.text('« Hafatra » oublié'), findsOneWidget);
+
+      await tester.tap(find.text('Annuler'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hafatra'), findsOneWidget);
+      expect(await store.contains('Qm7tR2vLx9A', MediaFormat.mp3), isTrue);
+    });
+
+    testWidgets('several slid away quickly come back together', (tester) async {
+      await openLibraryOfThreeForSwipes(tester);
+
+      await tester.fling(find.text('Hafatra'), const Offset(-600, 0), 1500);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.fling(find.text('Tsara'), const Offset(-600, 0), 1500);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Hafatra'), findsNothing);
+      expect(find.text('Tsara'), findsNothing);
+      expect(find.text('2 titres oubliés'), findsOneWidget);
+      expect(
+        await store.contains('Qm7tR2vLx9A', MediaFormat.mp3),
+        isTrue,
+        reason: 'nothing forgotten while it can be called back',
+      );
+
+      await tester.tap(find.text('Annuler'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hafatra'), findsOneWidget);
+      expect(find.text('Tsara'), findsOneWidget);
+    });
+
+    testWidgets('several slid away are forgotten once the message goes', (
+      tester,
+    ) async {
+      await openLibraryOfThreeForSwipes(tester);
+
+      await tester.fling(find.text('Hafatra'), const Offset(-600, 0), 1500);
+      await tester.pumpAndSettle();
+      await tester.fling(find.text('Tsara'), const Offset(-600, 0), 1500);
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      expect(await store.contains('Qm7tR2vLx9A', MediaFormat.mp3), isFalse);
+      expect(await store.contains('Xy7zA9bC1dE', MediaFormat.mp3), isFalse);
+      expect(find.text('Tsy Ferana'), findsOneWidget);
+    });
+
+    testWidgets('on desktop, forgets with a button instead of a slide', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      await pumpKa7(tester);
+      await downloadHafatra(tester);
+
+      expect(find.byType(Dismissible), findsNothing);
+      final pointer = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await pointer.addPointer(location: Offset.zero);
+      await pointer.moveTo(tester.getCenter(find.text('Hafatra')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Oublier'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hafatra'), findsNothing);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      expect(await store.contains('Qm7tR2vLx9A', MediaFormat.mp3), isFalse);
+      await pointer.removePointer();
+      debugDefaultTargetPlatformOverride = null;
     });
 
     group('selection', () {

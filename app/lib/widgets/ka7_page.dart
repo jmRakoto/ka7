@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter/scheduler.dart';
+
+import '../l10n/app_localizations.dart';
 import 'appear.dart';
 
 /// Below this width, pages tighten their margins (phone).
@@ -10,7 +13,7 @@ const _maxContentWidth = 880.0;
 
 /// A section of Ka7: a 26 px title, content at reading width, and an optional
 /// sticky footer holding the one main action.
-class Ka7Page extends StatelessWidget {
+class Ka7Page extends StatefulWidget {
   const Ka7Page({
     super.key,
     required this.title,
@@ -27,7 +30,46 @@ class Ka7Page extends StatelessWidget {
   final bool showBack;
 
   @override
+  State<Ka7Page> createState() => _Ka7PageState();
+}
+
+/// Scrolled this far: the way back to the top is offered.
+const _farDown = 1500.0;
+
+class _Ka7PageState extends State<Ka7Page> {
+  final _scroll = ScrollController();
+  final _since = SchedulerBinding.instance.currentFrameTimeStamp;
+  var _far = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(() {
+      final far = _scroll.offset > _farDown;
+      if (far != _far) setState(() => _far = far);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _toTop() => _scroll.animateTo(
+    0,
+    duration: MediaQuery.disableAnimationsOf(context)
+        ? const Duration(milliseconds: 1)
+        : const Duration(milliseconds: 450),
+    curve: Curves.easeOutCubic,
+  );
+
+  @override
   Widget build(BuildContext context) {
+    final title = widget.title;
+    final children = widget.children;
+    final footer = widget.footer;
+    final showBack = widget.showBack;
     final theme = Theme.of(context);
     final compact = MediaQuery.sizeOf(context).width < compactWidth;
     final side = compact ? 16.0 : 32.0;
@@ -45,36 +87,74 @@ class Ka7Page extends StatelessWidget {
         children: [
           const Positioned.fill(child: _Glow()),
           SafeArea(
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(side, compact ? 16 : 28, side, 32),
-              children: [
-                column(
-                  Row(
-                    children: [
-                      if (showBack) ...[
-                        const BackButton(),
-                        const SizedBox(width: 4),
-                      ],
-                      Expanded(
-                        child: Semantics(
-                          header: true,
-                          child: Text(
-                            title,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.4,
+            child: AppearClock(
+              since: _since,
+              // A thumb to drag through a long list.
+              child: Scrollbar(
+                controller: _scroll,
+                interactive: true,
+                child: ListView(
+                  controller: _scroll,
+                  padding: EdgeInsets.fromLTRB(
+                    side,
+                    compact ? 16 : 28,
+                    side,
+                    32,
+                  ),
+                  children: [
+                    column(
+                      Row(
+                        children: [
+                          if (showBack) ...[
+                            const BackButton(),
+                            const SizedBox(width: 4),
+                          ],
+                          Expanded(
+                            child: Semantics(
+                              header: true,
+                              child: Text(
+                                title,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.4,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 20),
+                    // A child's key goes up to the list: rows that move keep
+                    // their state, and long lists stay built on demand.
+                    for (final (i, child) in children.indexed)
+                      KeyedSubtree(
+                        key: switch (child.key) {
+                          final key? => ValueKey(('ka7page', key)),
+                          null => null,
+                        },
+                        child: column(Appear(index: i, child: child)),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                for (final (i, child) in children.indexed)
-                  column(Appear(index: i, child: child)),
-              ],
+              ),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: AnimatedScale(
+              scale: _far ? 1 : 0,
+              duration: const Duration(milliseconds: 180),
+              child: _far
+                  ? FloatingActionButton.small(
+                      heroTag: null,
+                      tooltip: AppLocalizations.of(context).backToTop,
+                      onPressed: _toTop,
+                      child: const Icon(Icons.arrow_upward),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ),
         ],
@@ -92,7 +172,7 @@ class Ka7Page extends StatelessWidget {
                 top: false,
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: side, vertical: 12),
-                  child: column(footer!),
+                  child: column(footer),
                 ),
               ),
             ),

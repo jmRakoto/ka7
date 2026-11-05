@@ -432,6 +432,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Picked in advance in the preview. Beyond 192 kbit/s, an MP3 from YouTube hardly sounds better, it only weighs more.';
 
   @override
+  String entriesForgotten(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries forgotten',
+      one: '$count entry forgotten',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String entryForgotten(String title) {
+    return '“$title” forgotten';
+  }
+
+  @override
+  String get backToTop => 'Back to top';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

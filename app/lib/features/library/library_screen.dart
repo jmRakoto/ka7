@@ -5,7 +5,6 @@ import 'package:ka7_store/ka7_store.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/failure_text.dart';
 import '../../theme/ka7_theme.dart';
-import '../../widgets/appear.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/ka7_page.dart';
 import '../../widgets/status_pill.dart';
@@ -72,9 +71,59 @@ class _LibraryScreenState extends State<LibraryScreen> {
     super.dispose();
   }
 
-  Future<void> _forget(HistoryItem item) async {
-    await widget.store.forget(item.videoId);
-    _reload();
+  /// Forgotten on screen at once; in the store only once the message closes
+  /// without « Annuler ». Quick swipes gather in one message, called back
+  /// together.
+  final Map<String, String> _batch = {};
+
+  /// Forgotten for good: kept out of sight without reloading the list.
+  final Set<String> _gone = {};
+
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? _message;
+
+  void _forget(HistoryItem item) {
+    final l10n = AppLocalizations.of(context);
+    setState(() => _batch[item.videoId] = item.title);
+    final batch = {..._batch};
+    final messenger = ScaffoldMessenger.of(context);
+    // The previous message makes way; its entries stay in this batch.
+    _message?.close();
+    final message = _message = messenger.showSnackBar(
+      SnackBar(
+        // Closes by itself, even with its action: then the entries go.
+        persist: false,
+        content: Text(
+          batch.length == 1
+              ? l10n.entryForgotten(batch.values.single)
+              : l10n.entriesForgotten(batch.length),
+        ),
+        action: SnackBarAction(label: l10n.cancelButton, onPressed: () {}),
+      ),
+    );
+    message.closed.then((reason) async {
+      // Made way for the next one: the batch goes on.
+      if (!identical(message, _message)) return;
+      _message = null;
+      final ids = {..._batch.keys};
+      _batch.clear();
+      if (reason == SnackBarClosedReason.action) {
+        if (mounted) setState(() {});
+        return;
+      }
+      if (mounted) setState(() => _gone.addAll(ids));
+      for (final id in ids) {
+        await widget.store.forget(id);
+      }
+      // Once the store has them gone, so can this list: downloaded again
+      // later, they show.
+      if (!mounted) return;
+      final fresh = _load();
+      setState(() {
+        _items = fresh;
+      });
+      await fresh;
+      if (mounted) setState(() => _gone.removeAll(ids));
+    });
   }
 
   /// Videos picked for removal; null when not picking.
@@ -217,126 +266,258 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Ka7Page(
-      title: l10n.libraryTitle,
-      children: [
-        TextField(
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search),
-            hintText: l10n.librarySearch,
-          ),
-          onChanged: (text) {
-            _search = text.trim();
-            _reload();
-          },
-        ),
-        const SizedBox(height: 12),
-        FutureBuilder(
-          future: _items,
-          builder: (context, snapshot) {
-            final items = snapshot.data;
-            if (items == null) return const SizedBox.shrink();
-            if (items.isEmpty && _search.isEmpty) {
-              return EmptyState(l10n.libraryEmpty);
-            }
-            final shown = items.where(_shown).toList();
-            // Newest first already: each day in its own card.
-            final days = <String, List<HistoryItem>>{};
-            for (final item in shown) {
-              days
-                  .putIfAbsent(_dayOf(item.at.toLocal(), l10n), () => [])
-                  .add(item);
-            }
-            final picked = _picked;
-            var index = 0;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _filters(items),
-                AnimatedSwitcher(
-                  duration: MediaQuery.disableAnimationsOf(context)
-                      ? Duration.zero
-                      : const Duration(milliseconds: 200),
-                  child: KeyedSubtree(
-                    key: ValueKey(picked == null),
-                    child: _pickBar(shown),
+    final search = TextField(
+      key: const ValueKey('search'),
+      decoration: InputDecoration(
+        prefixIcon: const Icon(Icons.search),
+        hintText: l10n.librarySearch,
+      ),
+      onChanged: (text) {
+        _search = text.trim();
+        _reload();
+      },
+    );
+    return FutureBuilder(
+      future: _items,
+      builder: (context, snapshot) {
+        final loaded = snapshot.data;
+        // Forgotten or about to be: out of the list and the counts.
+        final items = [
+          for (final item in loaded ?? const <HistoryItem>[])
+            if (!_batch.containsKey(item.videoId) &&
+                !_gone.contains(item.videoId))
+              item,
+        ];
+        final shown = items.where(_shown).toList();
+        // Newest first already: each day in its own card.
+        final days = <String, List<HistoryItem>>{};
+        for (final item in shown) {
+          days.putIfAbsent(_dayOf(item.at.toLocal(), l10n), () => []).add(item);
+        }
+        final picked = _picked;
+        // One child of the page per row: a long library is built as it
+        // scrolls, and a row that goes does not rebuild the others.
+        return Ka7Page(
+          title: l10n.libraryTitle,
+          children: [
+            search,
+            const SizedBox(height: 12),
+            if (loaded == null)
+              const SizedBox.shrink()
+            else if (items.isEmpty && _search.isEmpty)
+              EmptyState(l10n.libraryEmpty)
+            else ...[
+              _filters(items),
+              AnimatedSwitcher(
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : const Duration(milliseconds: 200),
+                child: KeyedSubtree(
+                  key: ValueKey(picked == null),
+                  child: _pickBar(shown),
+                ),
+              ),
+              if (shown.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    l10n.libraryNoMatch,
+                    style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ),
-                if (shown.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+              for (final MapEntry(key: day, value: entries)
+                  in days.entries) ...[
+                Padding(
+                  key: ValueKey(('day', day)),
+                  padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+                  child: Semantics(
+                    header: true,
                     child: Text(
-                      l10n.libraryNoMatch,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      day,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ),
-                for (final MapEntry(key: day, value: entries)
-                    in days.entries) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
-                    child: Semantics(
-                      header: true,
-                      child: Text(
-                        day,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.4,
-                        ),
+                ),
+                for (final (i, item) in entries.indexed)
+                  _CardSlice(
+                    key: ValueKey((item.videoId, item.format, item.at)),
+                    first: i == 0,
+                    last: i == entries.length - 1,
+                    child: _Forgettable(
+                      key: ValueKey((
+                        'row',
+                        item.videoId,
+                        item.format,
+                        item.at,
+                      )),
+                      // Picking: the boxes take the gestures.
+                      onForget: picked != null ? null : () => _forget(item),
+                      child: _HistoryTile(
+                        item: item,
+                        thumbnail: widget.thumbnail,
+                        picked: picked?.contains(item.videoId),
+                        onPick: picked == null
+                            ? null
+                            : (keep) => _pick(item.videoId, keep),
+                        onLongPress: picked != null
+                            ? null
+                            : () => setState(() => _picked = {item.videoId}),
+                        onOpen: item.path == null || widget.openFolder == null
+                            ? null
+                            : () => widget.openFolder!(
+                                item.path!.substring(
+                                  0,
+                                  item.path!.lastIndexOf('/'),
+                                ),
+                              ),
+                        onForget: () => _forget(item),
+                        onUpdate:
+                            item.playlistId == null ||
+                                widget.onUpdatePlaylist == null
+                            ? null
+                            : () => widget.onUpdatePlaylist!(item.playlistId!),
                       ),
                     ),
                   ),
-                  Card(
-                    margin: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        for (final (i, item) in entries.indexed) ...[
-                          if (i > 0) const Divider(height: 1, indent: 88),
-                          Appear(
-                            index: index++,
-                            child: _HistoryTile(
-                              item: item,
-                              thumbnail: widget.thumbnail,
-                              picked: picked?.contains(item.videoId),
-                              onPick: picked == null
-                                  ? null
-                                  : (keep) => _pick(item.videoId, keep),
-                              onLongPress: picked != null
-                                  ? null
-                                  : () => setState(
-                                      () => _picked = {item.videoId},
-                                    ),
-                              onOpen:
-                                  item.path == null || widget.openFolder == null
-                                  ? null
-                                  : () => widget.openFolder!(
-                                      item.path!.substring(
-                                        0,
-                                        item.path!.lastIndexOf('/'),
-                                      ),
-                                    ),
-                              onForget: () => _forget(item),
-                              onUpdate:
-                                  item.playlistId == null ||
-                                      widget.onUpdatePlaylist == null
-                                  ? null
-                                  : () => widget.onUpdatePlaylist!(
-                                      item.playlistId!,
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
               ],
-            );
-          },
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// One row of a day's card: the card's border and background, rounded at
+/// its first and last row, a thin line between rows.
+class _CardSlice extends StatelessWidget {
+  const _CardSlice({
+    super.key,
+    required this.first,
+    required this.last,
+    required this.child,
+  });
+
+  final bool first;
+  final bool last;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    const radius = Radius.circular(12);
+    final side = BorderSide(color: scheme.outlineVariant);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.vertical(
+          top: first ? radius : Radius.zero,
+          bottom: last ? radius : Radius.zero,
         ),
-      ],
+        border: Border(
+          left: side,
+          right: side,
+          top: first ? side : BorderSide.none,
+          bottom: last ? side : BorderSide.none,
+        ),
+      ),
+      // Ripples of the row show on the card's background.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [if (!first) const Divider(height: 1, indent: 88), child],
+        ),
+      ),
+    );
+  }
+}
+
+/// Forgets an entry the way the device does it: slid away on a touch
+/// screen, a 🗑 button under the pointer on desktop.
+class _Forgettable extends StatefulWidget {
+  const _Forgettable({
+    required super.key,
+    required this.onForget,
+    required this.child,
+  });
+
+  final VoidCallback? onForget;
+  final Widget child;
+
+  @override
+  State<_Forgettable> createState() => _ForgettableState();
+}
+
+class _ForgettableState extends State<_Forgettable> {
+  var _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final forget = widget.onForget;
+    if (forget == null) return widget.child;
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final desktop = switch (Theme.of(context).platform) {
+      TargetPlatform.linux ||
+      TargetPlatform.macOS ||
+      TargetPlatform.windows => true,
+      _ => false,
+    };
+    if (desktop) {
+      return MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Stack(
+          alignment: Alignment.centerRight,
+          children: [
+            widget.child,
+            // Left of the ⋮ menu, only while the pointer is on the row.
+            Positioned(
+              right: 48,
+              child: AnimatedOpacity(
+                opacity: _hovered ? 1 : 0,
+                duration: const Duration(milliseconds: 120),
+                child: IgnorePointer(
+                  ignoring: !_hovered,
+                  child: IconButton(
+                    tooltip: l10n.forget,
+                    onPressed: forget,
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    Widget behind(Alignment alignment) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      alignment: alignment,
+      color: scheme.surfaceContainerHighest,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.delete_outline, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(l10n.forget, style: TextStyle(color: scheme.onSurfaceVariant)),
+        ],
+      ),
+    );
+    return Dismissible(
+      key: widget.key!,
+      // The gap closes quickly: the next row is ready for the next swipe.
+      resizeDuration: const Duration(milliseconds: 160),
+      background: behind(Alignment.centerLeft),
+      secondaryBackground: behind(Alignment.centerRight),
+      onDismissed: (_) => forget(),
+      child: widget.child,
     );
   }
 }
