@@ -10,11 +10,15 @@ class FakeExtractor implements Extractor {
   @override
   String get name => 'fake';
 
+  /// URLs read, in order.
+  final probed = <String>[];
+
   @override
-  Future<Probe> probe(MediaEntry entry) async => switch (answers[entry.url]) {
-    final Probe probe => probe,
-    final Exception error => throw error,
-    final Error error => throw error,
-    _ => throw StateError('No answer for ${entry.url}'),
-  };
+  Future<Probe> probe(MediaEntry entry) async =>
+      switch (answers[(probed..add(entry.url)).last]) {
+        final Probe probe => probe,
+        final Exception error => throw error,
+        final Error error => throw error,
+        _ => throw StateError('No answer for ${entry.url}'),
+      };
 }

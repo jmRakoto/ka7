@@ -132,10 +132,18 @@ class _PreviewScreenState extends State<PreviewScreen> {
   void _searchAgain() {
     final query = _query.text.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (query.isEmpty) return;
-    final entry = SearchEntry(query, query: query);
     _query.clear();
     widget.onSearch?.call(query);
-    if (_entries.any((e) => e.url == entry.url)) return;
+    // Made before (YouTube ignores the case): its results come back on top,
+    // under the field, read once, ticks kept.
+    final before = _entries.indexWhere(
+      (e) => e is SearchEntry && e.query.toLowerCase() == query.toLowerCase(),
+    );
+    if (before >= 0) {
+      setState(() => _entries.insert(0, _entries.removeAt(before)));
+      return;
+    }
+    final entry = SearchEntry(query, query: query);
     setState(() => _entries.insert(0, entry));
     _read(entry);
   }

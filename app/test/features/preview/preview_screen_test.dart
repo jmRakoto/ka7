@@ -1091,6 +1091,60 @@ void main() {
     });
   });
 
+  testWidgets('brings a search made again back to the top, ticks kept', (
+    tester,
+  ) async {
+    const first = SearchEntry('Hafatra', query: 'Hafatra');
+    const second = SearchEntry('Tsy Ferana', query: 'Tsy Ferana');
+    final extractor = FakeExtractor({
+      first.url: Probe(
+        title: 'Hafatra',
+        isSearch: true,
+        items: hafatraVideo.items,
+      ),
+      second.url: Probe(
+        title: 'Tsy Ferana',
+        isSearch: true,
+        items: [ericMananaPlaylist.items[1]],
+      ),
+    });
+    await pumpApp(
+      tester,
+      PreviewScreen(
+        entries: const [first],
+        extractor: extractor,
+        onDownload: (_, _, _) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Hafatra'));
+    await tester.pump();
+    Future<void> search(String query) async {
+      await tester.enterText(find.byType(TextField), query);
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+    }
+
+    double top(String header) => tester.getTopLeft(find.text(header)).dy;
+
+    await search('Tsy Ferana');
+    expect(top('Recherche : Tsy Ferana'), lessThan(top('Recherche : Hafatra')));
+
+    await search('hafatra ');
+
+    expect(top('Recherche : Hafatra'), lessThan(top('Recherche : Tsy Ferana')));
+    expect(find.text('Recherche : Hafatra'), findsOneWidget);
+    expect(extractor.probed.where((e) => e == first.url), hasLength(1));
+    expect(
+      tester
+          .widget<CheckboxListTile>(
+            find.widgetWithText(CheckboxListTile, 'Hafatra'),
+          )
+          .value,
+      isTrue,
+    );
+  });
+
   testWidgets('offers no search field when previewing links', (tester) async {
     await pumpApp(
       tester,
