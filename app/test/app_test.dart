@@ -1199,6 +1199,36 @@ void main() {
       expect(await store.setting('folder.mp3'), '/data/Mozika');
     });
 
+    testWidgets('goes back to the default music folder', (tester) async {
+      await pumpKa7(tester);
+      await openSettings(tester);
+      final change = find.byTooltip('Changer le dossier de la musique');
+      final reset = find.byTooltip('Revenir au dossier par défaut');
+      await tester.scrollUntilVisible(
+        change,
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.ensureVisible(change);
+      await tester.pumpAndSettle();
+      expect(reset, findsNothing, reason: 'already the default');
+
+      picked = '/data/Mozika';
+      await tester.tap(change);
+      await tester.pumpAndSettle();
+      await tester.tap(reset);
+      await tester.pumpAndSettle();
+
+      expect(reset, findsNothing);
+      expect(find.text('/home/me/Musique'), findsOneWidget);
+      expect(await store.setting('folder.mp3'), isNull);
+      await download(tester, 'Qm7tR2vLx9A');
+      expect(
+        downloader.requests.single.destination,
+        '/home/me/Musique/Hafatra.mp3',
+      );
+    });
+
     testWidgets('keeps the folder when the picker is closed', (tester) async {
       await pumpKa7(tester);
       await openSettings(tester);
@@ -1405,7 +1435,18 @@ void main() {
       expect(await store.setting('theme'), 'dark');
     });
 
-    testWidgets('files by artist when asked to', (tester) async {
+    testWidgets('files by artist unless told otherwise', (tester) async {
+      await pumpKa7(tester);
+
+      await download(tester, 'Xy7zA9bC1dE');
+
+      expect(
+        downloader.requests.single.destination,
+        '/home/me/Musique/Erick Manana/Tsara.mp3',
+      );
+    });
+
+    testWidgets('files by playlist when asked to', (tester) async {
       await pumpKa7(tester);
       await openSettings(tester);
 
@@ -1413,15 +1454,15 @@ void main() {
         find.textContaining('chaîne YouTube qui a publié'),
         findsOneWidget,
       );
-      await tester.tap(find.text('Par artiste'));
+      await tester.tap(find.text('Par playlist'));
       await tester.pumpAndSettle();
       await download(tester, 'Xy7zA9bC1dE');
 
       expect(
         downloader.requests.single.destination,
-        '/home/me/Musique/Erick Manana/Tsara.mp3',
+        '/home/me/Musique/Tsara.mp3',
       );
-      expect(await store.setting('folders.layout'), 'artist');
+      expect(await store.setting('folders.layout'), 'playlist');
     });
 
     testWidgets('downloads two at a time by default', (tester) async {

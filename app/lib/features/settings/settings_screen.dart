@@ -267,10 +267,21 @@ class SettingsScreen extends StatelessWidget {
                     icon: icon,
                     title: label,
                     detail: settings.folderFor(format),
-                    trailing: IconButton.filledTonal(
-                      tooltip: tooltip,
-                      onPressed: () => _changeFolder(format),
-                      icon: const Icon(Icons.drive_folder_upload_outlined),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (settings.hasOwnFolder(format))
+                          IconButton(
+                            tooltip: l10n.resetFolder,
+                            onPressed: () => settings.setFolder(format, null),
+                            icon: const Icon(Icons.restart_alt),
+                          ),
+                        IconButton.filledTonal(
+                          tooltip: tooltip,
+                          onPressed: () => _changeFolder(format),
+                          icon: const Icon(Icons.drive_folder_upload_outlined),
+                        ),
+                      ],
                     ),
                   ),
               ],

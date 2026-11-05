@@ -40,8 +40,9 @@ class AppSettings extends ChangeNotifier {
     ThemeMode.values.asNameMap()[await store.setting(_themeKey)] ??
         ThemeMode.system,
     await store.setting(_onboardedKey) != null,
+    // By artist unless the user chose otherwise.
     FolderLayout.values.asNameMap()[await store.setting(_layoutKey)] ??
-        FolderLayout.playlist,
+        FolderLayout.artist,
     {
       for (final format in [MediaFormat.mp3, MediaFormat.mp4])
         if ((
@@ -118,16 +119,13 @@ class AppSettings extends ChangeNotifier {
     );
   }
 
-  /// Folders per playlist, or per artist.
+  /// Folders per artist (the default), or per playlist.
   FolderLayout get layout => _layout;
 
   Future<void> setLayout(FolderLayout layout) async {
     _layout = layout;
     notifyListeners();
-    await _store.setSetting(
-      _layoutKey,
-      layout == FolderLayout.playlist ? null : layout.name,
-    );
+    await _store.setSetting(_layoutKey, layout.name);
   }
 
   /// The welcome pages were seen (or skipped) once.
@@ -184,9 +182,20 @@ class AppSettings extends ChangeNotifier {
     await _store.setSetting(_languageKey, language);
   }
 
-  Future<void> setFolder(MediaFormat format, String folder) async {
+  /// Whether the user picked a folder other than the default.
+  bool hasOwnFolder(MediaFormat format) {
     final kind = _folderKind(format);
-    _folders[kind] = folder;
+    return _folders[kind] != null && _folders[kind] != _defaultFolders[kind];
+  }
+
+  /// [folder] null: back to the default.
+  Future<void> setFolder(MediaFormat format, String? folder) async {
+    final kind = _folderKind(format);
+    if (folder == null) {
+      _folders.remove(kind);
+    } else {
+      _folders[kind] = folder;
+    }
     notifyListeners();
     await _store.setSetting(_folderKey(kind), folder);
   }
