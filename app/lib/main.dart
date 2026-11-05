@@ -13,6 +13,7 @@ import 'app.dart';
 import 'platform/android_background.dart';
 import 'platform/android_ytdlp.dart';
 import 'platform/desktop_notifier.dart';
+import 'platform/desktop_open.dart';
 import 'platform/media_store.dart';
 import 'platform/open_url.dart';
 import 'platform/shared_links.dart';
@@ -47,14 +48,19 @@ Future<void> main() async {
 
 /// yt-dlp and ffmpeg, installed by the app when missing.
 Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
-  final home = Platform.environment['HOME'] ?? support.path;
+  final windows = Platform.isWindows;
+  final home =
+      Platform.environment[windows ? 'USERPROFILE' : 'HOME'] ?? support.path;
   // ~/Musique/Ka7 and ~/Vidéos/Ka7: Ka7's own folders, as on the phone.
   Future<String> folder(UserFolder kind) =>
-      ka7Folder(kind, run: Process.run, home: home);
+      ka7Folder(kind, run: Process.run, home: home, windows: windows);
+  Future<void> open(String target) =>
+      openOnDesktop(target, run: Process.run, windows: windows);
   final binaries = EngineBinaries(
     folder: '${support.path}/bin',
     run: Process.run,
     fetch: httpFetch,
+    windows: windows,
   );
   return Ka7App(
     thumbnail: _thumbnail,
@@ -74,13 +80,14 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
       MediaFormat.mp4: await folder(UserFolder.videos),
     },
     pickFolder: FilePicker.getDirectoryPath,
-    openFolder: (path) => Process.run('xdg-open', [path]),
+    openFolder: open,
     acceptDrops: true,
     appVersion: _appVersion,
     latestRelease: fetchLatestRelease,
-    openUrl: (url) => Process.run('xdg-open', [url]),
+    openUrl: open,
     pickLinksFile: _pickLinksFile,
-    notifier: DesktopNotifier(run: Process.run),
+    // Linux only (notify-send); Windows: nothing yet.
+    notifier: windows ? null : DesktopNotifier(run: Process.run),
     // Original audio too (no re-encoding), as on Android.
     formats: const [MediaFormat.mp3, MediaFormat.m4a, MediaFormat.mp4],
     // Deleted by hand: no longer « already there ».

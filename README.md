@@ -97,6 +97,10 @@ Le script refuse si des changements ne sont pas commités, si la branche n'est p
 
 Les utilisateurs téléchargent ensuite depuis `https://github.com/jmRakoto/ka7/releases`.
 
+### 6. Windows
+
+Flutter ne construit pas Windows depuis Linux : GitHub le fait. Dès que `tool/release.sh` a publié la version, le workflow « Windows » (`.github/workflows/windows.yml`) construit `Ka7-<version>-windows-setup.exe` (installateur) et `Ka7-<version>-windows-x64.zip`, les ajoute à la release et complète ses notes. Suivi : onglet Actions du dépôt, ou `gh run list --workflow windows.yml`. Les fichiers ne sont pas signés : Windows affiche un avertissement au premier lancement.
+
 ### La clé de publication
 
 Elle est irremplaçable. Perdre `ka7-release.jks` ou son mot de passe oblige chaque utilisateur à désinstaller Ka7, donc à perdre son historique, pour installer une nouvelle version. **La sauvegarder hors de cette machine** (clé USB, gestionnaire de mots de passe), avec `key.properties`.

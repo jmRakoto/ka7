@@ -24,7 +24,7 @@ final class FakeRun {
 
   Future<ProcessResult> call(String executable, List<String> arguments) async {
     calls.add([executable, ...arguments]);
-    if (executable == 'which') {
+    if (executable == 'which' || executable == 'where') {
       final path = onPath[arguments.single];
       return ProcessResult(1, path == null ? 1 : 0, path ?? '', '');
     }
@@ -175,6 +175,86 @@ void main() {
       );
 
       expect(folder.listSync(), isEmpty);
+    });
+  });
+
+  group('windows', () {
+    const ytDlpExe =
+        'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+    const ffmpegZip =
+        'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/'
+        'ffmpeg-master-latest-win64-lgpl.zip';
+
+    EngineBinaries windows(FakeRun run, [FakeFetch? fetch]) => EngineBinaries(
+      folder: folder.path,
+      run: run.call,
+      fetch: (fetch ?? FakeFetch({})).call,
+      windows: true,
+    );
+
+    test('looks for the .exe copies, then asks where', () async {
+      File('${folder.path}/yt-dlp.exe').createSync();
+      final run = FakeRun(
+        onPath: {
+          'ffmpeg': 'C:\\ffmpeg\\bin\\ffmpeg.exe\r\nC:\\other\\ffmpeg.exe\r\n',
+        },
+      );
+
+      final status = await windows(run).check();
+
+      expect(status.ytDlp, '${folder.path}/yt-dlp.exe');
+      expect(status.ffmpeg, 'C:\\ffmpeg\\bin\\ffmpeg.exe');
+      expect(run.calls.map((c) => c.first).toSet(), {'where'});
+    });
+
+    test('downloads yt-dlp.exe, nothing to make executable', () async {
+      final fetch = FakeFetch({ytDlpExe: List.filled(10, 7)});
+      final run = FakeRun();
+
+      await windows(run, fetch).install(EngineTool.ytDlp).drain<void>();
+
+      expect(fetch.asked, [ytDlpExe]);
+      expect(File('${folder.path}/yt-dlp.exe').lengthSync(), 10);
+      expect(run.calls, isEmpty);
+    });
+
+    test('extracts ffmpeg.exe and ffprobe.exe from the LGPL zip', () async {
+      final run = FakeRun(
+        onTar: (_) {
+          File('${folder.path}/ffmpeg.exe').createSync();
+          File('${folder.path}/ffprobe.exe').createSync();
+        },
+      );
+      final fetch = FakeFetch({ffmpegZip: List.filled(10, 1)});
+
+      await windows(run, fetch).install(EngineTool.ffmpeg).drain<void>();
+
+      // Windows' own tar (bsdtar) reads zip files, wildcards by default.
+      expect(run.calls.single, [
+        'tar',
+        '-xf',
+        '${folder.path}/ffmpeg.zip',
+        '-C',
+        folder.path,
+        '--strip-components=2',
+        '*/bin/ffmpeg.exe',
+        '*/bin/ffprobe.exe',
+      ]);
+      expect(folder.listSync().map((e) => e.uri.pathSegments.last).toSet(), {
+        'ffmpeg.exe',
+        'ffprobe.exe',
+      });
+      expect((await windows(run).check()).ffmpeg, '${folder.path}/ffmpeg.exe');
+    });
+
+    test('self-updates yt-dlp.exe', () async {
+      File('${folder.path}/yt-dlp.exe').createSync();
+      final run = FakeRun();
+
+      expect(await windows(run).updateYtDlp(), isTrue);
+      expect(run.calls, [
+        ['${folder.path}/yt-dlp.exe', '-U'],
+      ]);
     });
   });
 

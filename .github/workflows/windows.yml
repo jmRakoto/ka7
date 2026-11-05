@@ -1,0 +1,128 @@
+# Windows build of Ka7: Flutter only builds Windows apps on Windows.
+#
+# - A release published (tool/release.sh): builds that tag, adds the
+#   installer and the zip to the release, and the Windows part of its notes.
+# - By hand (Actions → Windows → Run workflow): builds the chosen branch or
+#   tag and keeps the files as a downloadable artifact; with "upload" and a
+#   tag, adds them to that tag's release.
+name: Windows
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Add the files to the release of the chosen tag
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+      # Accents in the release notes, read and written by Python.
+      PYTHONUTF8: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version
+        id: version
+        run: |
+          version=$(sed -n 's/^version: \([0-9.]*\)+[0-9]*$/\1/p' app/pubspec.yaml)
+          [[ -n $version ]] || { echo "no version in app/pubspec.yaml"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Ka7 $version from $GITHUB_REF_NAME"
+
+      # Same Flutter as the Linux and Android packages.
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.4
+          cache: true
+
+      - name: Build
+        run: |
+          flutter pub get
+          cd app
+          flutter build windows --release \
+            --dart-define=KA7_VERSION=${{ steps.version.outputs.version }}
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.version }}'
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item -Recurse app/build/windows/x64/runner/Release dist/Ka7
+          Compress-Archive -Path dist/Ka7 -DestinationPath "dist/Ka7-$v-windows-x64.zip"
+          Remove-Item -Recurse dist/Ka7
+
+      - name: Installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+          }
+          & $iscc /Qp "/DVersion=${{ steps.version.outputs.version }}" `
+            "/DSource=$PWD\app\build\windows\x64\runner\Release" `
+            "/DOutput=$PWD\dist" packaging\windows\ka7.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Checksums
+        run: cd dist && sha256sum * | tee SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ka7-${{ steps.version.outputs.version }}-windows
+          path: |
+            dist/*.exe
+            dist/*.zip
+
+      - name: Add to the release
+        if: github.event_name == 'release' || (inputs.upload && github.ref_type == 'tag')
+        run: |
+          v=${{ steps.version.outputs.version }}
+          tag=$GITHUB_REF_NAME
+          gh release upload "$tag" --clobber \
+            "dist/Ka7-$v-windows-setup.exe" "dist/Ka7-$v-windows-x64.zip"
+          notes=$(gh release view "$tag" --json body -q .body)
+          if [[ $notes != *"### Windows"* ]]; then
+            sums=$(cd dist && sha256sum "Ka7-$v-windows-setup.exe" "Ka7-$v-windows-x64.zip")
+            windows=$(cat <<EOF
+
+          ### Windows (10 ou plus récent, 64 bits)
+
+          1. Télécharge **\`Ka7-$v-windows-setup.exe\`** ci-dessous et ouvre-le.
+          2. Windows peut afficher « Windows a protégé votre ordinateur » : clique sur **Informations complémentaires**, puis **Exécuter quand même**.
+          3. L'installation ne demande pas de droits administrateur. Ka7 apparaît dans le menu Démarrer.
+
+          Sans installation : \`Ka7-$v-windows-x64.zip\`, à décompresser, puis lance \`ka7.exe\`.
+
+          Au premier lancement, l'app propose d'installer yt-dlp et ffmpeg (une seule fois).
+
+          SHA-256 :
+          \`\`\`
+          $sums
+          \`\`\`
+          EOF
+            )
+            # Before the checksums of the other files when the notes have them.
+            body=$(printf '%s\n' "$notes" | python -c "
+          import sys
+          notes = sys.stdin.read()
+          extra = sys.argv[1]
+          mark = '## Empreintes SHA-256'
+          print(notes.replace(mark, extra.strip('\n') + '\n\n' + mark, 1)
+                if mark in notes else notes + '\n' + extra)
+          " "$(printf '%s\n' "$windows" | sed 's/^          //')")
+            gh release edit "$tag" --notes "$body"
+          fi

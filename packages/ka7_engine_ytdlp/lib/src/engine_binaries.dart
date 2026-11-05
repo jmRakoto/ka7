@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'ytdlp_extractor.dart';
@@ -59,12 +60,18 @@ final class EngineBinaries implements EngineSetup {
     required this.folder,
     required this.run,
     required this.fetch,
+    this.windows = false,
   });
 
   /// Folder the app manages its own copies in.
   final String folder;
   final RunProcess run;
   final Fetch fetch;
+
+  /// Windows: `.exe` programs, a zip for ffmpeg, `where` instead of `which`.
+  final bool windows;
+
+  String get _exe => windows ? '.exe' : '';
 
   @override
   Future<EngineStatus> check() async =>
@@ -88,8 +95,14 @@ final class EngineBinaries implements EngineSetup {
 
   Future<void> _install(EngineTool tool, void Function(double) report) async {
     final (url, target) = switch (tool) {
-      EngineTool.ytDlp => (_ytDlpUrl, '$folder/yt-dlp'),
-      EngineTool.ffmpeg => (_ffmpegUrl, '$folder/ffmpeg.tar.xz'),
+      EngineTool.ytDlp => (
+        windows ? _ytDlpWindowsUrl : _ytDlpUrl,
+        '$folder/yt-dlp$_exe',
+      ),
+      EngineTool.ffmpeg => (
+        windows ? _ffmpegWindowsUrl : _ffmpegUrl,
+        windows ? '$folder/ffmpeg.zip' : '$folder/ffmpeg.tar.xz',
+      ),
     };
     await Directory(folder).create(recursive: true);
     final part = File('$target.part');
@@ -100,16 +113,20 @@ final class EngineBinaries implements EngineSetup {
       rethrow;
     }
     final file = await part.rename(target);
-    if (tool == EngineTool.ytDlp) return _makeExecutable(file.path);
+    if (tool == EngineTool.ytDlp) {
+      if (windows) return;
+      return _makeExecutable(file.path);
+    }
+    // Windows' own tar (bsdtar) reads zip files, patterns by default.
     final tar = await run('tar', [
-      '-xJf',
+      if (windows) '-xf' else '-xJf',
       file.path,
       '-C',
       folder,
       '--strip-components=2',
-      '--wildcards',
-      '*/bin/ffmpeg',
-      '*/bin/ffprobe',
+      if (!windows) '--wildcards',
+      '*/bin/ffmpeg$_exe',
+      '*/bin/ffprobe$_exe',
     ]);
     await file.delete();
     if (tar.exitCode != 0) throw InstallFailure('tar: ${tar.stderr}');
@@ -147,18 +164,22 @@ final class EngineBinaries implements EngineSetup {
   /// Self-updates the copy of yt-dlp the app installed; true when it ran
   /// without error. A yt-dlp from the PATH belongs to the system: left alone.
   Future<bool> updateYtDlp() async {
-    final managed = File('$folder/yt-dlp');
+    final managed = File('$folder/yt-dlp$_exe');
     if (!managed.existsSync()) return false;
     final update = await run(managed.path, ['-U']);
     return update.exitCode == 0;
   }
 
   Future<String?> _find(String name) async {
-    final managed = File('$folder/$name');
+    final managed = File('$folder/$name$_exe');
     if (managed.existsSync()) return managed.path;
     try {
-      final which = await run('which', [name]);
-      final path = (which.stdout as String).trim();
+      final which = await run(windows ? 'where' : 'which', [name]);
+      // `where` lists every match, one per line: the first one wins.
+      final path = const LineSplitter()
+          .convert(which.stdout as String)
+          .map((line) => line.trim())
+          .firstWhere((line) => line.isNotEmpty, orElse: () => '');
       return which.exitCode == 0 && path.isNotEmpty ? path : null;
     } on ProcessException {
       return null;
@@ -170,10 +191,17 @@ final class EngineBinaries implements EngineSetup {
 const _ytDlpUrl =
     'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';
 
+const _ytDlpWindowsUrl =
+    'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+
 /// LGPL build of ffmpeg: no GPL obligation on Ka7.
 const _ffmpegUrl =
     'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/'
     'ffmpeg-master-latest-linux64-lgpl.tar.xz';
+
+const _ffmpegWindowsUrl =
+    'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/'
+    'ffmpeg-master-latest-win64-lgpl.zip';
 
 Future<void> _remove(File file) async {
   if (file.existsSync()) await file.delete();

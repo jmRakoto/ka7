@@ -59,4 +59,54 @@ void main() {
     expect(music, '/home/me/Musique/Ka7');
     expect(videos, '/home/me/Videos/Ka7');
   });
+
+  group('windows', () {
+    test('asks Windows for the Music folder, even moved to OneDrive', () async {
+      List<String>? asked;
+      final folder = await userFolder(
+        UserFolder.music,
+        home: r'C:\Users\me',
+        windows: true,
+        run: (executable, arguments) async {
+          asked = [executable, ...arguments];
+          return ProcessResult(
+            1,
+            0,
+            'C:\\Users\\me\\OneDrive\\Musique\r\n',
+            '',
+          );
+        },
+      );
+
+      expect(asked, [
+        'powershell',
+        '-NoProfile',
+        '-Command',
+        "[Environment]::GetFolderPath('MyMusic')",
+      ]);
+      expect(folder, r'C:\Users\me\OneDrive\Musique');
+    });
+
+    test('falls back to Videos under the profile', () async {
+      final folder = await userFolder(
+        UserFolder.videos,
+        home: r'C:\Users\me',
+        windows: true,
+        run: _answer(0, '\r\n'),
+      );
+
+      expect(folder, r'C:\Users\me\Videos');
+    });
+
+    test('Ka7 folder with Windows separators', () async {
+      final music = await ka7Folder(
+        UserFolder.music,
+        home: r'C:\Users\me',
+        windows: true,
+        run: _answer(0, 'C:\\Users\\me\\Music\r\n'),
+      );
+
+      expect(music, r'C:\Users\me\Music\Ka7');
+    });
+  });
 }

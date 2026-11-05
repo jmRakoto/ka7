@@ -11,6 +11,9 @@
 # notes.md holds only what is new (the « Nouveautés » part); the install
 # guide and the checksums are added here, from the files actually uploaded.
 #
+# Windows: built afterwards on GitHub (.github/workflows/windows.yml, started
+# by the published release), which adds its files and notes to the release.
+#
 # Before: raise `version:` in app/pubspec.yaml (and its +N) and in
 # cli/pubspec.yaml, commit, push.
 set -euo pipefail
