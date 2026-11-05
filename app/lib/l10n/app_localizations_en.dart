@@ -457,6 +457,78 @@ class AppLocalizationsEn extends AppLocalizations {
   String get channelLabel => 'YouTube channel';
 
   @override
+  String get openOnYouTube => 'Open on YouTube';
+
+  @override
+  String get filterTitles => 'Filter titles…';
+
+  @override
+  String filterCount(int shown, int total) {
+    return '$shown of $total';
+  }
+
+  @override
+  String get filterNoMatch => 'No title matches.';
+
+  @override
+  String channelCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'YouTube channel · $count videos',
+      one: 'YouTube channel · $count video',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ageToday => 'today';
+
+  @override
+  String ageDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: '$count day ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count weeks ago',
+      one: '$count week ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months ago',
+      one: '$count month ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count years ago',
+      one: '$count year ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

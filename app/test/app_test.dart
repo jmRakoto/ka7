@@ -38,9 +38,18 @@ const _sungByErick = Probe(
 const _erickSearch = SearchEntry('Erick', query: 'Erick');
 
 final _extractor = FakeExtractor({
+  'https://www.youtube.com/channel/UCx7eYvXnFq3o2Erick00001': Probe(
+    title: 'Erick Manana',
+    playlistId: 'UCx7eYvXnFq3o2Erick00001',
+    isChannel: true,
+    items: [..._sungByErick.items, ...ericMananaPlaylist.items],
+  ),
   _erickSearch.url: Probe(
     title: 'Erick',
     isSearch: true,
+    channels: const [
+      ChannelRef(name: 'Erick Manana', channelId: 'UCx7eYvXnFq3o2Erick00001'),
+    ],
     items: [..._sungByErick.items, ...hafatraVideo.items],
   ),
   'https://www.youtube.com/watch?v=Xy7zA9bC1dE': _sungByErick,
@@ -179,6 +188,41 @@ void main() {
 
       expect(find.text('Dans la file'), findsNothing);
       expect(find.text('Échoué'), findsOneWidget);
+    });
+
+    testWidgets('a channel found opens with all its videos', (tester) async {
+      await pumpKa7(tester);
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Recherche YouTube'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Erick');
+      await tester.pump();
+      await tester.tap(find.text('Rechercher'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Erick Manana').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Recherche : Erick'), findsNothing);
+      expect(find.text('Tsy Ferana'), findsOneWidget);
+      expect(
+        find.text(
+          'Chaîne YouTube · ${1 + ericMananaPlaylist.items.length} titres',
+        ),
+        findsOneWidget,
+        reason: 'every video of the channel',
+      );
+      expect(find.text('Suivre'), findsOneWidget, reason: 'the channel itself');
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Télécharger'),
+            )
+            .onPressed,
+        isNull,
+        reason: 'picked by hand: nothing ticked yet',
+      );
     });
 
     testWidgets('remembers the searches, newest first, across launches', (
@@ -771,6 +815,35 @@ void main() {
 
       expect(find.text('Tsy Ferana'), findsOneWidget);
       expect(find.text("Tsara Ny Hiran' Ny Taniko"), findsNothing);
+    });
+
+    testWidgets('finds an entry by its title, even in styled letters', (
+      tester,
+    ) async {
+      const styled = ProbeItem(
+        videoId: 'Xy7zA9bC1dE',
+        title: '𝐒𝐀𝐌𝐎𝐄̈𝐋𝐀 - 𝐓𝐈𝐀𝐕𝐈𝐍𝐀',
+      );
+      await store.record(
+        const JobSucceeded(
+          PlannedDownload(
+            source: Probe(title: 'Samoela', items: [styled]),
+            item: styled,
+            index: 1,
+          ),
+          '/home/me/Musique/Tiavina.mp3',
+        ),
+        MediaFormat.mp3,
+        DateTime(2026, 10, 30, 9),
+      );
+      await pumpKa7(tester);
+      await tester.tap(_nav('Bibliothèque'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'tiavina');
+      await tester.pumpAndSettle();
+
+      expect(find.text('𝐒𝐀𝐌𝐎𝐄̈𝐋𝐀 - 𝐓𝐈𝐀𝐕𝐈𝐍𝐀'), findsOneWidget);
     });
 
     testWidgets('finds an entry by its title', (tester) async {

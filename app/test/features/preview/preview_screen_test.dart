@@ -120,6 +120,11 @@ void main() {
   });
 
   testWidgets('lists what each link contains, with durations', (tester) async {
+    // Rows are built as they scroll in: room for both links.
+    tester.view
+      ..physicalSize = const Size(800, 1600)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await pumpApp(
       tester,
       PreviewScreen(
@@ -517,7 +522,31 @@ void main() {
       expect(avatar.backgroundImage, isNotNull);
     });
 
-    testWidgets('opens the channel on YouTube when tapped', (tester) async {
+    testWidgets('opens the channel in Ka7, with all its videos', (
+      tester,
+    ) async {
+      final channels = <ChannelRef>[];
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [search],
+          extractor: found,
+          isFollowed: (_) => false,
+          onFollow: (_, _) async {},
+          onOpenChannel: channels.add,
+          onDownload: (_, _, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Mahaleo official'));
+
+      expect(channels.single.channelId, 'UCt4quCNBZZ0Cc6xWXUSp0zQ');
+    });
+
+    testWidgets('opens the channel on YouTube with its own button', (
+      tester,
+    ) async {
       final opened = <String>[];
       await pumpApp(
         tester,
@@ -532,7 +561,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Mahaleo official'));
+      await tester.tap(find.byTooltip('Ouvrir sur YouTube'));
 
       expect(opened, [
         'https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ',
@@ -589,6 +618,158 @@ void main() {
 
       expect(find.text('Chaînes'), findsNothing);
       expect(find.text('Suivre'), findsNothing);
+    });
+  });
+
+  testWidgets('tells how long ago each video was posted', (tester) async {
+    const dated = SearchEntry('Denise', query: 'Denise');
+    await pumpApp(
+      tester,
+      PreviewScreen(
+        entries: const [dated],
+        extractor: FakeExtractor({
+          dated.url: Probe(
+            title: 'Denise',
+            isSearch: true,
+            items: [
+              ProbeItem(
+                videoId: 'Qm7tR2vLx9A',
+                title: 'Tsy Mazava',
+                duration: const Duration(minutes: 4, seconds: 12),
+                published: DateTime.utc(2025, 11, 2),
+              ),
+              ProbeItem(
+                videoId: 'aB3dE5fG7hI',
+                title: 'Aura',
+                duration: const Duration(minutes: 3, seconds: 1),
+                published: DateTime.utc(2026, 11, 2),
+              ),
+              const ProbeItem(videoId: 'jK9lM1nO3pQ', title: 'Sans date'),
+            ],
+          ),
+        }),
+        now: () => DateTime.utc(2026, 11, 5, 12),
+        onDownload: (_, _, _) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('4:12 · il y a 1 an'), findsOneWidget);
+    expect(find.text('3:01 · il y a 3 jours'), findsOneWidget);
+  });
+
+  group('channel page', () {
+    const denise = ChannelEntry(
+      'https://www.youtube.com/channel/UCEpStQu-C7FCCv1-P5UyClg',
+      channel: 'channel/UCEpStQu-C7FCCv1-P5UyClg',
+    );
+    String title(int i) => switch (i) {
+      7 => 'Jalousie (Clip Officiel)',
+      9 => 'Jalousie Live',
+      _ => 'Chanson $i',
+    };
+    final channel = Probe(
+      title: 'Denise',
+      playlistId: 'UCEpStQu-C7FCCv1-P5UyClg',
+      isChannel: true,
+      items: [
+        for (var i = 1; i <= 12; i++)
+          ProbeItem(
+            videoId: 'aaaaaaaa${i.toString().padLeft(3, '0')}',
+            title: title(i),
+          ),
+      ],
+    );
+
+    Future<void> pumpChannel(
+      WidgetTester tester, {
+      bool pickByHand = false,
+      void Function(List<PlannedDownload>)? onPlanned,
+    }) async {
+      tester.view
+        ..physicalSize = const Size(800, 2400)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [denise],
+          extractor: FakeExtractor({denise.url: channel}),
+          pickByHand: pickByHand,
+          isFollowed: (_) => false,
+          onFollow: (_, _) async {},
+          channelPicture: (_) async => null,
+          onDownload: (planned, _, _) => onPlanned?.call(planned),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('shows the channel in a card, with follow', (tester) async {
+      await pumpChannel(tester);
+
+      expect(find.text('Chaîne YouTube · 12 titres'), findsOneWidget);
+      expect(find.byType(CircleAvatar), findsOneWidget);
+      expect(find.text('Suivre'), findsOneWidget);
+    });
+
+    testWidgets('finds titles by filtering, ticks kept', (tester) async {
+      List<PlannedDownload>? planned;
+      await pumpChannel(
+        tester,
+        pickByHand: true,
+        onPlanned: (p) => planned = p,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Télécharger'),
+            )
+            .onPressed,
+        isNull,
+        reason: 'opened from a search: nothing ticked',
+      );
+
+      await tester.enterText(find.byType(TextField), 'jalousie');
+      await tester.pumpAndSettle();
+      expect(find.text('Chanson 1'), findsNothing);
+      expect(find.text('Jalousie Live'), findsOneWidget);
+      expect(find.text('2 sur 12'), findsOneWidget);
+
+      await tester.tap(find.text('Tout sélectionner'));
+      await tester.pump();
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pumpAndSettle();
+      expect(find.text('Chanson 1'), findsOneWidget, reason: 'all back');
+      await tester.tap(find.text('Télécharger'));
+
+      expect(planned!.map((p) => p.item.title), [
+        'Jalousie (Clip Officiel)',
+        'Jalousie Live',
+      ]);
+    });
+
+    testWidgets('says when no title holds the filter', (tester) async {
+      await pumpChannel(tester);
+
+      await tester.enterText(find.byType(TextField), 'zzz');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Aucun titre ne correspond.'), findsOneWidget);
+    });
+
+    testWidgets('a short playlist needs no filter', (tester) async {
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [playlist],
+          extractor: extractor,
+          onDownload: (_, _, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TextField), findsNothing);
     });
   });
 

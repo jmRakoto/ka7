@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_store/ka7_store.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -50,7 +51,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
   var _filter = _Filter.all;
   late Future<List<HistoryItem>> _items = _load();
 
-  Future<List<HistoryItem>> _load() => widget.store.history(search: _search);
+  /// Searched here, not in the store: titles in styled letters (𝐓𝐈𝐀𝐕𝐈𝐍𝐀)
+  /// or with accents are found by their plain words.
+  Future<List<HistoryItem>> _load() async => [
+    for (final item in await widget.store.history())
+      if (holdsWords('${item.title} ${item.album ?? ''}', _search)) item,
+  ];
 
   void _reload() {
     final items = _load();

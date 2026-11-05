@@ -109,4 +109,34 @@ void main() {
       expect(probe.items.first.channelId, 'UClsWET8BmyoPbIvMxRVOIDA');
     });
   });
+
+  group('dates', () {
+    test('a list gives the approximate date of each video', () {
+      final probe = parseProbeJson(
+        jsonDecode(
+              File(
+                'test/fixtures/channel_videos_dated.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, Object?>,
+      );
+
+      expect(
+        probe.items.first.published,
+        DateTime.fromMillisecondsSinceEpoch(1764892800 * 1000, isUtc: true),
+      );
+    });
+
+    test('a single video gives its own date', () {
+      final probe = parseProbeJson(
+        jsonDecode(File('test/fixtures/video.json').readAsStringSync())
+            as Map<String, Object?>,
+      );
+
+      expect(
+        probe.items.single.published,
+        DateTime.utc(2005, 4, 24, 3, 31, 52),
+      );
+    });
+  });
 }

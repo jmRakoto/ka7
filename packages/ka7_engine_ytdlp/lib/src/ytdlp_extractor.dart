@@ -58,6 +58,9 @@ final class YtDlpExtractor implements Extractor, ChannelPictures {
       '--dump-single-json',
       '--flat-playlist',
       '--no-warnings',
+      // Lists: a date from YouTube's « 1 year ago », for each video.
+      '--extractor-args',
+      'youtubetab:approximate_date',
       if (entry case PlaylistEntry(isMix: true)) ...[
         '--playlist-end',
         '${mixLimit()}',

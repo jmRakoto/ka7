@@ -39,6 +39,8 @@ void main() {
       '--dump-single-json',
       '--flat-playlist',
       '--no-warnings',
+      '--extractor-args',
+      'youtubetab:approximate_date',
       'https://www.youtube.com/playlist?list=PLe7rK2mErickManana01',
     ]);
     expect(probe.items, hasLength(6));
@@ -79,6 +81,23 @@ void main() {
     limit = 25;
     await extractor.probe(entryOf('RDHb8sJ1kP0wE'));
     expect(ytDlp.arguments, containsAllInOrder(['--playlist-end', '25']));
+  });
+
+  test('asks for the approximate date of each video in a list', () async {
+    final ytDlp = FakeYtDlp(
+      stdout: File(
+        'test/fixtures/channel_videos_dated.json',
+      ).readAsStringSync(),
+    );
+
+    await YtDlpExtractor(
+      run: ytDlp.call,
+    ).probe(entryOf('https://www.youtube.com/@Denise'));
+
+    expect(
+      ytDlp.arguments,
+      containsAllInOrder(['--extractor-args', 'youtubetab:approximate_date']),
+    );
   });
 
   test('searches YouTube for plain words, videos only', () async {

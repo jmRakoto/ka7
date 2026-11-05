@@ -112,4 +112,36 @@ void main() {
 
     expect(channels, isEmpty);
   });
+
+  group('holdsWords', () {
+    test('every word, anywhere, any case', () {
+      expect(
+        holdsWords('Denise - Jalousie (Clip Officiel)', 'clip jalou'),
+        isTrue,
+      );
+      expect(holdsWords('Denise - Jalousie', 'live'), isFalse);
+    });
+
+    test('reads styled letters as plain ones', () {
+      expect(
+        holdsWords(
+          '𝐒𝐀𝐌𝐎𝐄̈𝐋𝐀 - 𝐓𝐈𝐀𝐕𝐈𝐍𝐀 🇲🇬 (Official Video Clip)',
+          'samoela tiavina',
+        ),
+        isTrue,
+        reason: 'mathematical bold, and Ë as E plus its accent mark',
+      );
+      expect(holdsWords('𝘛𝘪𝘢𝘷𝘪𝘯𝘢', 'tiavina'), isTrue, reason: 'italic');
+      expect(holdsWords('ＴＩＡＶＩＮＡ ２０２１', 'tiavina 2021'), isTrue);
+    });
+
+    test('ignores accents both ways', () {
+      expect(holdsWords('Fitiavàna lehibé', 'fitiavana lehibe'), isTrue);
+      expect(holdsWords('Fitiavana', 'fitiavàna'), isTrue);
+    });
+
+    test('an empty filter holds everything', () {
+      expect(holdsWords('Denise', '   '), isTrue);
+    });
+  });
 }

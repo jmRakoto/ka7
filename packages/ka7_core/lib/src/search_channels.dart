@@ -1,3 +1,4 @@
+import 'plain_text.dart';
 import 'probe.dart';
 
 /// An engine that can find a channel's picture (search results only give
@@ -27,12 +28,8 @@ final class ChannelRef {
 /// Channels of [search] whose name holds every word of [query], any case:
 /// those it found, then those of its videos; each once, in that order.
 List<ChannelRef> channelsMatching(Probe search, String query) {
-  final words = _words(query);
-  if (words.isEmpty) return const [];
-  bool matches(String name) {
-    final inName = _words(name).join(' ');
-    return words.every(inName.contains);
-  }
+  if (_words(query).isEmpty) return const [];
+  bool matches(String name) => holdsWords(name, query);
 
   final found = <String, ChannelRef>{};
   final candidates = [
@@ -54,7 +51,14 @@ List<ChannelRef> channelsMatching(Probe search, String query) {
   return [...found.values];
 }
 
+/// Whether [text] holds every word of [query], any case; an empty query
+/// holds everything.
+bool holdsWords(String text, String query) {
+  final inText = _words(text).join(' ');
+  return _words(query).every(inText.contains);
+}
+
 List<String> _words(String text) => [
-  for (final word in text.toLowerCase().split(RegExp(r'\s+')))
+  for (final word in plainText(text).split(RegExp(r'\s+')))
     if (word.isNotEmpty) word,
 ];

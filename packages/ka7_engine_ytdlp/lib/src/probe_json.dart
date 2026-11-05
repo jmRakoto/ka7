@@ -49,6 +49,13 @@ ProbeItem _item(Map<String, Object?> json) {
     duration: seconds == null ? null : Duration(seconds: seconds.round()),
     channel: json['channel'] as String?,
     channelId: json['channel_id'] as String?,
+    published: switch (json['timestamp']) {
+      final num seconds => DateTime.fromMillisecondsSinceEpoch(
+        (seconds * 1000).round(),
+        isUtc: true,
+      ),
+      _ => null,
+    },
     availability: _availabilityOf(json['title']),
   );
 }

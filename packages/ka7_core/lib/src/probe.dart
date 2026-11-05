@@ -23,8 +23,12 @@ final class ProbeItem {
     this.duration,
     this.channel,
     this.channelId,
+    this.published,
     this.availability = Availability.available,
   });
+
+  /// When it was posted on YouTube; approximate in lists, null if unknown.
+  final DateTime? published;
 
   final String videoId;
   final String title;

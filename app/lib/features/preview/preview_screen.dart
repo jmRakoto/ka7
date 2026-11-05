@@ -28,7 +28,20 @@ class PreviewScreen extends StatefulWidget {
     this.picture,
     this.openUrl,
     this.channelPicture,
+    this.onOpenChannel,
+    this.pickByHand = false,
+    this.now = DateTime.now,
   });
+
+  /// Today, to tell how long ago videos were posted.
+  final DateTime Function() now;
+
+  /// Nothing ticked at first (a channel opened from a search): the user
+  /// filters and picks.
+  final bool pickByHand;
+
+  /// Opens a channel met in a search in Ka7, with all its videos.
+  final ValueChanged<ChannelRef>? onOpenChannel;
 
   /// Finds the picture of a channel the search gave none for.
   final Future<String?> Function(String channelId)? channelPicture;
@@ -97,6 +110,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
   final Set<String> _present = {};
 
   late var _format = widget.formats.first;
+
+  /// Words typed to find titles in a long list, per link.
+  final _filters = <MediaEntry, String>{};
   late var _quality = widget.quality;
 
   /// The entries, then the searches made from here, newest first.
@@ -157,7 +173,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
               _probes[entry] = probe;
               _present.addAll(present);
               // Search results: the user picks, nothing is checked.
-              if (!probe.isSearch) _selected.addAll(_wanted(probe));
+              if (!probe.isSearch && !widget.pickByHand) {
+                _selected.addAll(_wanted(probe));
+              }
             });
           },
           onError: (Object error) {
@@ -339,7 +357,11 @@ class _PreviewScreenState extends State<PreviewScreen> {
           ),
         for (final entry in _entries)
           if (_probes[entry] case final probe?)
-            _ProbeGroup(
+            ..._ProbeGroup(
+              id: entry.url,
+              now: widget.now(),
+              filter: _filters[entry] ?? '',
+              onFilter: (text) => setState(() => _filters[entry] = text),
               probe: probe,
               // A search named like channels: those, to follow.
               channels: switch ((entry, widget.onFollow, widget.isFollowed)) {
@@ -365,7 +387,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
                     },
               picture: widget.picture,
               channelPicture: widget.channelPicture,
-              onOpenChannel: switch (widget.openUrl) {
+              onOpenChannel: widget.onOpenChannel,
+              onWebChannel: switch (widget.openUrl) {
                 final open? => (channel) => open(channel.link),
                 null => null,
               },
@@ -386,15 +409,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
               onToggle: (id, keep) => setState(
                 () => keep ? _selected.add(id) : _selected.remove(id),
               ),
-              onToggleAll: (keep) => setState(() {
-                final ids = [
-                  for (final item in probe.items)
-                    if (item.availability == Availability.available)
-                      item.videoId,
-                ];
-                keep ? _selected.addAll(ids) : _selected.removeAll(ids);
-              }),
-            )
+              onToggleAll: (keep, ids) => setState(
+                () => keep ? _selected.addAll(ids) : _selected.removeAll(ids),
+              ),
+            ).children(context)
           else if (_failures[entry] case final failure?)
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -413,8 +431,14 @@ class _PreviewScreenState extends State<PreviewScreen> {
   }
 }
 
-class _ProbeGroup extends StatelessWidget {
+/// One link read: its header, a filter when long, and its videos — each a
+/// child of the page, so a channel of hundreds is built as it scrolls.
+class _ProbeGroup {
   const _ProbeGroup({
+    required this.id,
+    required this.now,
+    required this.filter,
+    required this.onFilter,
     required this.probe,
     required this.selected,
     required this.present,
@@ -428,12 +452,24 @@ class _ProbeGroup extends StatelessWidget {
     this.onFollowChannel,
     this.picture,
     this.onOpenChannel,
+    this.onWebChannel,
     this.channelPicture,
   });
+
+  /// The link it comes from, to key its rows.
+  final String id;
+
+  /// Today, for « il y a 1 an ».
+  final DateTime now;
+
+  /// Words to find titles by; empty shows all.
+  final String filter;
+  final ValueChanged<String> onFilter;
 
   final ImageProvider Function(String url)? picture;
   final Future<String?> Function(String channelId)? channelPicture;
   final void Function(ChannelRef channel)? onOpenChannel;
+  final void Function(ChannelRef channel)? onWebChannel;
 
   final ImageProvider Function(String videoId)? thumbnail;
 
@@ -445,8 +481,8 @@ class _ProbeGroup extends StatelessWidget {
   final bool? followed;
   final void Function(bool follow)? onFollow;
 
-  /// Every available video of the playlist, checked or not.
-  final void Function(bool keep) onToggleAll;
+  /// The available videos shown ([ids]), all checked or none.
+  final void Function(bool keep, List<String> ids) onToggleAll;
 
   final Probe probe;
   final Set<String> selected;
@@ -460,8 +496,20 @@ class _ProbeGroup extends StatelessWidget {
   /// file », « Réussi », « Échoué »…), or « Déjà là » when downloaded before
   /// in this format. Cancelled: nothing, it can be picked again.
   Widget? _details(BuildContext context, ProbeItem item) {
-    final duration = item.duration;
     final l10n = AppLocalizations.of(context);
+    // Length, then how long ago it was posted: « 4:12 · il y a 1 an ».
+    final facts = [
+      if (item.duration case final duration?) clock(duration),
+      if (item.published case final published?)
+        switch (ageOf(published, now)) {
+          (unit: AgeUnit.day, count: 0) => l10n.ageToday,
+          (unit: AgeUnit.day, :final count) => l10n.ageDays(count),
+          (unit: AgeUnit.week, :final count) => l10n.ageWeeks(count),
+          (unit: AgeUnit.month, :final count) => l10n.ageMonths(count),
+          (unit: AgeUnit.year, :final count) => l10n.ageYears(count),
+        },
+    ].join(' · ');
+    final line = facts.isEmpty ? null : facts;
     final pill = switch (queued(item.videoId)) {
       RunItemStatus.waiting || RunItemStatus.running => StatusPill(
         l10n.statusQueued,
@@ -486,98 +534,308 @@ class _ProbeGroup extends StatelessWidget {
             : null,
     };
     if (pill == null) {
-      return duration == null ? null : Text(clock(duration));
+      return line == null ? null : Text(line);
     }
     return Wrap(
       spacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
-      children: [pill, if (duration != null) Text(clock(duration))],
+      children: [pill, if (line != null) Text(line)],
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  List<Widget> children(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final available = [
+    final filtering = filter.trim().isNotEmpty;
+    // Unreachable videos have no title worth finding: only shown unfiltered.
+    final shown = [
       for (final item in probe.items)
+        if (!filtering ||
+            (item.availability == Availability.available &&
+                holdsWords(item.title, filter)))
+          item,
+    ];
+    final available = [
+      for (final item in shown)
         if (item.availability == Availability.available) item.videoId,
     ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    final long = !probe.isSearch && probe.items.length >= _filterFrom;
+    final follow = switch ((followed, onFollow)) {
+      (final followed?, final onFollow?) => _FollowButton(
+        followed: followed,
+        onPressed: () => onFollow(!followed),
+      ),
+      _ => null,
+    };
+    return [
+      if (probe.isChannel)
+        _ChannelHeader(
+          key: ValueKey(('header', id)),
+          probe: probe,
+          follow: follow,
+          picture: picture,
+          channelPicture: channelPicture,
+          onWeb: switch ((onWebChannel, probe.playlistId)) {
+            (final web?, final channelId?) => () => web(
+              ChannelRef(name: probe.title, channelId: channelId),
+            ),
+            _ => null,
+          },
+        )
+      else ...[
         SectionTitle(
+          key: ValueKey(('title', id)),
           probe.isSearch ? l10n.searchResults(probe.title) : probe.title,
           trailing: l10n.trackCount(probe.items.length),
         ),
         if (channels.isNotEmpty && onFollowChannel != null)
           _Channels(
+            key: ValueKey(('channels', id)),
             channels: channels,
             onFollow: onFollowChannel!,
             picture: picture,
             channelPicture: channelPicture,
             onOpen: onOpenChannel,
+            onWeb: onWebChannel,
           ),
-        if (followed case final followed? when onFollow != null)
+        if (follow != null)
           Align(
+            key: ValueKey(('follow', id)),
             alignment: Alignment.centerLeft,
-            child: followed
-                ? FilledButton.tonalIcon(
-                    onPressed: () => onFollow!(false),
-                    icon: const Icon(Icons.notifications_active_outlined),
-                    label: Text(l10n.following),
-                  )
-                : OutlinedButton.icon(
-                    onPressed: () => onFollow!(true),
-                    icon: const Icon(Icons.notifications_none),
-                    label: Text(l10n.follow),
-                  ),
+            child: follow,
           ),
-        if (available.length > 1)
-          CheckboxListTile(
-            tristate: true,
-            value: switch (available.where(selected.contains).length) {
-              0 => false,
-              final n when n == available.length => true,
-              _ => null,
-            },
-            // Partly checked: a tap checks everything.
-            onChanged: (_) => onToggleAll(!available.every(selected.contains)),
-            title: Text(
-              l10n.selectAll,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        for (final item in probe.items)
-          if (item.availability == Availability.available)
-            CheckboxListTile(
-              value: selected.contains(item.videoId),
-              onChanged: (keep) => onToggle(item.videoId, keep ?? false),
-              title: _Title(
-                item.title,
-                onLongPress: () =>
-                    _showVideo(context, item, thumbnail?.call(item.videoId)),
-              ),
-              subtitle: _details(context, item),
-              secondary: switch (thumbnail) {
-                final thumbnail? => VideoThumbnail(
-                  image: thumbnail(item.videoId),
-                  onLongPress: () =>
-                      _showVideo(context, item, thumbnail(item.videoId)),
-                ),
-                null => null,
-              },
-            )
-          else
-            CheckboxListTile(
-              value: false,
-              onChanged: null,
-              title: Text(switch (item.availability) {
-                Availability.private => l10n.itemPrivate,
-                Availability.unavailable => l10n.itemUnavailable,
-                _ => l10n.itemDeleted,
-              }),
-            ),
       ],
+      if (long)
+        _TitleFilter(
+          key: ValueKey(('filter', id)),
+          shown: shown.length,
+          total: probe.items.length,
+          active: filtering,
+          onChanged: onFilter,
+        ),
+      if (filtering && shown.isEmpty)
+        Padding(
+          key: ValueKey(('none', id)),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Text(
+            l10n.filterNoMatch,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      if (available.length > 1)
+        CheckboxListTile(
+          key: ValueKey(('all', id)),
+          tristate: true,
+          value: switch (available.where(selected.contains).length) {
+            0 => false,
+            final n when n == available.length => true,
+            _ => null,
+          },
+          // Partly checked: a tap checks everything shown.
+          onChanged: (_) =>
+              onToggleAll(!available.every(selected.contains), available),
+          title: Text(
+            l10n.selectAll,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      for (final (i, item) in shown.indexed)
+        if (item.availability == Availability.available)
+          CheckboxListTile(
+            key: ValueKey(('row', id, item.videoId)),
+            value: selected.contains(item.videoId),
+            onChanged: (keep) => onToggle(item.videoId, keep ?? false),
+            title: _Title(
+              item.title,
+              onLongPress: () =>
+                  _showVideo(context, item, thumbnail?.call(item.videoId)),
+            ),
+            subtitle: _details(context, item),
+            secondary: switch (thumbnail) {
+              final thumbnail? => VideoThumbnail(
+                image: thumbnail(item.videoId),
+                onLongPress: () =>
+                    _showVideo(context, item, thumbnail(item.videoId)),
+              ),
+              null => null,
+            },
+          )
+        else
+          CheckboxListTile(
+            key: ValueKey(('gone', id, i)),
+            value: false,
+            onChanged: null,
+            title: Text(switch (item.availability) {
+              Availability.private => l10n.itemPrivate,
+              Availability.unavailable => l10n.itemUnavailable,
+              _ => l10n.itemDeleted,
+            }),
+          ),
+    ];
+  }
+}
+
+/// From this many videos, a list gets a field to find titles in.
+const _filterFrom = 10;
+
+/// Suivre, or Suivi when followed already.
+class _FollowButton extends StatelessWidget {
+  const _FollowButton({required this.followed, required this.onPressed});
+
+  final bool followed;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return followed
+        ? FilledButton.tonalIcon(
+            onPressed: onPressed,
+            icon: const Icon(Icons.notifications_active_outlined),
+            label: Text(l10n.following),
+          )
+        : OutlinedButton.icon(
+            onPressed: onPressed,
+            icon: const Icon(Icons.notifications_none),
+            label: Text(l10n.follow),
+          );
+  }
+}
+
+/// A channel at the top of its page: picture, name, how many videos, and
+/// what can be done with it.
+class _ChannelHeader extends StatelessWidget {
+  const _ChannelHeader({
+    super.key,
+    required this.probe,
+    required this.follow,
+    required this.picture,
+    required this.channelPicture,
+    required this.onWeb,
+  });
+
+  final Probe probe;
+  final Widget? follow;
+  final ImageProvider Function(String url)? picture;
+  final Future<String?> Function(String channelId)? channelPicture;
+  final VoidCallback? onWeb;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _Avatar(
+                  radius: 30,
+                  channel: ChannelRef(
+                    name: probe.title,
+                    channelId: probe.playlistId ?? '',
+                  ),
+                  picture: picture,
+                  find: probe.playlistId == null ? null : channelPicture,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        probe.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.channelCount(probe.items.length),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (follow != null || onWeb != null) ...[
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ?follow,
+                  if (onWeb case final web?)
+                    TextButton.icon(
+                      onPressed: web,
+                      icon: const Icon(Icons.open_in_new, size: 18),
+                      label: Text(l10n.openOnYouTube),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A field to find titles in a long list, with how many it shows.
+class _TitleFilter extends StatelessWidget {
+  const _TitleFilter({
+    super.key,
+    required this.shown,
+    required this.total,
+    required this.active,
+    required this.onChanged,
+  });
+
+  final int shown;
+  final int total;
+  final bool active;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            onChanged: onChanged,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.filter_list),
+              hintText: l10n.filterTitles,
+            ),
+          ),
+          if (active)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 4),
+              child: Text(
+                l10n.filterCount(shown, total),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -770,18 +1028,23 @@ class _QualityMenu extends StatelessWidget {
 /// Suivi when followed already.
 class _Channels extends StatelessWidget {
   const _Channels({
+    super.key,
     required this.channels,
     required this.onFollow,
     required this.picture,
     required this.onOpen,
+    this.onWeb,
     this.channelPicture,
   });
 
   final ImageProvider Function(String url)? picture;
   final Future<String?> Function(String channelId)? channelPicture;
 
-  /// Its page on YouTube; null where none can be opened.
+  /// The channel in Ka7, with all its videos.
   final void Function(ChannelRef channel)? onOpen;
+
+  /// Its page on YouTube; null where none can be opened.
+  final void Function(ChannelRef channel)? onWeb;
 
   final List<(ChannelRef, bool)> channels;
   final Future<void> Function(ChannelRef channel, bool follow) onFollow;
@@ -811,7 +1074,7 @@ class _Channels extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8),
               clipBehavior: Clip.antiAlias,
               child: ListTile(
-                // Its page on YouTube: to see what it is before following.
+                // All its videos, here: to pick from, or follow it.
                 onTap: switch (onOpen) {
                   final open? => () => open(channel),
                   null => null,
@@ -827,30 +1090,31 @@ class _Channels extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                subtitle: Row(
+                subtitle: Text(l10n.channelLabel),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(child: Text(l10n.channelLabel)),
-                    if (onOpen != null) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.open_in_new,
-                        size: 14,
-                        color: scheme.onSurfaceVariant,
+                    if (onWeb case final web?)
+                      IconButton(
+                        tooltip: l10n.openOnYouTube,
+                        onPressed: () => web(channel),
+                        icon: const Icon(Icons.open_in_new, size: 20),
                       ),
-                    ],
+                    followed
+                        ? FilledButton.tonalIcon(
+                            onPressed: () => onFollow(channel, false),
+                            icon: const Icon(
+                              Icons.notifications_active_outlined,
+                            ),
+                            label: Text(l10n.following),
+                          )
+                        : OutlinedButton.icon(
+                            onPressed: () => onFollow(channel, true),
+                            icon: const Icon(Icons.notifications_none),
+                            label: Text(l10n.follow),
+                          ),
                   ],
                 ),
-                trailing: followed
-                    ? FilledButton.tonalIcon(
-                        onPressed: () => onFollow(channel, false),
-                        icon: const Icon(Icons.notifications_active_outlined),
-                        label: Text(l10n.following),
-                      )
-                    : OutlinedButton.icon(
-                        onPressed: () => onFollow(channel, true),
-                        icon: const Icon(Icons.notifications_none),
-                        label: Text(l10n.follow),
-                      ),
               ),
             ),
         ],
@@ -861,7 +1125,14 @@ class _Channels extends StatelessWidget {
 
 /// The channel's picture, or its initial while none is known or it fails.
 class _Avatar extends StatefulWidget {
-  const _Avatar({required this.channel, required this.picture, this.find});
+  const _Avatar({
+    required this.channel,
+    required this.picture,
+    this.find,
+    this.radius,
+  });
+
+  final double? radius;
 
   final ChannelRef channel;
   final ImageProvider Function(String url)? picture;
@@ -895,6 +1166,7 @@ class _AvatarState extends State<_Avatar> {
       _ => null,
     };
     return CircleAvatar(
+      radius: widget.radius,
       backgroundColor: scheme.primaryContainer,
       foregroundColor: scheme.primary,
       backgroundImage: image,

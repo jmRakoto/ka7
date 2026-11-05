@@ -70,6 +70,70 @@ class _Pending implements Extractor {
 void main() {
   setUpAll(_loadFonts);
 
+  // A channel opened from a search: header card, filter, titles.
+  for (final brightness in Brightness.values) {
+    testWidgets('phone channel ${brightness.name}', (tester) async {
+      tester.view
+        ..physicalSize = const Size(400, 860)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      Directory(_out).createSync(recursive: true);
+      const entry = ChannelEntry(
+        'https://www.youtube.com/channel/UCEpStQu-C7FCCv1-P5UyClg',
+        channel: 'channel/UCEpStQu-C7FCCv1-P5UyClg',
+      );
+      await tester.pumpWidget(
+        RepaintBoundary(
+          child: MaterialApp(
+            theme: ka7Theme(brightness),
+            locale: const Locale('fr'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: PreviewScreen(
+                entries: const [entry],
+                pickByHand: true,
+                extractor: FakeExtractor({
+                  entry.url: Probe(
+                    title: 'Denise',
+                    playlistId: 'UCEpStQu-C7FCCv1-P5UyClg',
+                    isChannel: true,
+                    items: [
+                      for (var i = 1; i <= 40; i++)
+                        ProbeItem(
+                          videoId: 'aaaaaaaa${i.toString().padLeft(3, '0')}',
+                          title: i.isEven ? 'Jalousie (Live $i)' : 'Chanson $i',
+                          duration: Duration(seconds: 180 + i),
+                        ),
+                    ],
+                  ),
+                }),
+                isFollowed: (_) => false,
+                onFollow: (_, _) async {},
+                openUrl: (_) {},
+                thumbnail: (_) => MemoryImage(Uint8List(0)),
+                onDownload: (_, _, _) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'jalousie');
+      await tester.pumpAndSettle();
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+        find.byType(RepaintBoundary).first,
+      );
+      await tester.runAsync(() async {
+        final image = await boundary.toImage();
+        final png = await image.toByteData(format: ui.ImageByteFormat.png);
+        File(
+          '$_out/phone-${brightness.name}-2-preview-channel.png',
+        ).writeAsBytesSync(png!.buffer.asUint8List());
+      });
+    });
+  }
+
   // Loading never settles: pumped by hand, mid-animation.
   for (final brightness in Brightness.values) {
     testWidgets('phone loading ${brightness.name}', (tester) async {

@@ -794,6 +794,66 @@ abstract class AppLocalizations {
   /// **'Chaîne YouTube'**
   String get channelLabel;
 
+  /// No description provided for @openOnYouTube.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir sur YouTube'**
+  String get openOnYouTube;
+
+  /// No description provided for @filterTitles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Filtrer les titres…'**
+  String get filterTitles;
+
+  /// No description provided for @filterCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{shown} sur {total}'**
+  String filterCount(int shown, int total);
+
+  /// No description provided for @filterNoMatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun titre ne correspond.'**
+  String get filterNoMatch;
+
+  /// No description provided for @channelCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{Chaîne YouTube · {count} titre} other{Chaîne YouTube · {count} titres}}'**
+  String channelCount(int count);
+
+  /// No description provided for @ageToday.
+  ///
+  /// In fr, this message translates to:
+  /// **'aujourd\'hui'**
+  String get ageToday;
+
+  /// No description provided for @ageDays.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{il y a {count} jour} other{il y a {count} jours}}'**
+  String ageDays(int count);
+
+  /// No description provided for @ageWeeks.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{il y a {count} semaine} other{il y a {count} semaines}}'**
+  String ageWeeks(int count);
+
+  /// No description provided for @ageMonths.
+  ///
+  /// In fr, this message translates to:
+  /// **'il y a {count} mois'**
+  String ageMonths(int count);
+
+  /// No description provided for @ageYears.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, one{il y a {count} an} other{il y a {count} ans}}'**
+  String ageYears(int count);
+
   /// No description provided for @settingsTitle.
   ///
   /// In fr, this message translates to:

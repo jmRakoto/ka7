@@ -478,6 +478,72 @@ class AppLocalizationsFr extends AppLocalizations {
   String get channelLabel => 'Chaîne YouTube';
 
   @override
+  String get openOnYouTube => 'Ouvrir sur YouTube';
+
+  @override
+  String get filterTitles => 'Filtrer les titres…';
+
+  @override
+  String filterCount(int shown, int total) {
+    return '$shown sur $total';
+  }
+
+  @override
+  String get filterNoMatch => 'Aucun titre ne correspond.';
+
+  @override
+  String channelCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Chaîne YouTube · $count titres',
+      one: 'Chaîne YouTube · $count titre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ageToday => 'aujourd\'hui';
+
+  @override
+  String ageDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'il y a $count jours',
+      one: 'il y a $count jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'il y a $count semaines',
+      one: 'il y a $count semaine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageMonths(int count) {
+    return 'il y a $count mois';
+  }
+
+  @override
+  String ageYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'il y a $count ans',
+      one: 'il y a $count an',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsTitle => 'Réglages';
 
   @override

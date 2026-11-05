@@ -269,6 +269,61 @@
   "backToTop": "Revenir en haut",
   "searchChannels": "Chaînes",
   "channelLabel": "Chaîne YouTube",
+  "openOnYouTube": "Ouvrir sur YouTube",
+  "filterTitles": "Filtrer les titres…",
+  "filterCount": "{shown} sur {total}",
+  "@filterCount": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "filterNoMatch": "Aucun titre ne correspond.",
+  "channelCount": "{count, plural, one{Chaîne YouTube · {count} titre} other{Chaîne YouTube · {count} titres}}",
+  "@channelCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageToday": "aujourd'hui",
+  "ageDays": "{count, plural, one{il y a {count} jour} other{il y a {count} jours}}",
+  "@ageDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageWeeks": "{count, plural, one{il y a {count} semaine} other{il y a {count} semaines}}",
+  "@ageWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageMonths": "il y a {count} mois",
+  "@ageMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageYears": "{count, plural, one{il y a {count} an} other{il y a {count} ans}}",
+  "@ageYears": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "settingsTitle": "Réglages",
   "settingsLanguage": "Langue",
   "languageSystem": "Système",

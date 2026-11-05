@@ -1,0 +1,41 @@
+{
+ "id": "UCEpStQu-C7FCCv1-P5UyClg",
+ "title": "Denise - Videos",
+ "_type": "playlist",
+ "channel": "Denise",
+ "channel_id": "UCEpStQu-C7FCCv1-P5UyClg",
+ "extractor_key": "YoutubeTab",
+ "webpage_url": "https://www.youtube.com/channel/UCEpStQu-C7FCCv1-P5UyClg/videos",
+ "entries": [
+  {
+   "_type": "url",
+   "ie_key": "Youtube",
+   "id": "IxTEr-c8eD0",
+   "url": "https://www.youtube.com/watch?v=IxTEr-c8eD0",
+   "title": "Denise - Tsy Mazava (Clip Officiel)",
+   "duration": 273,
+   "timestamp": 1764892800,
+   "view_count": 2100000
+  },
+  {
+   "_type": "url",
+   "ie_key": "Youtube",
+   "id": "q9Gs8dTgDNY",
+   "url": "https://www.youtube.com/watch?v=q9Gs8dTgDNY",
+   "title": "Denise & D-Lain - Tiako Hanjeky (Lyrics Video)",
+   "duration": 182,
+   "timestamp": 1762300800,
+   "view_count": 1600000
+  },
+  {
+   "_type": "url",
+   "ie_key": "Youtube",
+   "id": "cOB5GZLO-o0",
+   "url": "https://www.youtube.com/watch?v=cOB5GZLO-o0",
+   "title": "Denise - MAKUA Festival [Novembre 2024] CONCERT COMPLET",
+   "duration": 3973,
+   "timestamp": 1762300800,
+   "view_count": 11000
+  }
+ ]
+}

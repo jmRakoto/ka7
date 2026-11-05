@@ -500,10 +500,14 @@ class _Ka7ShellState extends State<Ka7Shell> {
     _push(entries);
   }
 
-  void _push(List<MediaEntry> entries) => _addNavigator.currentState!.push(
+  void _push(
+    List<MediaEntry> entries, {
+    bool pickByHand = false,
+  }) => _addNavigator.currentState!.push(
     MaterialPageRoute<void>(
       builder: (context) => PreviewScreen(
         entries: entries,
+        pickByHand: pickByHand,
         extractor: widget.extractor,
         formats: widget.formats,
         archive: _archive,
@@ -514,6 +518,11 @@ class _Ka7ShellState extends State<Ka7Shell> {
         onSearch: (query) => unawaited(_remember(query)),
         picture: widget.picture,
         openUrl: widget.openUrl,
+        // A channel found by a search: all its videos, in a new preview.
+        // Picked by hand: hundreds of videos, the user finds the ones wanted.
+        onOpenChannel: (channel) => _push([
+          ChannelEntry(channel.link, channel: 'channel/${channel.channelId}'),
+        ], pickByHand: true),
         channelPicture: switch (widget.extractor) {
           final ChannelPictures engine => (id) => _pictures.putIfAbsent(
             id,
