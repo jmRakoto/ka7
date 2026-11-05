@@ -125,7 +125,7 @@ class SettingsScreen extends StatelessWidget {
                       (
                         FolderLayout.artist,
                         l10n.layoutArtist,
-                        'Erick Manana',
+                        'Rakoto',
                         'Tsara.mp3',
                       ),
                     ]) ...[
