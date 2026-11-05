@@ -111,6 +111,7 @@ class Ka7Shell extends StatefulWidget {
 class _Ka7ShellState extends State<Ka7Shell> {
   var _section = _Section.add;
   final _addNavigator = GlobalKey<NavigatorState>();
+  final _settingsNavigator = GlobalKey<NavigatorState>();
 
   /// Newest first.
   final _runs = <QueuedRun>[];
@@ -132,7 +133,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
   var _dragging = false;
 
   /// Followed playlists and channels, and their new videos found at launch.
-  var _followed = <Subscription>[];
+  final _followed = ValueNotifier(<Subscription>[]);
   final _news = ValueNotifier(<News>[]);
 
   /// A newer Ka7 to offer, until downloaded or put off.
@@ -196,6 +197,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
     }
     widget.background?.release();
     _historyChanges.dispose();
+    _followed.dispose();
     _queueChanges.dispose();
     _recent.dispose();
     _news.dispose();
@@ -370,13 +372,13 @@ class _Ka7ShellState extends State<Ka7Shell> {
 
   Future<void> _loadSubscriptions() async {
     final subscriptions = await widget.store.subscriptions();
-    if (mounted) setState(() => _followed = subscriptions);
+    if (mounted) _followed.value = subscriptions;
   }
 
   /// Read in the background: the app is usable meanwhile.
   /// At most once a day: each followed link is a YouTube read.
   Future<void> _checkNews() async {
-    if (_followed.isEmpty) return;
+    if (_followed.value.isEmpty) return;
     final now = widget.now();
     final last = DateTime.tryParse(
       await widget.store.setting(_newsCheckedKey) ?? '',
@@ -389,7 +391,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
       now.toUtc().toIso8601String(),
     );
     final news = await findNews(
-      [for (final s in _followed) (link: s.link, title: s.title)],
+      [for (final s in _followed.value) (link: s.link, title: s.title)],
       extractor: widget.extractor,
       archive: _archive,
       format: widget.formats.first,
@@ -435,7 +437,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
     }
   }
 
-  bool _isFollowed(String link) => _followed.any((s) => s.link == link);
+  bool _isFollowed(String link) => _followed.value.any((s) => s.link == link);
 
   Future<void> _follow(Probe probe, bool follow) async {
     final link = followLinkOf(probe)!;
@@ -681,14 +683,23 @@ class _Ka7ShellState extends State<Ka7Shell> {
             thumbnail: widget.thumbnail,
             now: widget.now,
           ),
-          SettingsScreen(
-            settings: widget.settings,
-            pickFolder: widget.pickFolder,
-            subscriptions: _followed,
-            onUnfollow: _unfollow,
-            appVersion: widget.appVersion,
-            pickDestination: widget.pickDestination,
-            defaultDestination: widget.shownFolder,
+          // Its own navigator: the About page opens beside the sidebar.
+          Navigator(
+            key: _settingsNavigator,
+            onGenerateRoute: (_) => MaterialPageRoute<void>(
+              builder: (_) => ValueListenableBuilder(
+                valueListenable: _followed,
+                builder: (_, followed, _) => SettingsScreen(
+                  settings: widget.settings,
+                  pickFolder: widget.pickFolder,
+                  subscriptions: followed,
+                  onUnfollow: _unfollow,
+                  appVersion: widget.appVersion,
+                  pickDestination: widget.pickDestination,
+                  defaultDestination: widget.shownFolder,
+                ),
+              ),
+            ),
           ),
         ],
       ),

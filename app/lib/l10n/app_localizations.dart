@@ -644,11 +644,131 @@ abstract class AppLocalizations {
   /// **'Version de développement'**
   String get aboutDevVersion;
 
-  /// No description provided for @aboutEngine.
+  /// No description provided for @aboutTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Téléchargements par yt-dlp et ffmpeg.'**
-  String get aboutEngine;
+  /// **'À propos de Ka7'**
+  String get aboutTitle;
+
+  /// No description provided for @aboutMadeBy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Développé par Rakoto Ketrika'**
+  String get aboutMadeBy;
+
+  /// No description provided for @aboutTagline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tes vidéos et ta musique, en fichiers propres que tu gardes.'**
+  String get aboutTagline;
+
+  /// No description provided for @aboutPrivate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout reste sur ton appareil : aucun compte, aucune publicité, aucun suivi.'**
+  String get aboutPrivate;
+
+  /// No description provided for @aboutDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ka7 transforme des vidéos YouTube en fichiers MP3, M4A ou MP4 que tu gardes pour toujours, même sans connexion. Une vidéo, une playlist entière ou toute une chaîne : tu colles, tu vérifies, Ka7 s\'occupe du reste.'**
+  String get aboutDescription;
+
+  /// No description provided for @aboutFeatures.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce que fait Ka7'**
+  String get aboutFeatures;
+
+  /// No description provided for @featureAddTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoute de toutes les façons'**
+  String get featureAddTitle;
+
+  /// No description provided for @featureAddBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Colle un ou plusieurs liens (vidéo, playlist, chaîne, mix), cherche directement sur YouTube, importe un fichier .txt, glisse un lien sur la fenêtre ou partage-le depuis l\'app YouTube.'**
+  String get featureAddBody;
+
+  /// No description provided for @featurePreviewTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifie avant de télécharger'**
+  String get featurePreviewTitle;
+
+  /// No description provided for @featurePreviewBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'aperçu montre chaque titre avec sa miniature, sa durée et sa date. Coche ce que tu veux, filtre une longue liste, et ce que tu as déjà est marqué « Déjà là ».'**
+  String get featurePreviewBody;
+
+  /// No description provided for @featureFormatTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisis le format et la qualité'**
+  String get featureFormatTitle;
+
+  /// No description provided for @featureFormatBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'MP3 pour la musique, M4A pour le son d\'origine, MP4 pour la vidéo. Qualité au choix : de 128 à 320 kbit/s, de 480p à la meilleure image.'**
+  String get featureFormatBody;
+
+  /// No description provided for @featureFilesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Des fichiers propres et rangés'**
+  String get featureFilesTitle;
+
+  /// No description provided for @featureFilesBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titre, artiste, album, numéro de piste et pochette dans chaque MP3. Rangés par playlist ou par artiste, dans le dossier de ton choix.'**
+  String get featureFilesBody;
+
+  /// No description provided for @featureQueueTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suis la file'**
+  String get featureQueueTitle;
+
+  /// No description provided for @featureQueueBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plusieurs titres à la fois, avec la progression et la vitesse. Annule ou réessaie un titre, reprends une file interrompue, et reçois une notification à la fin.'**
+  String get featureQueueBody;
+
+  /// No description provided for @featureLibraryTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retrouve tout dans la Bibliothèque'**
+  String get featureLibraryTitle;
+
+  /// No description provided for @featureLibraryBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'historique jour par jour, avec recherche et filtres. Ouvre le dossier d\'un titre ou mets une playlist à jour avec ses nouveaux titres.'**
+  String get featureLibraryBody;
+
+  /// No description provided for @featureFollowTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suis tes playlists et tes chaînes'**
+  String get featureFollowTitle;
+
+  /// No description provided for @featureFollowBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Abonne-toi depuis l\'aperçu : au démarrage, Ka7 te propose leurs nouveaux titres. Il te prévient aussi quand une nouvelle version de Ka7 sort.'**
+  String get featureFollowBody;
+
+  /// No description provided for @aboutOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus d\'infos sur Ka7'**
+  String get aboutOpen;
 
   /// No description provided for @resetFolder.
   ///

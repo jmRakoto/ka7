@@ -7,6 +7,7 @@ import '../../settings/app_settings.dart';
 import '../../widgets/ka7_logo.dart';
 import '../../widgets/ka7_page.dart';
 import '../../widgets/quality_picker.dart';
+import 'about_screen.dart';
 
 /// Settings, in cards: appearance, downloads, folders, subscriptions, about.
 class SettingsScreen extends StatelessWidget {
@@ -691,7 +692,7 @@ class _FolderSample extends StatelessWidget {
   }
 }
 
-/// The cassette, the name, the version.
+/// The cassette, the name, the version; opens the About page.
 class _About extends StatelessWidget {
   const _About({required this.version});
 
@@ -701,37 +702,45 @@ class _About extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          const ExcludeSemantics(child: Ka7Logo(width: 52)),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Ka7',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(switch (version) {
-                  final version? => l10n.aboutVersion(version),
-                  null => l10n.aboutDevVersion,
-                }, style: theme.textTheme.bodyMedium),
-                const SizedBox(height: 2),
-                Text(
-                  l10n.aboutEngine,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+    return Semantics(
+      button: true,
+      hint: l10n.aboutOpen,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => AboutScreen(version: version),
           ),
-        ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              const ExcludeSemantics(child: Ka7Logo(width: 52)),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ka7',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(switch (version) {
+                      final version? => l10n.aboutVersion(version),
+                      null => l10n.aboutDevVersion,
+                    }, style: theme.textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

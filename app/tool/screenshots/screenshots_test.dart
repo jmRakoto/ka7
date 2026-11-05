@@ -309,6 +309,17 @@ void main() {
         await shot('5-library');
         await tester.tap(find.text('Réglages').last);
         await shot('6-settings');
+        final aboutCard = find.text('Version de développement');
+        await tester.scrollUntilVisible(
+          aboutCard,
+          200,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await tester.ensureVisible(aboutCard);
+        await tester.pumpAndSettle();
+        await shot('6b-settings-about');
+        await tester.tap(aboutCard);
+        await shot('6c-about');
 
         // Next launch, after a crash in the middle of the playlist.
         final relaunched = Ka7Store.inMemory();

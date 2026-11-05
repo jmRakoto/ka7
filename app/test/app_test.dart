@@ -1285,6 +1285,70 @@ void main() {
       expect(find.text('Version 0.3.0'), findsOneWidget);
     });
 
+    testWidgets('opens the about page: maker, version, no tools named', (
+      tester,
+    ) async {
+      await pumpKa7(tester, appVersion: '0.3.1');
+      await openSettings(tester);
+      await tester.scrollUntilVisible(
+        find.text('Version 0.3.1'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(find.textContaining('yt-dlp'), findsNothing);
+      expect(find.textContaining('ffmpeg'), findsNothing);
+
+      await tester.ensureVisible(find.text('Version 0.3.1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Version 0.3.1'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('À propos de Ka7'), findsOneWidget);
+      expect(find.text('Version 0.3.1'), findsOneWidget);
+      expect(find.textContaining('yt-dlp'), findsNothing);
+      expect(find.textContaining('ffmpeg'), findsNothing);
+      // The sidebar or the tabs stay: the page opens inside Settings.
+      expect(find.text('Bibliothèque'), findsWidgets);
+
+      expect(find.text('Page du projet'), findsNothing);
+      expect(find.textContaining('Ka7 transforme'), findsOneWidget);
+      expect(find.text('Ce que fait Ka7'), findsOneWidget);
+      final features = [
+        'Ajoute de toutes les façons',
+        "Vérifie avant de télécharger",
+        'Choisis le format et la qualité',
+        'Des fichiers propres et rangés',
+        'Suis la file',
+        'Retrouve tout dans la Bibliothèque',
+        'Suis tes playlists et tes chaînes',
+      ];
+      for (final feature in features) {
+        await tester.scrollUntilVisible(
+          find.text(feature),
+          200,
+          scrollable: find.byType(Scrollable).last,
+        );
+        expect(find.text(feature), findsOneWidget);
+      }
+      await tester.scrollUntilVisible(
+        find.text('Développé par Rakoto Ketrika'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(find.text('Développé par Rakoto Ketrika'), findsOneWidget);
+      expect(find.textContaining('yt-dlp'), findsNothing);
+      expect(find.textContaining('ffmpeg'), findsNothing);
+
+      await tester.scrollUntilVisible(
+        find.byType(BackButton),
+        -200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.text('À propos de Ka7'), findsNothing);
+      expect(find.text('Version 0.3.1'), findsOneWidget);
+    });
     testWidgets('says when it is a development build', (tester) async {
       await pumpKa7(tester);
       await openSettings(tester);

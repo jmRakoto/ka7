@@ -362,7 +362,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutDevVersion => 'Development build';
 
   @override
-  String get aboutEngine => 'Downloads by yt-dlp and ffmpeg.';
+  String get aboutTitle => 'About Ka7';
+
+  @override
+  String get aboutMadeBy => 'Developed by Rakoto Ketrika';
+
+  @override
+  String get aboutTagline => 'Your videos and music, as clean files you keep.';
+
+  @override
+  String get aboutPrivate =>
+      'Everything stays on your device: no account, no ads, no tracking.';
+
+  @override
+  String get aboutDescription =>
+      'Ka7 turns YouTube videos into MP3, M4A or MP4 files you keep forever, even offline. One video, a whole playlist or an entire channel: paste, check, and Ka7 does the rest.';
+
+  @override
+  String get aboutFeatures => 'What Ka7 does';
+
+  @override
+  String get featureAddTitle => 'Add in every way';
+
+  @override
+  String get featureAddBody =>
+      'Paste one or more links (video, playlist, channel, mix), search YouTube directly, import a .txt file, drop a link on the window or share it from the YouTube app.';
+
+  @override
+  String get featurePreviewTitle => 'Check before downloading';
+
+  @override
+  String get featurePreviewBody =>
+      'The preview shows each title with its thumbnail, length and date. Tick what you want, filter a long list, and what you already have is marked “Already there”.';
+
+  @override
+  String get featureFormatTitle => 'Pick the format and quality';
+
+  @override
+  String get featureFormatBody =>
+      'MP3 for music, M4A for the original sound, MP4 for video. Quality of your choice: 128 to 320 kbit/s, 480p up to the best picture.';
+
+  @override
+  String get featureFilesTitle => 'Clean, tidy files';
+
+  @override
+  String get featureFilesBody =>
+      'Title, artist, album, track number and cover art in every MP3. Filed by playlist or by artist, in the folder of your choice.';
+
+  @override
+  String get featureQueueTitle => 'Follow the queue';
+
+  @override
+  String get featureQueueBody =>
+      'Several titles at once, with progress and speed. Cancel or retry a title, resume an interrupted run, and get a notification when it ends.';
+
+  @override
+  String get featureLibraryTitle => 'Find everything in the Library';
+
+  @override
+  String get featureLibraryBody =>
+      'Your history day by day, with search and filters. Open a title\'s folder or update a playlist with its new titles.';
+
+  @override
+  String get featureFollowTitle => 'Follow your playlists and channels';
+
+  @override
+  String get featureFollowBody =>
+      'Subscribe from the preview: at startup, Ka7 offers their new titles. It also tells you when a new version of Ka7 is out.';
+
+  @override
+  String get aboutOpen => 'More about Ka7';
 
   @override
   String get resetFolder => 'Back to the default folder';

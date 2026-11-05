@@ -381,7 +381,77 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aboutDevVersion => 'Version de développement';
 
   @override
-  String get aboutEngine => 'Téléchargements par yt-dlp et ffmpeg.';
+  String get aboutTitle => 'À propos de Ka7';
+
+  @override
+  String get aboutMadeBy => 'Développé par Rakoto Ketrika';
+
+  @override
+  String get aboutTagline =>
+      'Tes vidéos et ta musique, en fichiers propres que tu gardes.';
+
+  @override
+  String get aboutPrivate =>
+      'Tout reste sur ton appareil : aucun compte, aucune publicité, aucun suivi.';
+
+  @override
+  String get aboutDescription =>
+      'Ka7 transforme des vidéos YouTube en fichiers MP3, M4A ou MP4 que tu gardes pour toujours, même sans connexion. Une vidéo, une playlist entière ou toute une chaîne : tu colles, tu vérifies, Ka7 s\'occupe du reste.';
+
+  @override
+  String get aboutFeatures => 'Ce que fait Ka7';
+
+  @override
+  String get featureAddTitle => 'Ajoute de toutes les façons';
+
+  @override
+  String get featureAddBody =>
+      'Colle un ou plusieurs liens (vidéo, playlist, chaîne, mix), cherche directement sur YouTube, importe un fichier .txt, glisse un lien sur la fenêtre ou partage-le depuis l\'app YouTube.';
+
+  @override
+  String get featurePreviewTitle => 'Vérifie avant de télécharger';
+
+  @override
+  String get featurePreviewBody =>
+      'L\'aperçu montre chaque titre avec sa miniature, sa durée et sa date. Coche ce que tu veux, filtre une longue liste, et ce que tu as déjà est marqué « Déjà là ».';
+
+  @override
+  String get featureFormatTitle => 'Choisis le format et la qualité';
+
+  @override
+  String get featureFormatBody =>
+      'MP3 pour la musique, M4A pour le son d\'origine, MP4 pour la vidéo. Qualité au choix : de 128 à 320 kbit/s, de 480p à la meilleure image.';
+
+  @override
+  String get featureFilesTitle => 'Des fichiers propres et rangés';
+
+  @override
+  String get featureFilesBody =>
+      'Titre, artiste, album, numéro de piste et pochette dans chaque MP3. Rangés par playlist ou par artiste, dans le dossier de ton choix.';
+
+  @override
+  String get featureQueueTitle => 'Suis la file';
+
+  @override
+  String get featureQueueBody =>
+      'Plusieurs titres à la fois, avec la progression et la vitesse. Annule ou réessaie un titre, reprends une file interrompue, et reçois une notification à la fin.';
+
+  @override
+  String get featureLibraryTitle => 'Retrouve tout dans la Bibliothèque';
+
+  @override
+  String get featureLibraryBody =>
+      'L\'historique jour par jour, avec recherche et filtres. Ouvre le dossier d\'un titre ou mets une playlist à jour avec ses nouveaux titres.';
+
+  @override
+  String get featureFollowTitle => 'Suis tes playlists et tes chaînes';
+
+  @override
+  String get featureFollowBody =>
+      'Abonne-toi depuis l\'aperçu : au démarrage, Ka7 te propose leurs nouveaux titres. Il te prévient aussi quand une nouvelle version de Ka7 sort.';
+
+  @override
+  String get aboutOpen => 'Plus d\'infos sur Ka7';
 
   @override
   String get resetFolder => 'Revenir au dossier par défaut';
