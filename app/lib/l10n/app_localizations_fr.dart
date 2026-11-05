@@ -246,24 +246,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get formatMp4 => 'MP4 · vidéo';
 
   @override
-  String get engineMissingBoth => 'Il manque yt-dlp et ffmpeg';
-
-  @override
-  String get engineMissingYtDlp => 'Il manque yt-dlp';
-
-  @override
-  String get engineMissingFfmpeg => 'Il manque ffmpeg';
+  String get engineMissingTitle => 'Une dernière étape';
 
   @override
   String get engineMissingBody =>
-      'Ka7 s\'en sert pour lire YouTube et créer les MP3. Il les télécharge depuis leurs sites officiels et les garde dans son propre dossier.';
+      'Ka7 a besoin de quelques compléments pour lire YouTube et créer tes MP3. Il les télécharge et les range dans son propre dossier.';
 
   @override
   String get engineInstall => 'Installer';
 
   @override
-  String engineInstalling(String tool, String percent) {
-    return 'Installation de $tool… $percent';
+  String engineInstalling(String percent) {
+    return 'Téléchargement des compléments… $percent';
   }
 
   @override

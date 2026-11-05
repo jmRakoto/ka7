@@ -32,7 +32,7 @@ void main() {
       FakeEngineSetup(missing: {EngineTool.ytDlp, EngineTool.ffmpeg}),
     );
 
-    expect(find.text('Il manque yt-dlp et ffmpeg'), findsOneWidget);
+    expect(find.text('Une dernière étape'), findsOneWidget);
     expect(find.text('Installer'), findsOneWidget);
     expect(find.textContaining('READY'), findsNothing);
   });
@@ -40,7 +40,7 @@ void main() {
   testWidgets('installs each missing tool, then opens the app', (tester) async {
     final setup = FakeEngineSetup(missing: {EngineTool.ffmpeg});
     await pumpGate(tester, setup);
-    expect(find.text('Il manque ffmpeg'), findsOneWidget);
+    expect(find.text('Une dernière étape'), findsOneWidget);
 
     await tester.tap(find.text('Installer'));
     // Nothing received yet: the bar runs without end, so no settling.
@@ -48,7 +48,7 @@ void main() {
     setup.progress(EngineTool.ffmpeg, 0.4);
     await tester.pumpAndSettle();
 
-    expect(find.text('Installation de ffmpeg… 40 %'), findsOneWidget);
+    expect(find.text('Téléchargement des compléments… 40 %'), findsOneWidget);
 
     setup.finish(EngineTool.ffmpeg);
     await tester.pumpAndSettle();

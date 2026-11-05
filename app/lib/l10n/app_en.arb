@@ -127,17 +127,12 @@
   "copiedFailed": "Links copied: paste them in Add to retry later.",
   "formatMp3": "MP3 · audio",
   "formatMp4": "MP4 · video",
-  "engineMissingBoth": "yt-dlp and ffmpeg are missing",
-  "engineMissingYtDlp": "yt-dlp is missing",
-  "engineMissingFfmpeg": "ffmpeg is missing",
-  "engineMissingBody": "Ka7 uses them to read YouTube and make MP3 files. It downloads them from their official sites and keeps them in its own folder.",
+  "engineMissingTitle": "One last step",
+  "engineMissingBody": "Ka7 needs a few add-ons to read YouTube and make your MP3s. It downloads them and keeps them in its own folder.",
   "engineInstall": "Install",
-  "engineInstalling": "Installing {tool}… {percent}",
+  "engineInstalling": "Downloading add-ons… {percent}",
   "@engineInstalling": {
     "placeholders": {
-      "tool": {
-        "type": "String"
-      },
       "percent": {
         "type": "String"
       }

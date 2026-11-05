@@ -422,28 +422,16 @@ abstract class AppLocalizations {
   /// **'MP4 · vidéo'**
   String get formatMp4;
 
-  /// No description provided for @engineMissingBoth.
+  /// No description provided for @engineMissingTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Il manque yt-dlp et ffmpeg'**
-  String get engineMissingBoth;
-
-  /// No description provided for @engineMissingYtDlp.
-  ///
-  /// In fr, this message translates to:
-  /// **'Il manque yt-dlp'**
-  String get engineMissingYtDlp;
-
-  /// No description provided for @engineMissingFfmpeg.
-  ///
-  /// In fr, this message translates to:
-  /// **'Il manque ffmpeg'**
-  String get engineMissingFfmpeg;
+  /// **'Une dernière étape'**
+  String get engineMissingTitle;
 
   /// No description provided for @engineMissingBody.
   ///
   /// In fr, this message translates to:
-  /// **'Ka7 s\'en sert pour lire YouTube et créer les MP3. Il les télécharge depuis leurs sites officiels et les garde dans son propre dossier.'**
+  /// **'Ka7 a besoin de quelques compléments pour lire YouTube et créer tes MP3. Il les télécharge et les range dans son propre dossier.'**
   String get engineMissingBody;
 
   /// No description provided for @engineInstall.
@@ -455,8 +443,8 @@ abstract class AppLocalizations {
   /// No description provided for @engineInstalling.
   ///
   /// In fr, this message translates to:
-  /// **'Installation de {tool}… {percent}'**
-  String engineInstalling(String tool, String percent);
+  /// **'Téléchargement des compléments… {percent}'**
+  String engineInstalling(String percent);
 
   /// No description provided for @engineFailed.
   ///

@@ -428,7 +428,7 @@ void main() {
       await tester.tap(find.text('Passer'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Il manque ffmpeg'), findsOneWidget);
+      expect(find.text('Une dernière étape'), findsOneWidget);
     });
   });
 
@@ -2008,7 +2008,7 @@ void main() {
   ) async {
     await pumpKa7(tester, setup: FakeEngineSetup(missing: {EngineTool.ffmpeg}));
 
-    expect(find.text('Il manque ffmpeg'), findsOneWidget);
+    expect(find.text('Une dernière étape'), findsOneWidget);
     expect(find.byType(AddLinksScreen), findsNothing);
   });
 }

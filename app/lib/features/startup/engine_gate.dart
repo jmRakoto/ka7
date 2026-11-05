@@ -87,11 +87,7 @@ class _EngineGateState extends State<EngineGate> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  switch (status.missing) {
-                    [EngineTool.ytDlp] => l10n.engineMissingYtDlp,
-                    [EngineTool.ffmpeg] => l10n.engineMissingFfmpeg,
-                    _ => l10n.engineMissingBoth,
-                  },
+                  l10n.engineMissingTitle,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontSize: 26,
                     fontWeight: FontWeight.w600,
@@ -117,7 +113,6 @@ class _EngineGateState extends State<EngineGate> {
                   Text(
                     l10n
                         .engineInstalling(
-                          _toolName(installing),
                           _fraction == null
                               ? ''
                               : l10n.percent((_fraction! * 100).round()),
@@ -149,8 +144,3 @@ class _EngineGateState extends State<EngineGate> {
     );
   }
 }
-
-String _toolName(EngineTool tool) => switch (tool) {
-  EngineTool.ytDlp => 'yt-dlp',
-  EngineTool.ffmpeg => 'ffmpeg',
-};
