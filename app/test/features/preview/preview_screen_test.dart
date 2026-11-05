@@ -1145,6 +1145,53 @@ void main() {
     );
   });
 
+  testWidgets('tries a failed search again when it is made again', (
+    tester,
+  ) async {
+    const first = SearchEntry('Hafatra', query: 'Hafatra');
+    const second = SearchEntry('Tsy Ferana', query: 'Tsy Ferana');
+    final extractor = FakeExtractor({
+      first.url: const ProbeFailure(FailureReason.network),
+      second.url: Probe(
+        title: 'Tsy Ferana',
+        isSearch: true,
+        items: [ericMananaPlaylist.items[1]],
+      ),
+    });
+    await pumpApp(
+      tester,
+      PreviewScreen(
+        entries: const [first],
+        extractor: extractor,
+        onDownload: (_, _, _) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+    Future<void> search(String query) async {
+      await tester.enterText(find.byType(TextField), query);
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('Pas de connexion à YouTube'), findsOneWidget);
+    await search('Tsy Ferana');
+    // The connection is back.
+    extractor.answers[first.url] = Probe(
+      title: 'Hafatra',
+      isSearch: true,
+      items: hafatraVideo.items,
+    );
+    await search('Hafatra');
+
+    expect(extractor.probed.where((e) => e == first.url), hasLength(2));
+    expect(find.text('Pas de connexion à YouTube'), findsNothing);
+    expect(find.text('Recherche : Hafatra'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Recherche : Hafatra')).dy,
+      lessThan(tester.getTopLeft(find.text('Recherche : Tsy Ferana')).dy),
+    );
+  });
+
   testWidgets('offers no search field when previewing links', (tester) async {
     await pumpApp(
       tester,

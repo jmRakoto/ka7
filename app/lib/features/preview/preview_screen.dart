@@ -135,12 +135,18 @@ class _PreviewScreenState extends State<PreviewScreen> {
     _query.clear();
     widget.onSearch?.call(query);
     // Made before (YouTube ignores the case): its results come back on top,
-    // under the field, read once, ticks kept.
+    // under the field, read once, ticks kept. Failed: read again.
     final before = _entries.indexWhere(
       (e) => e is SearchEntry && e.query.toLowerCase() == query.toLowerCase(),
     );
     if (before >= 0) {
-      setState(() => _entries.insert(0, _entries.removeAt(before)));
+      final entry = _entries[before];
+      final failed = _failures.containsKey(entry);
+      setState(() {
+        _entries.insert(0, _entries.removeAt(before));
+        _failures.remove(entry);
+      });
+      if (failed) _read(entry);
       return;
     }
     final entry = SearchEntry(query, query: query);
