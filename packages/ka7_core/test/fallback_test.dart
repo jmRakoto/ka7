@@ -197,6 +197,18 @@ void main() {
       expect(cancelled, isTrue);
     });
   });
+
+  group('channel pictures', () {
+    test('asks the first engine that can find one', () async {
+      final fallback = FallbackExtractor([
+        FakeExtractor('explode', StateError('no pictures here')),
+        _Pictures({'UCx': 'https://yt3/x=s176'}),
+      ]);
+
+      expect(await fallback.pictureOf('UCx'), 'https://yt3/x=s176');
+      expect(await fallback.pictureOf('UCy'), isNull);
+    });
+  });
 }
 
 final class _Hanging implements Downloader {
@@ -207,4 +219,20 @@ final class _Hanging implements Downloader {
   @override
   Stream<DownloadProgress> download(DownloadRequest request) =>
       StreamController<DownloadProgress>(onCancel: onCancel).stream;
+}
+
+/// Knows some channel pictures.
+final class _Pictures implements Extractor, ChannelPictures {
+  _Pictures(this.pictures);
+
+  final Map<String, String> pictures;
+
+  @override
+  String get name => 'yt-dlp';
+
+  @override
+  Future<Probe> probe(MediaEntry entry) => throw UnimplementedError();
+
+  @override
+  Future<String?> pictureOf(String channelId) async => pictures[channelId];
 }

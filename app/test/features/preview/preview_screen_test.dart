@@ -40,6 +40,77 @@ class _Pending implements Extractor {
       (answers[entry.url] = Completer<Probe>()).future;
 }
 
+/// A 1×1 transparent PNG: no network in tests.
+final pixel = Uint8List.fromList(const [
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
+]);
+
 void main() {
   final playlist = entryOf('PLe7rK2mErickManana01');
   final video = entryOf('Qm7tR2vLx9A');
@@ -371,6 +442,101 @@ void main() {
         'https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ',
       );
       expect(probe.title, 'Mahaleo official');
+    });
+
+    testWidgets('shows the channel picture when there is one', (tester) async {
+      const withPicture = SearchEntry('Hira', query: 'Hira');
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [withPicture],
+          extractor: FakeExtractor({
+            withPicture.url: Probe(
+              title: 'Hira',
+              isSearch: true,
+              channels: const [
+                ChannelRef(
+                  name: 'Hira Gasy',
+                  channelId: 'UCv2n4bLsEi0p9uMiHLFxXSQ',
+                  avatar: 'https://yt3.ggpht.com/hira=s176',
+                ),
+              ],
+              items: hafatraVideo.items,
+            ),
+          }),
+          isFollowed: (_) => false,
+          onFollow: (_, _) async {},
+          picture: (_) => MemoryImage(pixel),
+          onDownload: (_, _, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
+      expect(avatar.backgroundImage, isNotNull);
+    });
+
+    testWidgets('fetches the picture of a channel met through its videos', (
+      tester,
+    ) async {
+      const denise = SearchEntry('Denise', query: 'Denise');
+      final asked = <String>[];
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [denise],
+          extractor: FakeExtractor({
+            denise.url: const Probe(
+              title: 'Denise',
+              isSearch: true,
+              items: [
+                ProbeItem(
+                  videoId: 'Qm7tR2vLx9A',
+                  title: 'Jalousie',
+                  channel: 'Denise',
+                  channelId: 'UCEpStQu-C7FCCv1-P5UyClg',
+                ),
+              ],
+            ),
+          }),
+          isFollowed: (_) => false,
+          onFollow: (_, _) async {},
+          // Its own copy: not the one an earlier test left in the cache.
+          picture: (_) => MemoryImage(Uint8List.fromList(pixel)),
+          channelPicture: (id) async {
+            asked.add(id);
+            return 'https://yt3.googleusercontent.com/denise=s176';
+          },
+          onDownload: (_, _, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(asked, ['UCEpStQu-C7FCCv1-P5UyClg']);
+      final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
+      expect(avatar.backgroundImage, isNotNull);
+    });
+
+    testWidgets('opens the channel on YouTube when tapped', (tester) async {
+      final opened = <String>[];
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [search],
+          extractor: found,
+          isFollowed: (_) => false,
+          onFollow: (_, _) async {},
+          openUrl: opened.add,
+          onDownload: (_, _, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Mahaleo official'));
+
+      expect(opened, [
+        'https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ',
+      ]);
     });
 
     testWidgets('says Following for a channel already followed', (
@@ -759,77 +925,6 @@ void main() {
   });
 
   group('thumbnails', () {
-    /// A 1×1 transparent PNG: no network in tests.
-    final pixel = Uint8List.fromList(const [
-      0x89,
-      0x50,
-      0x4E,
-      0x47,
-      0x0D,
-      0x0A,
-      0x1A,
-      0x0A,
-      0x00,
-      0x00,
-      0x00,
-      0x0D,
-      0x49,
-      0x48,
-      0x44,
-      0x52,
-      0x00,
-      0x00,
-      0x00,
-      0x01,
-      0x00,
-      0x00,
-      0x00,
-      0x01,
-      0x08,
-      0x06,
-      0x00,
-      0x00,
-      0x00,
-      0x1F,
-      0x15,
-      0xC4,
-      0x89,
-      0x00,
-      0x00,
-      0x00,
-      0x0D,
-      0x49,
-      0x44,
-      0x41,
-      0x54,
-      0x78,
-      0x9C,
-      0x63,
-      0x00,
-      0x01,
-      0x00,
-      0x00,
-      0x05,
-      0x00,
-      0x01,
-      0x0D,
-      0x0A,
-      0x2D,
-      0xB4,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x49,
-      0x45,
-      0x4E,
-      0x44,
-      0xAE,
-      0x42,
-      0x60,
-      0x82,
-    ]);
-
     testWidgets('shows each available video with its thumbnail', (
       tester,
     ) async {

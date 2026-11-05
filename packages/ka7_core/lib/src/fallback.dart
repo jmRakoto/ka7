@@ -3,14 +3,30 @@ import 'dart:async';
 import 'download.dart';
 import 'link_entry.dart';
 import 'probe.dart';
+import 'search_channels.dart';
 
 /// Failures every engine would agree on: no point asking the next one.
 const _final = {FailureReason.private, FailureReason.unavailable};
 
 /// Reads a link with the first engine that manages to (flow 3: "another
 /// engine exists").
-final class FallbackExtractor implements Extractor {
+final class FallbackExtractor implements Extractor, ChannelPictures {
   FallbackExtractor(this.engines);
+
+  /// From the first engine able to find one; a failure is just no picture.
+  @override
+  Future<String?> pictureOf(String channelId) async {
+    for (final engine in engines.whereType<ChannelPictures>()) {
+      try {
+        if (await engine.pictureOf(channelId) case final picture?) {
+          return picture;
+        }
+      } on Object {
+        continue;
+      }
+    }
+    return null;
+  }
 
   /// In the order to try them.
   final List<Extractor> engines;

@@ -11,7 +11,7 @@ typedef RunProcess =
     Future<ProcessResult> Function(String executable, List<String> arguments);
 
 /// Engine driving the official yt-dlp binary (desktop).
-final class YtDlpExtractor implements Extractor {
+final class YtDlpExtractor implements Extractor, ChannelPictures {
   YtDlpExtractor({
     required this.run,
     this.executable = 'yt-dlp',
@@ -29,6 +29,28 @@ final class YtDlpExtractor implements Extractor {
 
   @override
   String get name => 'yt-dlp';
+
+  /// Read from the channel page, without its videos (`--playlist-items 0`).
+  @override
+  Future<String?> pictureOf(String channelId) async {
+    final ProcessResult result;
+    try {
+      result = await _run([
+        '--dump-single-json',
+        '--flat-playlist',
+        '--no-warnings',
+        '--playlist-items',
+        '0',
+        'https://www.youtube.com/channel/$channelId',
+      ]);
+    } on ProbeFailure {
+      return null;
+    }
+    if (result.exitCode != 0) return null;
+    return avatarOf(
+      jsonDecode(result.stdout as String) as Map<String, Object?>,
+    );
+  }
 
   @override
   Future<Probe> probe(MediaEntry entry) async {

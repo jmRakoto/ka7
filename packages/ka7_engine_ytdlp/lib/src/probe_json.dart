@@ -25,6 +25,7 @@ Probe parseProbeJson(Map<String, Object?> json) {
             ChannelRef(
               name: (entry['channel'] ?? entry['title']) as String? ?? '',
               channelId: entry['id'] as String,
+              avatar: _largest(entry['thumbnails']),
             ),
       ],
     );
@@ -60,3 +61,31 @@ Availability _availabilityOf(Object? title) => switch (title) {
   '[Deleted video]' => Availability.deleted,
   _ => Availability.available,
 };
+
+/// The widest of yt-dlp's [thumbnails], as an https address.
+String? _largest(Object? thumbnails) {
+  final pictures = [
+    for (final picture in (thumbnails as List<Object?>?) ?? const [])
+      if (picture case {'url': final String url})
+        (
+          url.startsWith('//') ? 'https:$url' : url,
+          (picture['width'] as num?) ?? 0,
+        ),
+  ]..sort((a, b) => b.$2.compareTo(a.$2));
+  return pictures.firstOrNull?.$1;
+}
+
+/// The channel's own picture in a channel page: the square one (banners are
+/// wide), asked at 176 px.
+String? avatarOf(Map<String, Object?> json) {
+  for (final picture in (json['thumbnails'] as List<Object?>?) ?? const []) {
+    if (picture case {
+      'url': final String url,
+      'width': final num width,
+      'height': final num height,
+    } when width == height) {
+      return url.replaceFirst(RegExp(r'=s\d+'), '=s176');
+    }
+  }
+  return null;
+}

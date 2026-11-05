@@ -9,7 +9,6 @@
    "id": "-ieWGHvs9xQ",
    "url": "https://www.youtube.com/watch?v=-ieWGHvs9xQ",
    "title": "Mahaleo Dadah & Fafah   Ny tena fitia",
-   "description": "Mahaleo Dadah & Fafah Ny tena fitia.",
    "duration": 344,
    "channel_id": "UClsWET8BmyoPbIvMxRVOIDA",
    "channel": "Vaovao Malagasy Madagasikara ",
@@ -25,14 +24,25 @@
    "id": "UCt4quCNBZZ0Cc6xWXUSp0zQ",
    "url": "https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ",
    "title": "Mahaleo official ",
-   "description": "OFFICIAL CHANNEL of the group MAHALEO  from Madagascar . All original videos are subtitled in Malagasy English Français more ...",
    "channel_id": "UCt4quCNBZZ0Cc6xWXUSp0zQ",
    "channel": "Mahaleo official ",
    "channel_url": "https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ",
    "uploader": "Mahaleo official ",
    "uploader_id": "@MahaleoOfficiel",
    "uploader_url": "https://www.youtube.com/@MahaleoOfficiel",
-   "channel_is_verified": true
+   "channel_is_verified": true,
+   "thumbnails": [
+    {
+     "url": "https://yt3.ggpht.com/6gcy3fpZEnGPDJ8ZBPKKkblzz4Jc1CO9gCmRVcWCheYH3HVkNKY5rraibLjQtpr9VDnVB59Tm5g=s88-c-k-c0x00ffffff-no-rj-mo",
+     "height": 88,
+     "width": 88
+    },
+    {
+     "url": "https://yt3.ggpht.com/6gcy3fpZEnGPDJ8ZBPKKkblzz4Jc1CO9gCmRVcWCheYH3HVkNKY5rraibLjQtpr9VDnVB59Tm5g=s176-c-k-c0x00ffffff-no-rj-mo",
+     "height": 176,
+     "width": 176
+    }
+   ]
   },
   {
    "_type": "url",
@@ -40,7 +50,6 @@
    "id": "7MSYzO8Avzk",
    "url": "https://www.youtube.com/watch?v=7MSYzO8Avzk",
    "title": "SOMAMBISAMBY Mahaleo Live @ Olympia",
-   "description": "\"C'est en Roumanie (1982) que j'ai composé Somambisamby (Nostalgie). C'était au cours de ma 1ère année là-bas loin de chez ...",
    "duration": 181,
    "channel_id": "UCt4quCNBZZ0Cc6xWXUSp0zQ",
    "channel": "Mahaleo official ",
@@ -51,7 +60,7 @@
    "channel_is_verified": true
   }
  ],
- "webpage_url": "ytsearch5:Mahaleo",
+ "webpage_url": "ytsearch8:Mahaleo",
  "extractor": "youtube:search",
  "extractor_key": "YoutubeSearch"
 }

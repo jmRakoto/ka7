@@ -35,6 +35,7 @@ class Ka7App extends StatefulWidget {
     this.shownFolder,
     this.askNotifications,
     this.thumbnail,
+    this.picture,
     this.appVersion,
     this.latestRelease,
     this.openUrl,
@@ -62,6 +63,9 @@ class Ka7App extends StatefulWidget {
 
   /// Picture of a video in the preview, by id; none when null (tests).
   final ImageProvider Function(String videoId)? thumbnail;
+
+  /// A picture from the web by address (channel avatars); none when null.
+  final ImageProvider Function(String url)? picture;
 
   /// Finds yt-dlp and ffmpeg, or installs them (flow 0); null when the
   /// engine is built into the app (mobile).
@@ -146,6 +150,7 @@ class _Ka7AppState extends State<Ka7App> {
       notifier: widget.notifier,
       shownFolder: widget.shownFolder,
       thumbnail: widget.thumbnail,
+      picture: widget.picture,
       appVersion: widget.appVersion,
       latestRelease: widget.latestRelease,
       openUrl: widget.openUrl,

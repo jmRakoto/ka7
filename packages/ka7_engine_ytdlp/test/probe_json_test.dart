@@ -98,6 +98,12 @@ void main() {
       expect(probe.channels.single.name.trim(), 'Mahaleo official');
     });
 
+    test('keeps the channel picture, the largest one', () {
+      final avatar = probe.channels.single.avatar!;
+      expect(avatar, startsWith('https://yt3.ggpht.com/'));
+      expect(avatar, contains('s176'), reason: '176 px over 88');
+    });
+
     test('knows the channel of each video', () {
       expect(probe.items.last.channelId, 'UCt4quCNBZZ0Cc6xWXUSp0zQ');
       expect(probe.items.first.channelId, 'UClsWET8BmyoPbIvMxRVOIDA');

@@ -41,6 +41,7 @@ class Ka7Shell extends StatefulWidget {
     this.notifier,
     this.shownFolder,
     this.thumbnail,
+    this.picture,
     this.fileExists,
     this.pickDestination,
     this.appVersion,
@@ -57,6 +58,9 @@ class Ka7Shell extends StatefulWidget {
 
   /// Picture of a video in the preview, by id; none when null (tests).
   final ImageProvider Function(String videoId)? thumbnail;
+
+  /// A picture from the web by address (channel avatars).
+  final ImageProvider Function(String url)? picture;
 
   /// Where the user finds a format's files, when not the download folder.
   final String Function(MediaFormat format)? shownFolder;
@@ -462,6 +466,9 @@ class _Ka7ShellState extends State<Ka7Shell> {
     _preview([parseEntry(playlistId) as MediaEntry]);
   }
 
+  /// Channel pictures asked this session: once each.
+  final _pictures = <String, Future<String?>>{};
+
   /// Latest searches, newest first (setting `search.recent`, one a line).
   final _recent = ValueNotifier<List<String>>(const []);
 
@@ -505,6 +512,15 @@ class _Ka7ShellState extends State<Ka7Shell> {
         quality: widget.settings.quality,
         queueStatus: _queueStatus,
         onSearch: (query) => unawaited(_remember(query)),
+        picture: widget.picture,
+        openUrl: widget.openUrl,
+        channelPicture: switch (widget.extractor) {
+          final ChannelPictures engine => (id) => _pictures.putIfAbsent(
+            id,
+            () => engine.pictureOf(id),
+          ),
+          _ => null,
+        },
         queueChanges: _queueChanges,
         onFollow: _follow,
         onDownload: (downloads, format, quality) {

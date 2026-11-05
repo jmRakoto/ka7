@@ -25,7 +25,19 @@ class PreviewScreen extends StatefulWidget {
     this.queueChanges,
     this.onSearch,
     this.quality = Quality.standard,
+    this.picture,
+    this.openUrl,
+    this.channelPicture,
   });
+
+  /// Finds the picture of a channel the search gave none for.
+  final Future<String?> Function(String channelId)? channelPicture;
+
+  /// A picture from the web (a channel's), by address; none when null.
+  final ImageProvider Function(String url)? picture;
+
+  /// Opens a page in the browser (a channel on YouTube).
+  final void Function(String url)? openUrl;
 
   /// A new search made here, to remember it.
   final ValueChanged<String>? onSearch;
@@ -351,6 +363,12 @@ class _PreviewScreenState extends State<PreviewScreen> {
                       );
                       if (mounted) setState(() {});
                     },
+              picture: widget.picture,
+              channelPicture: widget.channelPicture,
+              onOpenChannel: switch (widget.openUrl) {
+                final open? => (channel) => open(channel.link),
+                null => null,
+              },
               selected: _selected,
               present: _present,
               queued: (id) => widget.queueStatus?.call(id, _format),
@@ -408,7 +426,14 @@ class _ProbeGroup extends StatelessWidget {
     required this.thumbnail,
     this.channels = const [],
     this.onFollowChannel,
+    this.picture,
+    this.onOpenChannel,
+    this.channelPicture,
   });
+
+  final ImageProvider Function(String url)? picture;
+  final Future<String?> Function(String channelId)? channelPicture;
+  final void Function(ChannelRef channel)? onOpenChannel;
 
   final ImageProvider Function(String videoId)? thumbnail;
 
@@ -485,7 +510,13 @@ class _ProbeGroup extends StatelessWidget {
           trailing: l10n.trackCount(probe.items.length),
         ),
         if (channels.isNotEmpty && onFollowChannel != null)
-          _Channels(channels: channels, onFollow: onFollowChannel!),
+          _Channels(
+            channels: channels,
+            onFollow: onFollowChannel!,
+            picture: picture,
+            channelPicture: channelPicture,
+            onOpen: onOpenChannel,
+          ),
         if (followed case final followed? when onFollow != null)
           Align(
             alignment: Alignment.centerLeft,
@@ -738,7 +769,19 @@ class _QualityMenu extends StatelessWidget {
 /// Channels named like the search, above its videos: each with Suivre, or
 /// Suivi when followed already.
 class _Channels extends StatelessWidget {
-  const _Channels({required this.channels, required this.onFollow});
+  const _Channels({
+    required this.channels,
+    required this.onFollow,
+    required this.picture,
+    required this.onOpen,
+    this.channelPicture,
+  });
+
+  final ImageProvider Function(String url)? picture;
+  final Future<String?> Function(String channelId)? channelPicture;
+
+  /// Its page on YouTube; null where none can be opened.
+  final void Function(ChannelRef channel)? onOpen;
 
   final List<(ChannelRef, bool)> channels;
   final Future<void> Function(ChannelRef channel, bool follow) onFollow;
@@ -766,14 +809,17 @@ class _Channels extends StatelessWidget {
           for (final (channel, followed) in channels)
             Card(
               margin: const EdgeInsets.only(bottom: 8),
+              clipBehavior: Clip.antiAlias,
               child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: scheme.primaryContainer,
-                  foregroundColor: scheme.primary,
-                  child: Text(
-                    channel.name.characters.first.toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
+                // Its page on YouTube: to see what it is before following.
+                onTap: switch (onOpen) {
+                  final open? => () => open(channel),
+                  null => null,
+                },
+                leading: _Avatar(
+                  channel: channel,
+                  picture: picture,
+                  find: channelPicture,
                 ),
                 title: Text(
                   channel.name,
@@ -781,7 +827,19 @@ class _Channels extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                subtitle: Text(l10n.channelLabel),
+                subtitle: Row(
+                  children: [
+                    Flexible(child: Text(l10n.channelLabel)),
+                    if (onOpen != null) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.open_in_new,
+                        size: 14,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ],
+                ),
                 trailing: followed
                     ? FilledButton.tonalIcon(
                         onPressed: () => onFollow(channel, false),
@@ -797,6 +855,61 @@ class _Channels extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// The channel's picture, or its initial while none is known or it fails.
+class _Avatar extends StatefulWidget {
+  const _Avatar({required this.channel, required this.picture, this.find});
+
+  final ChannelRef channel;
+  final ImageProvider Function(String url)? picture;
+
+  /// Asked once when the search gave no picture: the initial shows meanwhile.
+  final Future<String?> Function(String channelId)? find;
+
+  @override
+  State<_Avatar> createState() => _AvatarState();
+}
+
+class _AvatarState extends State<_Avatar> {
+  var _failed = false;
+  String? _found;
+
+  @override
+  void initState() {
+    super.initState();
+    final find = widget.find;
+    if (widget.channel.avatar != null || find == null) return;
+    find(widget.channel.channelId).then((url) {
+      if (mounted && url != null) setState(() => _found = url);
+    }, onError: (Object _) {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final image = switch ((widget.channel.avatar ?? _found, widget.picture)) {
+      (final url?, final picture?) when !_failed => picture(url),
+      _ => null,
+    };
+    return CircleAvatar(
+      backgroundColor: scheme.primaryContainer,
+      foregroundColor: scheme.primary,
+      backgroundImage: image,
+      onBackgroundImageError: image == null
+          ? null
+          // Can come in the middle of a frame: the initial comes next one.
+          : (_, _) => WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _failed = true);
+            }),
+      child: image != null
+          ? null
+          : Text(
+              widget.channel.name.characters.first.toUpperCase(),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
     );
   }
 }

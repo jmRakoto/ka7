@@ -141,4 +141,34 @@ void main() {
       ),
     );
   });
+
+  group('channel picture', () {
+    test('asks for the channel alone and takes its square picture', () async {
+      final ytDlp = FakeYtDlp(
+        stdout: File('test/fixtures/channel_avatar.json').readAsStringSync(),
+      );
+
+      final picture = await YtDlpExtractor(
+        run: ytDlp.call,
+      ).pictureOf('UCEpStQu-C7FCCv1-P5UyClg');
+
+      expect(
+        ytDlp.arguments,
+        containsAllInOrder([
+          '--playlist-items',
+          '0',
+          'https://www.youtube.com/channel/UCEpStQu-C7FCCv1-P5UyClg',
+        ]),
+      );
+      expect(picture, startsWith('https://yt3.googleusercontent.com/'));
+      expect(picture, contains('=s176'), reason: 'small enough for a row');
+      expect(picture, isNot(contains('=s0')), reason: 'not the banner');
+    });
+
+    test('gives no picture when yt-dlp fails', () async {
+      final ytDlp = FakeYtDlp(exitCode: 1, stderr: 'ERROR: offline');
+
+      expect(await YtDlpExtractor(run: ytDlp.call).pictureOf('UCx'), isNull);
+    });
+  });
 }

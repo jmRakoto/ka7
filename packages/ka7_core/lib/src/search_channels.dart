@@ -1,10 +1,20 @@
 import 'probe.dart';
 
+/// An engine that can find a channel's picture (search results only give
+/// it for some channels).
+abstract interface class ChannelPictures {
+  /// Its address (https), or null when none can be found.
+  Future<String?> pictureOf(String channelId);
+}
+
 /// A YouTube channel met in search results.
 final class ChannelRef {
-  const ChannelRef({required this.name, required this.channelId});
+  const ChannelRef({required this.name, required this.channelId, this.avatar});
 
   final String name;
+
+  /// Its picture (https); null where unknown (met only through a video).
+  final String? avatar;
 
   /// `UC…`.
   final String channelId;
@@ -38,6 +48,7 @@ List<ChannelRef> channelsMatching(Probe search, String query) {
     found[channel.channelId] = ChannelRef(
       name: channel.name.trim(),
       channelId: channel.channelId,
+      avatar: channel.avatar,
     );
   }
   return [...found.values];

@@ -59,6 +59,23 @@ void main() {
     expect(channels.map((c) => c.name), ['Mahaleo official', 'Mahaleo Fans']);
   });
 
+  test('keeps the picture of a channel the search found', () {
+    final channels = channelsMatching(
+      _search(
+        channels: const [
+          ChannelRef(
+            name: 'Mahaleo official',
+            channelId: 'UCt4quCNBZZ0Cc6xWXUSp0zQ',
+            avatar: 'https://yt3.ggpht.com/abc=s176',
+          ),
+        ],
+      ),
+      'mahaleo',
+    );
+
+    expect(channels.single.avatar, 'https://yt3.ggpht.com/abc=s176');
+  });
+
   test('every word of the search must be in the name, any case', () {
     final search = _search(channels: [_official]);
 

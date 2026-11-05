@@ -57,6 +57,7 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
   );
   return Ka7App(
     thumbnail: _thumbnail,
+    picture: NetworkImage.new,
     engineSetup: _daily(store, binaries, (b) => b.updateYtDlp()),
     enginesFor: (status, settings) => (
       extractor: YtDlpExtractor(run: Process.run, executable: status!.ytDlp!),
@@ -79,6 +80,8 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
     openUrl: (url) => Process.run('xdg-open', [url]),
     pickLinksFile: _pickLinksFile,
     notifier: DesktopNotifier(run: Process.run),
+    // Original audio too (no re-encoding), as on Android.
+    formats: const [MediaFormat.mp3, MediaFormat.m4a, MediaFormat.mp4],
     // Deleted by hand: no longer « already there ».
     fileExists: (path, _) => File(path).exists(),
   );
@@ -109,6 +112,7 @@ Future<Ka7App> _mobile(Ka7Store store) async {
         folders[format == MediaFormat.mp4 ? format : MediaFormat.mp3]!;
     return Ka7App(
       thumbnail: _thumbnail,
+      picture: NetworkImage.new,
       engineSetup: _daily(
         store,
         AndroidEngineSetup(ytDlp),
@@ -165,6 +169,7 @@ Future<Ka7App> _mobile(Ka7Store store) async {
   final engine = ExplodeEngine(source: YoutubeExplodeSource());
   return Ka7App(
     thumbnail: _thumbnail,
+    picture: NetworkImage.new,
     enginesFor: (_, settings) => (extractor: engine, downloader: engine),
     store: store,
     formats: const [MediaFormat.m4a, MediaFormat.mp4],
