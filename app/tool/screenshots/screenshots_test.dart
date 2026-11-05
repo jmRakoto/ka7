@@ -51,6 +51,9 @@ final _extractor = FakeExtractor({
   'https://www.youtube.com/results?search_query=Erick+Manana': Probe(
     title: 'Erick Manana',
     isSearch: true,
+    channels: const [
+      ChannelRef(name: 'Erick Manana', channelId: 'UCx7eYvXnFq3o2Erick00001'),
+    ],
     items: ericMananaPlaylist.items.take(2).toList(),
   ),
 });

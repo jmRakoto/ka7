@@ -324,6 +324,108 @@ void main() {
     expect(find.text('Dans la file'), findsNothing, reason: 'other format');
   });
 
+  group('channels in a search', () {
+    const search = SearchEntry('Mahaleo', query: 'Mahaleo');
+    final found = FakeExtractor({
+      search.url: Probe(
+        title: 'Mahaleo',
+        isSearch: true,
+        channels: const [
+          ChannelRef(
+            name: 'Mahaleo official ',
+            channelId: 'UCt4quCNBZZ0Cc6xWXUSp0zQ',
+          ),
+          ChannelRef(name: 'Hira Gasy', channelId: 'UCv2n4bLsEi0p9uMiHLFxXSQ'),
+        ],
+        items: hafatraVideo.items,
+      ),
+    });
+
+    testWidgets('shows the channels named like the search, to follow', (
+      tester,
+    ) async {
+      final followed = <(Probe, bool)>[];
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [search],
+          extractor: found,
+          isFollowed: (_) => false,
+          onFollow: (probe, follow) async => followed.add((probe, follow)),
+          onDownload: (_, _, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Chaînes'), findsOneWidget);
+      expect(find.text('Mahaleo official'), findsOneWidget);
+      expect(find.text('Hira Gasy'), findsNothing, reason: 'other name');
+      await tester.tap(find.text('Suivre'));
+      await tester.pumpAndSettle();
+
+      final (probe, follow) = followed.single;
+      expect(follow, isTrue);
+      expect(probe.isChannel, isTrue);
+      expect(
+        followLinkOf(probe),
+        'https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ',
+      );
+      expect(probe.title, 'Mahaleo official');
+    });
+
+    testWidgets('says Following for a channel already followed', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [search],
+          extractor: found,
+          isFollowed: (link) =>
+              link ==
+              'https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ',
+          onFollow: (_, _) async {},
+          onDownload: (_, _, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Suivi'), findsOneWidget);
+    });
+
+    testWidgets('shows no channel when none is named like the search', (
+      tester,
+    ) async {
+      const other = SearchEntry('Hafatra', query: 'Hafatra');
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: const [other],
+          extractor: FakeExtractor({
+            other.url: Probe(
+              title: 'Hafatra',
+              isSearch: true,
+              channels: const [
+                ChannelRef(
+                  name: 'Mahaleo',
+                  channelId: 'UCt4quCNBZZ0Cc6xWXUSp0zQ',
+                ),
+              ],
+              items: hafatraVideo.items,
+            ),
+          }),
+          isFollowed: (_) => false,
+          onFollow: (_, _) async {},
+          onDownload: (_, _, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Chaînes'), findsNothing);
+      expect(find.text('Suivre'), findsNothing);
+    });
+  });
+
   group('loading', () {
     testWidgets('shows what is being read, with rows to come', (tester) async {
       final pending = _Pending();

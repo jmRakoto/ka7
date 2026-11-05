@@ -451,6 +451,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backToTop => 'Back to top';
 
   @override
+  String get searchChannels => 'Channels';
+
+  @override
+  String get channelLabel => 'YouTube channel';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

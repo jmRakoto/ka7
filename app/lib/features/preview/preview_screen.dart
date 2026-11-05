@@ -276,9 +276,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
           children: [
             // Narrow screen: the quality and the total give way, never the
             // button.
-            Flexible(child: quality),
+            // The quality is read first: it gets the room, the total wraps.
+            Flexible(flex: 3, child: quality),
             const SizedBox(width: 8),
-            Expanded(child: total),
+            Expanded(flex: 2, child: total),
             download,
           ],
         ),
@@ -328,6 +329,28 @@ class _PreviewScreenState extends State<PreviewScreen> {
           if (_probes[entry] case final probe?)
             _ProbeGroup(
               probe: probe,
+              // A search named like channels: those, to follow.
+              channels: switch ((entry, widget.onFollow, widget.isFollowed)) {
+                (SearchEntry(:final query), _?, final isFollowed?) => [
+                  for (final channel in channelsMatching(probe, query))
+                    (channel, isFollowed(channel.link)),
+                ],
+                _ => const [],
+              },
+              onFollowChannel: widget.onFollow == null
+                  ? null
+                  : (channel, follow) async {
+                      await widget.onFollow!(
+                        Probe(
+                          title: channel.name,
+                          playlistId: channel.channelId,
+                          isChannel: true,
+                          items: const [],
+                        ),
+                        follow,
+                      );
+                      if (mounted) setState(() {});
+                    },
               selected: _selected,
               present: _present,
               queued: (id) => widget.queueStatus?.call(id, _format),
@@ -383,9 +406,15 @@ class _ProbeGroup extends StatelessWidget {
     required this.followed,
     required this.onFollow,
     required this.thumbnail,
+    this.channels = const [],
+    this.onFollowChannel,
   });
 
   final ImageProvider Function(String videoId)? thumbnail;
+
+  /// Channels named like the search, and whether each is followed.
+  final List<(ChannelRef, bool)> channels;
+  final Future<void> Function(ChannelRef channel, bool follow)? onFollowChannel;
 
   /// Null when this cannot be followed (video, search, mix).
   final bool? followed;
@@ -455,6 +484,8 @@ class _ProbeGroup extends StatelessWidget {
           probe.isSearch ? l10n.searchResults(probe.title) : probe.title,
           trailing: l10n.trackCount(probe.items.length),
         ),
+        if (channels.isNotEmpty && onFollowChannel != null)
+          _Channels(channels: channels, onFollow: onFollowChannel!),
         if (followed case final followed? when onFollow != null)
           Align(
             alignment: Alignment.centerLeft,
@@ -699,6 +730,72 @@ class _QualityMenu extends StatelessWidget {
             const Icon(Icons.arrow_drop_down, size: 20),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Channels named like the search, above its videos: each with Suivre, or
+/// Suivi when followed already.
+class _Channels extends StatelessWidget {
+  const _Channels({required this.channels, required this.onFollow});
+
+  final List<(ChannelRef, bool)> channels;
+  final Future<void> Function(ChannelRef channel, bool follow) onFollow;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              l10n.searchChannels,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: scheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          for (final (channel, followed) in channels)
+            Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: scheme.primaryContainer,
+                  foregroundColor: scheme.primary,
+                  child: Text(
+                    channel.name.characters.first.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                title: Text(
+                  channel.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(l10n.channelLabel),
+                trailing: followed
+                    ? FilledButton.tonalIcon(
+                        onPressed: () => onFollow(channel, false),
+                        icon: const Icon(Icons.notifications_active_outlined),
+                        label: Text(l10n.following),
+                      )
+                    : OutlinedButton.icon(
+                        onPressed: () => onFollow(channel, true),
+                        icon: const Icon(Icons.notifications_none),
+                        label: Text(l10n.follow),
+                      ),
+              ),
+            ),
+        ],
       ),
     );
   }

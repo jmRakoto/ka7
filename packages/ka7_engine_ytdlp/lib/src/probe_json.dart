@@ -11,10 +11,21 @@ Probe parseProbeJson(Map<String, Object?> json) {
     return Probe(
       title: json['title'] as String? ?? '',
       isSearch: true,
-      // Results also list channels and playlists: videos only.
+      // Results also list channels and playlists: videos as items, channels
+      // to follow apart; playlists left out.
       items: [
         for (final entry in entries)
           if (entry['ie_key'] == 'Youtube') _item(entry),
+      ],
+      channels: [
+        for (final entry in entries)
+          if (entry['ie_key'] == 'YoutubeTab' &&
+              entry['id'] is String &&
+              entry['id'] == entry['channel_id'])
+            ChannelRef(
+              name: (entry['channel'] ?? entry['title']) as String? ?? '',
+              channelId: entry['id'] as String,
+            ),
       ],
     );
   }
@@ -36,6 +47,7 @@ ProbeItem _item(Map<String, Object?> json) {
     title: json['title'] as String? ?? '',
     duration: seconds == null ? null : Duration(seconds: seconds.round()),
     channel: json['channel'] as String?,
+    channelId: json['channel_id'] as String?,
     availability: _availabilityOf(json['title']),
   );
 }

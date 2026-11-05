@@ -782,6 +782,18 @@ abstract class AppLocalizations {
   /// **'Revenir en haut'**
   String get backToTop;
 
+  /// No description provided for @searchChannels.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaînes'**
+  String get searchChannels;
+
+  /// No description provided for @channelLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaîne YouTube'**
+  String get channelLabel;
+
   /// No description provided for @settingsTitle.
   ///
   /// In fr, this message translates to:

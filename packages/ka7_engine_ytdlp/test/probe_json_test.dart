@@ -83,4 +83,24 @@ void main() {
   test('does not take a playlist for a channel', () {
     expect(parseProbeJson(fixture('playlist_flat.json')).isChannel, isFalse);
   });
+
+  group('search with a channel', () {
+    final probe = parseProbeJson(
+      jsonDecode(
+            File('test/fixtures/search_with_channel.json').readAsStringSync(),
+          )
+          as Map<String, Object?>,
+    );
+
+    test('keeps the channels it found apart from the videos', () {
+      expect(probe.items.map((i) => i.videoId), ['-ieWGHvs9xQ', '7MSYzO8Avzk']);
+      expect(probe.channels.single.channelId, 'UCt4quCNBZZ0Cc6xWXUSp0zQ');
+      expect(probe.channels.single.name.trim(), 'Mahaleo official');
+    });
+
+    test('knows the channel of each video', () {
+      expect(probe.items.last.channelId, 'UCt4quCNBZZ0Cc6xWXUSp0zQ');
+      expect(probe.items.first.channelId, 'UClsWET8BmyoPbIvMxRVOIDA');
+    });
+  });
 }

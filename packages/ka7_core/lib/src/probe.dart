@@ -1,4 +1,5 @@
 import 'link_entry.dart';
+import 'search_channels.dart';
 
 /// Whether a video can be downloaded.
 enum Availability {
@@ -21,6 +22,7 @@ final class ProbeItem {
     required this.title,
     this.duration,
     this.channel,
+    this.channelId,
     this.availability = Availability.available,
   });
 
@@ -28,6 +30,9 @@ final class ProbeItem {
   final String title;
   final Duration? duration;
   final String? channel;
+
+  /// `UC…`, to follow the channel; null where unknown.
+  final String? channelId;
   final Availability availability;
 }
 
@@ -39,7 +44,11 @@ final class Probe {
     this.playlistId,
     this.isChannel = false,
     this.isSearch = false,
+    this.channels = const [],
   });
+
+  /// Channels a search found, besides its videos.
+  final List<ChannelRef> channels;
 
   /// Results of a search: the user picks among them, none checked at first.
   final bool isSearch;

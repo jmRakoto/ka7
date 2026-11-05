@@ -200,6 +200,31 @@ void main() {
       expect(await store.setting('search.recent'), isNull);
     });
 
+    testWidgets('searches again after coming back from the results', (
+      tester,
+    ) async {
+      await pumpKa7(tester);
+      Future<void> search() async {
+        await tester.tap(find.text('Recherche YouTube'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'Erick');
+        await tester.pump();
+        await tester.tap(find.text('Rechercher'));
+        await tester.pumpAndSettle();
+      }
+
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+      await search();
+      expect(find.text('Recherche : Erick'), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      await search();
+
+      expect(find.text('Recherche : Erick'), findsOneWidget);
+    });
+
     testWidgets('leaving the results gives an empty search field', (
       tester,
     ) async {

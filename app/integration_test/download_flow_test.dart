@@ -146,6 +146,47 @@ void main() {
     await _waitFor(tester, find.text('Suivi'), timeout: 120);
   });
 
+  testWidgets('a search shows the channel named like it, to follow', (
+    tester,
+  ) async {
+    final folder = Directory.systemTemp.createTempSync('ka7_e2e_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final store = Ka7Store.open(File('${folder.path}/ka7.sqlite'));
+    addTearDown(store.close);
+    await store.setSetting('language', 'fr');
+    await store.setSetting('onboarding.done', '1');
+    await tester.pumpWidget(_realApp(store, folder.path));
+    await _waitFor(tester, find.text('Recherche YouTube'));
+    await tester.pump(const Duration(milliseconds: 600));
+
+    Future<void> search() async {
+      await tester.tap(find.text('Recherche YouTube'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.enterText(find.byType(TextField), 'Mahaleo');
+      await tester.pump();
+      await tester.tap(find.text('Rechercher'));
+      await _waitFor(tester, find.text('Chaînes'), timeout: 120);
+    }
+
+    await search();
+    expect(find.textContaining('Mahaleo'), findsWidgets);
+    final follow = find.widgetWithText(OutlinedButton, 'Suivre').first;
+    await tester.tap(follow);
+    await _waitFor(tester, find.text('Suivi'));
+
+    final [followed] = await store.subscriptions();
+    expect(followed.link, startsWith('https://www.youtube.com/channel/UC'));
+    expect(followed.title.toLowerCase(), contains('mahaleo'));
+
+    // Searched again from the recent searches: the channel is followed.
+    await tester.tap(find.byType(BackButton));
+    await _waitFor(tester, find.widgetWithText(ActionChip, 'Mahaleo'));
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.tap(find.widgetWithText(ActionChip, 'Mahaleo'));
+    await _waitFor(tester, find.text('Chaînes'), timeout: 120);
+    expect(find.text('Suivi'), findsWidgets);
+  });
+
   testWidgets('an older Ka7 learns from GitHub that a newer one is out', (
     tester,
   ) async {

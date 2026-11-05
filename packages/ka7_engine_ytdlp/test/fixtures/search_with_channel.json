@@ -1,0 +1,57 @@
+{
+ "id": "Mahaleo",
+ "title": "Mahaleo",
+ "_type": "playlist",
+ "entries": [
+  {
+   "_type": "url",
+   "ie_key": "Youtube",
+   "id": "-ieWGHvs9xQ",
+   "url": "https://www.youtube.com/watch?v=-ieWGHvs9xQ",
+   "title": "Mahaleo Dadah & Fafah   Ny tena fitia",
+   "description": "Mahaleo Dadah & Fafah Ny tena fitia.",
+   "duration": 344,
+   "channel_id": "UClsWET8BmyoPbIvMxRVOIDA",
+   "channel": "Vaovao Malagasy Madagasikara ",
+   "channel_url": "https://www.youtube.com/channel/UClsWET8BmyoPbIvMxRVOIDA",
+   "uploader": "Vaovao Malagasy Madagasikara ",
+   "uploader_id": "@malagasyvaovao",
+   "uploader_url": "https://www.youtube.com/@malagasyvaovao",
+   "channel_is_verified": null
+  },
+  {
+   "_type": "url",
+   "ie_key": "YoutubeTab",
+   "id": "UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "url": "https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "title": "Mahaleo official ",
+   "description": "OFFICIAL CHANNEL of the group MAHALEO  from Madagascar . All original videos are subtitled in Malagasy English Français more ...",
+   "channel_id": "UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "channel": "Mahaleo official ",
+   "channel_url": "https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "uploader": "Mahaleo official ",
+   "uploader_id": "@MahaleoOfficiel",
+   "uploader_url": "https://www.youtube.com/@MahaleoOfficiel",
+   "channel_is_verified": true
+  },
+  {
+   "_type": "url",
+   "ie_key": "Youtube",
+   "id": "7MSYzO8Avzk",
+   "url": "https://www.youtube.com/watch?v=7MSYzO8Avzk",
+   "title": "SOMAMBISAMBY Mahaleo Live @ Olympia",
+   "description": "\"C'est en Roumanie (1982) que j'ai composé Somambisamby (Nostalgie). C'était au cours de ma 1ère année là-bas loin de chez ...",
+   "duration": 181,
+   "channel_id": "UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "channel": "Mahaleo official ",
+   "channel_url": "https://www.youtube.com/channel/UCt4quCNBZZ0Cc6xWXUSp0zQ",
+   "uploader": "Mahaleo official ",
+   "uploader_id": null,
+   "uploader_url": null,
+   "channel_is_verified": true
+  }
+ ],
+ "webpage_url": "ytsearch5:Mahaleo",
+ "extractor": "youtube:search",
+ "extractor_key": "YoutubeSearch"
+}

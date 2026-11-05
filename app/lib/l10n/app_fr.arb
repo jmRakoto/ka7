@@ -267,6 +267,8 @@
     }
   },
   "backToTop": "Revenir en haut",
+  "searchChannels": "Chaînes",
+  "channelLabel": "Chaîne YouTube",
   "settingsTitle": "Réglages",
   "settingsLanguage": "Langue",
   "languageSystem": "Système",
