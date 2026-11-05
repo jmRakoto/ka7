@@ -143,7 +143,7 @@ Les fichiers arrivent dans les dossiers **Music/Ka7** et **Movies/Ka7**, visible
   ./Ka7-$version-x86_64.AppImage
   \`\`\`
 
-Au premier lancement, l'app propose d'installer yt-dlp et ffmpeg (environ 180 Mo, une seule fois).
+Au premier lancement, Ka7 télécharge quelques compléments (environ 180 Mo, une seule fois).
 
 ## Empreintes SHA-256
 

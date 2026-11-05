@@ -107,7 +107,7 @@ jobs:
 
           Sans installation : \`Ka7-$v-windows-x64.zip\`, à décompresser, puis lance \`ka7.exe\`.
 
-          Au premier lancement, l'app propose d'installer yt-dlp et ffmpeg (une seule fois).
+          Au premier lancement, Ka7 télécharge quelques compléments (une seule fois).
 
           SHA-256 :
           \`\`\`
