@@ -43,10 +43,11 @@ Le `+N` doit augmenter à **chaque** version : sinon Android refuse d'installer 
 
 ### 2. Linux
 
-Prérequis : `fvm`, `fakeroot`, `dpkg-deb`. L'outil AppImage est téléchargé seul la première fois.
+Prérequis : `fvm`, Docker. La construction se fait dans un conteneur Ubuntu 22.04 : les paquets marchent sur Ubuntu 22.04, Debian 12 et plus récents (construits sur une machine plus récente, ils ne démarreraient pas sur les anciennes). L'outil AppImage est téléchargé seul la première fois. Sans Docker : `KA7_NATIVE_BUILD=1` (il faut alors aussi `fakeroot` et `dpkg-deb`), paquets limités aux Linux aussi récents que la machine.
 
 ```bash
 tool/package_linux.sh       # dist/ka7_<version>_amd64.deb et dist/Ka7-<version>-x86_64.AppImage
+tool/linux/check_old_linux.sh dist/Ka7-*-x86_64.AppImage dist/ka7_*_amd64.deb   # démarre-t-il sur Ubuntu 22.04 ?
 sudo apt install ./dist/ka7_*_amd64.deb
 ```
 

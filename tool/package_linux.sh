@@ -3,9 +3,47 @@
 #   ka7_<version>_amd64.deb  app (menu entry, `ka7-app`) and CLI (`ka7`)
 #   Ka7-<version>-x86_64.AppImage  app only, runs without installing
 # yt-dlp and ffmpeg are not bundled: the app installs them on first launch.
+#
+# Built in an Ubuntu 22.04 container (tool/linux/Dockerfile), so the packages
+# run on 22.04 and newer; KA7_NATIVE_BUILD=1 builds on this machine instead
+# (the packages then need a Linux as recent as this one).
+# Check on an old Linux: tool/linux/check_old_linux.sh <AppImage> [<deb>].
 set -euo pipefail
 cd "$(dirname "$0")/.."
 root=$PWD
+
+if [[ ${KA7_IN_CONTAINER:-} != 1 && ${KA7_NATIVE_BUILD:-} != 1 ]]; then
+  # The project's own Flutter (fvm) and package cache, at the same paths
+  # inside: same versions, and nothing in the project points into the box.
+  flutter_root=$(fvm flutter --version --machine 2>/dev/null |
+    python3 -I -c 'import json,sys; print(json.load(sys.stdin)["flutterRoot"])')
+  flutter_root=$(readlink -f "$flutter_root")
+  pub_cache=$(readlink -f "${PUB_CACHE:-$HOME/.pub-cache}")
+  tools=${XDG_CACHE_HOME:-$HOME/.cache}/ka7-tools
+  mkdir -p "$tools"
+  echo "== builder image (Ubuntu 22.04)"
+  docker build -q -t ka7-linux-builder tool/linux >/dev/null
+  docker run --rm -u "$(id -u):$(id -g)" \
+    -e HOME=/tmp/home -e KA7_IN_CONTAINER=1 \
+    -e FLUTTER_ROOT="$flutter_root" -e PUB_CACHE="$pub_cache" \
+    -e XDG_CACHE_HOME="$(dirname "$tools")" \
+    -e SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct)}" \
+    ${KA7_MAINTAINER:+-e KA7_MAINTAINER="$KA7_MAINTAINER"} \
+    -v "$root:$root" -v "$flutter_root:$flutter_root" \
+    -v "$pub_cache:$pub_cache" -v "$tools:$tools" \
+    -w "$root" ka7-linux-builder tool/package_linux.sh
+  exit
+fi
+
+if [[ ${KA7_IN_CONTAINER:-} == 1 ]]; then
+  # A fresh home each time: no first-run usage statistics sent from here.
+  flutter=("$FLUTTER_ROOT/bin/flutter" --suppress-analytics)
+  dart=("$FLUTTER_ROOT/bin/dart" --suppress-analytics)
+  mkdir -p "$HOME"
+else
+  flutter=(fvm flutter)
+  dart=(fvm dart)
+fi
 
 id=mg.rakoto.ka7
 version=$(sed -n 's/^version: \([0-9.]*\).*/\1/p' app/pubspec.yaml)
@@ -22,13 +60,14 @@ export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct)}
 same_dates() { find "$1" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +; }
 
 echo "== build app $version"
-# Leftovers of earlier builds would end up in the packages.
-rm -rf app/build/linux/x64/release/bundle
-(cd app && fvm flutter build linux --release --dart-define=KA7_VERSION="$version")
+# Leftovers of earlier builds would end up in the packages; objects compiled
+# against this machine's libraries must not be reused in the container.
+rm -rf app/build/linux/x64/release
+(cd app && "${flutter[@]}" build linux --release --dart-define=KA7_VERSION="$version")
 app=$root/app/build/linux/x64/release/bundle
 
 echo "== build cli"
-(cd cli && fvm dart build cli -o "$stage/cli")
+(cd cli && "${dart[@]}" build cli -o "$stage/cli")
 cli=$stage/cli/bundle
 
 # Desktop entry and icons, under [prefix]/share.
