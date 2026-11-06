@@ -498,5 +498,84 @@
         "type": "String"
       }
     }
-  }
+  },
+  "playerPlay": "Lire",
+  "playerPause": "Pause",
+  "playerStop": "Arrêter",
+  "playerNext": "Suivant",
+  "playerPrevious": "Précédent",
+  "playerForward": "Avancer de 10 s",
+  "playerBack": "Reculer de 10 s",
+  "playerRepeatOff": "Répéter : non",
+  "playerRepeatAll": "Répéter la liste",
+  "playerRepeatOne": "Répéter ce titre",
+  "playerShuffle": "Lecture aléatoire",
+  "playerClose": "Fermer le lecteur",
+  "playerOpen": "Ouvrir le lecteur",
+  "playerQueue": "File de lecture",
+  "playerNowPlaying": "En cours de lecture",
+  "playerRemoveFromQueue": "Retirer de la file de lecture",
+  "playerMissingFile": "Fichier introuvable : déplacé ou supprimé",
+  "playerOffline": "Lecture en ligne impossible : pas de réseau",
+  "playerUnavailable": "Ce titre ne peut pas être lu",
+  "playerLoading": "Chargement…",
+  "playerMissingBadge": "Introuvable",
+  "playNext": "Lire ensuite",
+  "enqueue": "Ajouter à la file de lecture",
+  "addToPlaylist": "Ajouter à une liste…",
+  "playAll": "Tout lire",
+  "shuffleAll": "Lecture aléatoire",
+  "playlistsTitle": "Listes de lecture",
+  "playlistsOpen": "Mes listes",
+  "newPlaylist": "Nouvelle liste",
+  "playlistName": "Nom de la liste",
+  "createButton": "Créer",
+  "saveButton": "Enregistrer",
+  "renamePlaylist": "Renommer",
+  "deletePlaylist": "Supprimer la liste",
+  "deletePlaylistTitle": "Supprimer « {name} » ?",
+  "@deletePlaylistTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePlaylistBody": "Seule la liste disparaît : les fichiers restent.",
+  "playlistsEmpty": "Aucune liste pour l'instant. Crée-en une, puis ajoute-y des titres depuis la Bibliothèque.",
+  "playlistEmpty": "Liste vide : ajoute des titres depuis la Bibliothèque, menu ⋮ « Ajouter à une liste… ».",
+  "addedToPlaylist": "Ajouté à « {name} »",
+  "@addedToPlaylist": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFromPlaylist": "Retirer de la liste",
+  "playlistActions": "Actions de la liste",
+  "listenOnline": "Écouter avant de télécharger",
+  "watchOnline": "Regarder avant de télécharger",
+  "navPlayer": "Lecteur",
+  "playerTitles": "Titres · {count}",
+  "@playerTitles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playerLists": "Listes · {count}",
+  "@playerLists": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playerEmpty": "Rien à écouter pour l'instant : les titres téléchargés arrivent ici, prêts à lire sans réseau.",
+  "playerSearch": "Chercher un titre",
+  "playerNoMatch": "Aucun titre ne correspond.",
+  "addFolder": "Ajouter un dossier",
+  "folderEmpty": "Aucun fichier à lire dans ce dossier : vide, déplacé, ou plus accessible."
 }

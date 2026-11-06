@@ -13,6 +13,12 @@ import '../../settings/app_settings.dart';
 import '../../widgets/ka7_logo.dart';
 import '../add_links/add_links_screen.dart';
 import '../library/library_screen.dart';
+import '../player/media_backend.dart';
+import '../player/mini_player.dart';
+import '../player/player_controller.dart';
+import '../player/player_hub_screen.dart';
+import '../player/player_screen.dart';
+import '../player/track.dart';
 import '../preview/preview_screen.dart';
 import '../queue/queue_screen.dart';
 import '../settings/settings_screen.dart';
@@ -20,9 +26,10 @@ import '../settings/settings_screen.dart';
 /// Below this width, the sections move from the sidebar to a bottom bar.
 const _sidebarWidth = 720.0;
 
-enum _Section { add, queue, library, settings }
+enum _Section { add, queue, library, player, settings }
 
-/// Sidebar (or bottom bar) and the four sections; owns the running queues.
+/// Sidebar (or bottom bar) and the sections (Lecteur only with a player);
+/// owns the running queues.
 class Ka7Shell extends StatefulWidget {
   const Ka7Shell({
     super.key,
@@ -44,6 +51,9 @@ class Ka7Shell extends StatefulWidget {
     this.picture,
     this.fileExists,
     this.pickDestination,
+    this.mediaBackend,
+    this.pickMediaFolder,
+    this.listMediaFolder,
     this.appVersion,
     this.latestRelease,
     this.openUrl,
@@ -71,6 +81,18 @@ class Ka7Shell extends StatefulWidget {
 
   /// Whether a downloaded file is still there; null to trust the archive.
   final FileExists? fileExists;
+
+  /// Makes the player's backend; null where nothing can be played.
+  final MediaBackend Function()? mediaBackend;
+
+  /// Picks a folder to play as a list; null where none can be picked.
+  /// [from]: where it opens, the music folder of Settings (a path, or a
+  /// `content://` tree on Android).
+  final Future<({String folder, String label})?> Function(String? from)?
+  pickMediaFolder;
+
+  /// The playable files of a folder list.
+  final Future<List<MediaFile>> Function(String folder)? listMediaFolder;
 
   /// Android: picks where files are filed in the end.
   final Future<Destination?> Function()? pickDestination;
@@ -112,6 +134,39 @@ class _Ka7ShellState extends State<Ka7Shell> {
   var _section = _Section.add;
   final _addNavigator = GlobalKey<NavigatorState>();
   final _settingsNavigator = GlobalKey<NavigatorState>();
+  final _playerNavigator = GlobalKey<NavigatorState>();
+
+  /// Stream addresses asked while the preview shows, so ▶ starts at once;
+  /// null without a player or an engine that gives them.
+  late final StreamCache? _streams = switch ((
+    widget.mediaBackend,
+    widget.extractor,
+  )) {
+    (_?, final StreamUrls engine) => StreamCache(engine),
+    _ => null,
+  };
+
+  /// The one player; null where nothing can be played.
+  late final PlayerController? _player = switch (widget.mediaBackend) {
+    final backend? => PlayerController(
+      backend: backend(),
+      streamUrl: _streams?.streamUrl,
+      fileExists: switch (widget.fileExists) {
+        // A folder's own files (FLAC…) have no Ka7 format: there, as read
+        // when the list opened.
+        final exists? => (track) => switch (track.format) {
+          final format? => exists(track.path!, format),
+          null => Future.value(true),
+        },
+        null => null,
+      },
+    ),
+    null => null,
+  };
+
+  void _openPlayer() => Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (_) => PlayerScreen(player: _player!)),
+  );
 
   /// Newest first.
   final _runs = <QueuedRun>[];
@@ -196,6 +251,10 @@ class _Ka7ShellState extends State<Ka7Shell> {
       subscription.cancel();
     }
     widget.background?.release();
+    if (_player case final player?) {
+      player.dispose();
+      unawaited(player.backend.dispose());
+    }
     _historyChanges.dispose();
     _followed.dispose();
     _queueChanges.dispose();
@@ -533,6 +592,19 @@ class _Ka7ShellState extends State<Ka7Shell> {
           _ => null,
         },
         queueChanges: _queueChanges,
+        onPlay: switch (_player) {
+          final player? => (item, {required video}) => player.playAll([
+            Track.online(item, video: video),
+          ]),
+          null => null,
+        },
+        onPrefetch: switch (_streams) {
+          final streams? => (item, {required video}) => streams.prefetch(
+            item.videoId,
+            video: video,
+          ),
+          null => null,
+        },
         onFollow: _follow,
         onDownload: (downloads, format, quality) {
           // A search stays open: back on Add, the results are still there.
@@ -607,13 +679,16 @@ class _Ka7ShellState extends State<Ka7Shell> {
     final l10n = AppLocalizations.of(context);
     final pending = _pending;
     final sections = [
-      (Icons.add_link, l10n.navAdd),
-      (Icons.downloading, l10n.navQueue),
-      (Icons.library_music_outlined, l10n.navLibrary),
-      (Icons.settings_outlined, l10n.navSettings),
+      (_Section.add, Icons.add_link, l10n.navAdd),
+      (_Section.queue, Icons.downloading, l10n.navQueue),
+      (_Section.library, Icons.library_music_outlined, l10n.navLibrary),
+      if (_player != null)
+        (_Section.player, Icons.headphones_outlined, l10n.navPlayer),
+      (_Section.settings, Icons.settings_outlined, l10n.navSettings),
     ];
-    Widget icon(int index, IconData data) =>
-        index == _Section.queue.index && pending > 0
+    final selected = sections.indexWhere((s) => s.$1 == _section);
+    Widget icon(_Section section, IconData data) =>
+        section == _Section.queue && pending > 0
         ? Badge.count(count: pending, child: Icon(data))
         : Icon(data);
 
@@ -683,6 +758,32 @@ class _Ka7ShellState extends State<Ka7Shell> {
             thumbnail: widget.thumbnail,
             now: widget.now,
           ),
+          // Its own navigator: playlists open beside the sidebar.
+          switch (_player) {
+            final player? => Navigator(
+              key: _playerNavigator,
+              onGenerateRoute: (_) => MaterialPageRoute<void>(
+                builder: (_) => PlayerHubScreen(
+                  store: widget.store,
+                  player: player,
+                  changes: _historyChanges,
+                  onOpenPlayer: _openPlayer,
+                  thumbnail: widget.thumbnail,
+                  pickFolder: switch (widget.pickMediaFolder) {
+                    // Opens where Ka7 files music: the Android destination
+                    // chosen, or the music folder of Settings.
+                    final pick? => () => pick(
+                      widget.settings.destinationFor(MediaFormat.mp3)?.uri ??
+                          widget.settings.folderFor(MediaFormat.mp3),
+                    ),
+                    null => null,
+                  },
+                  listFolder: widget.listMediaFolder,
+                ),
+              ),
+            ),
+            null => const SizedBox.shrink(),
+          },
           // Its own navigator: the About page opens beside the sidebar.
           Navigator(
             key: _settingsNavigator,
@@ -704,19 +805,34 @@ class _Ka7ShellState extends State<Ka7Shell> {
         ],
       ),
     );
-    void select(int index) => setState(() => _section = _Section.values[index]);
+    void select(int index) => setState(() => _section = sections[index].$1);
+    // Under every section while something plays; in the Scaffold's bottom
+    // bar, so messages show above it instead of over it.
+    final player = _player;
+    final mini = player == null
+        ? null
+        : MiniPlayer(player: player, onOpen: _openPlayer);
 
     final window = LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < _sidebarWidth) {
           return Scaffold(
             body: SafeArea(child: body),
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: _section.index,
-              onDestinationSelected: select,
-              destinations: [
-                for (final (i, (data, label)) in sections.indexed)
-                  NavigationDestination(icon: icon(i, data), label: label),
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ?mini,
+                NavigationBar(
+                  selectedIndex: selected,
+                  onDestinationSelected: select,
+                  destinations: [
+                    for (final (section, data, label) in sections)
+                      NavigationDestination(
+                        icon: icon(section, data),
+                        label: label,
+                      ),
+                  ],
+                ),
               ],
             ),
           );
@@ -725,7 +841,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
           body: Row(
             children: [
               NavigationRail(
-                selectedIndex: _section.index,
+                selectedIndex: selected,
                 onDestinationSelected: select,
                 labelType: NavigationRailLabelType.all,
                 leading: const Padding(
@@ -733,9 +849,9 @@ class _Ka7ShellState extends State<Ka7Shell> {
                   child: Ka7Logo(width: 44),
                 ),
                 destinations: [
-                  for (final (i, (data, label)) in sections.indexed)
+                  for (final (section, data, label) in sections)
                     NavigationRailDestination(
-                      icon: icon(i, data),
+                      icon: icon(section, data),
                       label: Text(label),
                     ),
                 ],
@@ -744,6 +860,7 @@ class _Ka7ShellState extends State<Ka7Shell> {
               Expanded(child: body),
             ],
           ),
+          bottomNavigationBar: mini,
         );
       },
     );

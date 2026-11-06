@@ -1525,6 +1525,312 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Télécharger la mise à jour'**
   String get updateDownload;
+
+  /// No description provided for @playerPlay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lire'**
+  String get playerPlay;
+
+  /// No description provided for @playerPause.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pause'**
+  String get playerPause;
+
+  /// No description provided for @playerStop.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrêter'**
+  String get playerStop;
+
+  /// No description provided for @playerNext.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivant'**
+  String get playerNext;
+
+  /// No description provided for @playerPrevious.
+  ///
+  /// In fr, this message translates to:
+  /// **'Précédent'**
+  String get playerPrevious;
+
+  /// No description provided for @playerForward.
+  ///
+  /// In fr, this message translates to:
+  /// **'Avancer de 10 s'**
+  String get playerForward;
+
+  /// No description provided for @playerBack.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reculer de 10 s'**
+  String get playerBack;
+
+  /// No description provided for @playerRepeatOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'Répéter : non'**
+  String get playerRepeatOff;
+
+  /// No description provided for @playerRepeatAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Répéter la liste'**
+  String get playerRepeatAll;
+
+  /// No description provided for @playerRepeatOne.
+  ///
+  /// In fr, this message translates to:
+  /// **'Répéter ce titre'**
+  String get playerRepeatOne;
+
+  /// No description provided for @playerShuffle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture aléatoire'**
+  String get playerShuffle;
+
+  /// No description provided for @playerClose.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer le lecteur'**
+  String get playerClose;
+
+  /// No description provided for @playerOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir le lecteur'**
+  String get playerOpen;
+
+  /// No description provided for @playerQueue.
+  ///
+  /// In fr, this message translates to:
+  /// **'File de lecture'**
+  String get playerQueue;
+
+  /// No description provided for @playerNowPlaying.
+  ///
+  /// In fr, this message translates to:
+  /// **'En cours de lecture'**
+  String get playerNowPlaying;
+
+  /// No description provided for @playerRemoveFromQueue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer de la file de lecture'**
+  String get playerRemoveFromQueue;
+
+  /// No description provided for @playerMissingFile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fichier introuvable : déplacé ou supprimé'**
+  String get playerMissingFile;
+
+  /// No description provided for @playerOffline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture en ligne impossible : pas de réseau'**
+  String get playerOffline;
+
+  /// No description provided for @playerUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce titre ne peut pas être lu'**
+  String get playerUnavailable;
+
+  /// No description provided for @playerLoading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chargement…'**
+  String get playerLoading;
+
+  /// No description provided for @playerMissingBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Introuvable'**
+  String get playerMissingBadge;
+
+  /// No description provided for @playNext.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lire ensuite'**
+  String get playNext;
+
+  /// No description provided for @enqueue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter à la file de lecture'**
+  String get enqueue;
+
+  /// No description provided for @addToPlaylist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter à une liste…'**
+  String get addToPlaylist;
+
+  /// No description provided for @playAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout lire'**
+  String get playAll;
+
+  /// No description provided for @shuffleAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture aléatoire'**
+  String get shuffleAll;
+
+  /// No description provided for @playlistsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Listes de lecture'**
+  String get playlistsTitle;
+
+  /// No description provided for @playlistsOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes listes'**
+  String get playlistsOpen;
+
+  /// No description provided for @newPlaylist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle liste'**
+  String get newPlaylist;
+
+  /// No description provided for @playlistName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom de la liste'**
+  String get playlistName;
+
+  /// No description provided for @createButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer'**
+  String get createButton;
+
+  /// No description provided for @saveButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer'**
+  String get saveButton;
+
+  /// No description provided for @renamePlaylist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Renommer'**
+  String get renamePlaylist;
+
+  /// No description provided for @deletePlaylist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer la liste'**
+  String get deletePlaylist;
+
+  /// No description provided for @deletePlaylistTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer « {name} » ?'**
+  String deletePlaylistTitle(String name);
+
+  /// No description provided for @deletePlaylistBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seule la liste disparaît : les fichiers restent.'**
+  String get deletePlaylistBody;
+
+  /// No description provided for @playlistsEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune liste pour l\'instant. Crée-en une, puis ajoute-y des titres depuis la Bibliothèque.'**
+  String get playlistsEmpty;
+
+  /// No description provided for @playlistEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Liste vide : ajoute des titres depuis la Bibliothèque, menu ⋮ « Ajouter à une liste… ».'**
+  String get playlistEmpty;
+
+  /// No description provided for @addedToPlaylist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouté à « {name} »'**
+  String addedToPlaylist(String name);
+
+  /// No description provided for @removeFromPlaylist.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer de la liste'**
+  String get removeFromPlaylist;
+
+  /// No description provided for @playlistActions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Actions de la liste'**
+  String get playlistActions;
+
+  /// No description provided for @listenOnline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écouter avant de télécharger'**
+  String get listenOnline;
+
+  /// No description provided for @watchOnline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Regarder avant de télécharger'**
+  String get watchOnline;
+
+  /// No description provided for @navPlayer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecteur'**
+  String get navPlayer;
+
+  /// No description provided for @playerTitles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titres · {count}'**
+  String playerTitles(int count);
+
+  /// No description provided for @playerLists.
+  ///
+  /// In fr, this message translates to:
+  /// **'Listes · {count}'**
+  String playerLists(int count);
+
+  /// No description provided for @playerEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien à écouter pour l\'instant : les titres téléchargés arrivent ici, prêts à lire sans réseau.'**
+  String get playerEmpty;
+
+  /// No description provided for @playerSearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chercher un titre'**
+  String get playerSearch;
+
+  /// No description provided for @playerNoMatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun titre ne correspond.'**
+  String get playerNoMatch;
+
+  /// No description provided for @addFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un dossier'**
+  String get addFolder;
+
+  /// No description provided for @folderEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun fichier à lire dans ce dossier : vide, déplacé, ou plus accessible.'**
+  String get folderEmpty;
 }
 
 class _AppLocalizationsDelegate

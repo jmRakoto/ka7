@@ -1352,4 +1352,116 @@ void main() {
       expect(box.value, isTrue, reason: 'a long press does not uncheck');
     });
   });
+
+  group('play before downloading', () {
+    Future<List<(String, bool)>> play(
+      WidgetTester tester, {
+      List<String> taps = const [],
+    }) async {
+      final played = <(String, bool)>[];
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [video],
+          extractor: extractor,
+          formats: const [MediaFormat.mp3, MediaFormat.mp4],
+          quality: Quality.standard,
+          onDownload: (_, _, _) {},
+          onPlay: (item, {required video}) => played.add((item.title, video)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final text in taps) {
+        await tester.tap(find.text(text));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.byTooltip('Écouter avant de télécharger'));
+      return played;
+    }
+
+    testWidgets('listens to a title online, for audio formats', (tester) async {
+      expect(await play(tester), [('Hafatra', false)]);
+    });
+
+    testWidgets('watches it, for MP4', (tester) async {
+      final played = <(String, bool)>[];
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [video],
+          extractor: extractor,
+          formats: const [MediaFormat.mp3, MediaFormat.mp4],
+          quality: Quality.standard,
+          onDownload: (_, _, _) {},
+          onPlay: (item, {required video}) => played.add((item.title, video)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('MP4 · vidéo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Regarder avant de télécharger'));
+
+      expect(played, [('Hafatra', true)]);
+    });
+
+    testWidgets('playing does not check the title', (tester) async {
+      await play(tester);
+      await tester.pumpAndSettle();
+
+      final row = tester.widget<CheckboxListTile>(
+        find.ancestor(
+          of: find.text('Hafatra').last,
+          matching: find.byType(CheckboxListTile),
+        ),
+      );
+      // A single video starts checked: it stays so.
+      expect(row.value, isTrue);
+    });
+
+    testWidgets('asks ahead for the address of each title shown', (
+      tester,
+    ) async {
+      final asked = <(String, bool)>[];
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [playlist],
+          extractor: extractor,
+          formats: const [MediaFormat.mp3, MediaFormat.mp4],
+          quality: Quality.standard,
+          onDownload: (_, _, _) {},
+          onPlay: (_, {required video}) {},
+          onPrefetch: (item, {required video}) =>
+              asked.add((item.videoId, video)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      // Unavailable videos cannot be played: not asked.
+      expect(asked, [('aB3dE5fG7hI', false), ('jK9lM1nO3pQ', false)]);
+
+      await tester.tap(find.text('MP4 · vidéo'));
+      await tester.pumpAndSettle();
+
+      expect(
+        asked,
+        containsAll([('aB3dE5fG7hI', true), ('jK9lM1nO3pQ', true)]),
+      );
+    });
+
+    testWidgets('no button without a player', (tester) async {
+      await pumpApp(
+        tester,
+        PreviewScreen(
+          entries: [video],
+          extractor: extractor,
+          formats: const [MediaFormat.mp3],
+          quality: Quality.standard,
+          onDownload: (_, _, _) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Écouter avant de télécharger'), findsNothing);
+    });
+  });
 }

@@ -11,7 +11,7 @@ typedef RunProcess =
     Future<ProcessResult> Function(String executable, List<String> arguments);
 
 /// Engine driving the official yt-dlp binary (desktop).
-final class YtDlpExtractor implements Extractor, ChannelPictures {
+final class YtDlpExtractor implements Extractor, ChannelPictures, StreamUrls {
   YtDlpExtractor({
     required this.run,
     this.executable = 'yt-dlp',
@@ -50,6 +50,26 @@ final class YtDlpExtractor implements Extractor, ChannelPictures {
     return avatarOf(
       jsonDecode(result.stdout as String) as Map<String, Object?>,
     );
+  }
+
+  @override
+  Future<String> streamUrl(String videoId, {required bool video}) async {
+    final result = await _run([
+      '--no-warnings',
+      '--get-url',
+      '--format',
+      // Video: YouTube only joins sound and picture up to 360p, enough to
+      // check it is the right one.
+      video ? 'best[vcodec!=none][acodec!=none]' : 'bestaudio/best',
+      // Not the quicker android_vr client: its addresses answer 403 to
+      // anyone but yt-dlp (2026-11-06).
+      'https://www.youtube.com/watch?v=$videoId',
+    ]);
+    if (result.exitCode != 0) {
+      final message = (result.stderr as String).trim();
+      throw ProbeFailure(failureReasonOf(message), message);
+    }
+    return (result.stdout as String).trim().split('\n').first;
   }
 
   @override

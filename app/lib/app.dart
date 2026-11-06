@@ -4,6 +4,7 @@ import 'package:ka7_engine_ytdlp/ka7_engine_ytdlp.dart';
 import 'package:ka7_store/ka7_store.dart';
 
 import 'features/onboarding/onboarding_screen.dart';
+import 'features/player/media_backend.dart';
 import 'features/shell/ka7_shell.dart';
 import 'features/startup/engine_gate.dart';
 import 'l10n/app_localizations.dart';
@@ -41,8 +42,24 @@ class Ka7App extends StatefulWidget {
     this.openUrl,
     this.fileExists,
     this.pickDestination,
+    this.mediaBackend,
+    this.pickMediaFolder,
+    this.listMediaFolder,
     this.now = DateTime.now,
   });
+
+  /// Picks a folder to play as a list (its address and how to show it);
+  /// null where none can be picked.
+  /// [from]: where it opens, the music folder of Settings (a path, or a
+  /// `content://` tree on Android).
+  final Future<({String folder, String label})?> Function(String? from)?
+  pickMediaFolder;
+
+  /// The playable files of a folder, read each time its list opens.
+  final Future<List<MediaFile>> Function(String folder)? listMediaFolder;
+
+  /// Makes the player's backend; null where nothing can be played.
+  final MediaBackend Function()? mediaBackend;
 
   /// Android: the system's folder picker, for where files are filed in the
   /// end; null where the download folder is the final one (desktop) or none
@@ -156,6 +173,9 @@ class _Ka7AppState extends State<Ka7App> {
       openUrl: widget.openUrl,
       fileExists: widget.fileExists,
       pickDestination: widget.pickDestination,
+      mediaBackend: widget.mediaBackend,
+      pickMediaFolder: widget.pickMediaFolder,
+      listMediaFolder: widget.listMediaFolder,
       pickFolder: widget.pickFolder,
       openFolder: widget.openFolder,
       now: widget.now,

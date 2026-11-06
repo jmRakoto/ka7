@@ -190,4 +190,56 @@ void main() {
       expect(await YtDlpExtractor(run: ytDlp.call).pictureOf('UCx'), isNull);
     });
   });
+
+  group('stream address', () {
+    const url = 'https://rr2---sn-uxah5-uogl.googlevideo.com/videoplayback?a=1';
+
+    test('asks for the best audio of the video, address only', () async {
+      final ytDlp = FakeYtDlp(stdout: '$url\n');
+
+      final stream = await YtDlpExtractor(
+        run: ytDlp.call,
+      ).streamUrl('jNQXAC9IVRw', video: false);
+
+      expect(ytDlp.arguments, [
+        '--no-warnings',
+        '--get-url',
+        '--format',
+        'bestaudio/best',
+        'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+      ]);
+      expect(stream, url);
+    });
+
+    test('asks for a video with its sound in one stream', () async {
+      final ytDlp = FakeYtDlp(stdout: '$url\n');
+
+      await YtDlpExtractor(
+        run: ytDlp.call,
+      ).streamUrl('jNQXAC9IVRw', video: true);
+
+      expect(
+        ytDlp.arguments,
+        containsAllInOrder(['--format', 'best[vcodec!=none][acodec!=none]']),
+      );
+    });
+
+    test('says why when yt-dlp fails', () async {
+      final ytDlp = FakeYtDlp(
+        exitCode: 1,
+        stderr: 'ERROR: [youtube] jNQXAC9IVRw: Private video',
+      );
+
+      expect(
+        YtDlpExtractor(run: ytDlp.call).streamUrl('jNQXAC9IVRw', video: false),
+        throwsA(
+          isA<ProbeFailure>().having(
+            (f) => f.reason,
+            'reason',
+            FailureReason.private,
+          ),
+        ),
+      );
+    });
+  });
 }

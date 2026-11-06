@@ -69,6 +69,68 @@ final class Subscription {
   final String title;
 }
 
+/// A playlist the user made from downloaded files.
+final class UserPlaylist {
+  const UserPlaylist({
+    required this.id,
+    required this.name,
+    required this.trackCount,
+    this.folder,
+    this.folderLabel,
+  });
+
+  final int id;
+  final String name;
+
+  /// Tracks kept in the store; none for a folder (read on opening).
+  final int trackCount;
+
+  /// The folder it plays (a path, or a `content://` tree on Android); null
+  /// for a playlist made by hand.
+  final String? folder;
+
+  /// The folder as the user knows it (`Musique/Mahaleo`).
+  final String? folderLabel;
+
+  bool get isFolder => folder != null;
+}
+
+/// A downloaded file in a [UserPlaylist].
+final class PlaylistTrack {
+  const PlaylistTrack({
+    required this.videoId,
+    required this.title,
+    required this.format,
+    required this.path,
+  });
+
+  /// From a successful line of the history.
+  factory PlaylistTrack.of(HistoryItem item) => PlaylistTrack(
+    videoId: item.videoId,
+    title: item.title,
+    format: item.format,
+    path: item.path!,
+  );
+
+  final String videoId;
+  final String title;
+  final MediaFormat format;
+
+  /// The file to play.
+  final String path;
+
+  @override
+  bool operator ==(Object other) =>
+      other is PlaylistTrack &&
+      other.videoId == videoId &&
+      other.format == format &&
+      other.path == path &&
+      other.title == title;
+
+  @override
+  int get hashCode => Object.hash(videoId, format, path, title);
+}
+
 /// Ka7's memory between two launches: archive and history, in one SQLite file.
 final class Ka7Store implements Archive {
   Ka7Store._(this._db);
@@ -265,6 +327,130 @@ final class Ka7Store implements Archive {
         Subscription(link: row.link, title: row.title),
     ];
   }
+
+  /// A playlist that plays [folder], read again each time it opens;
+  /// returns its id.
+  Future<int> createFolderPlaylist(
+    String name, {
+    required String folder,
+    required String label,
+  }) => _db
+      .into(_db.userPlaylists)
+      .insert(
+        UserPlaylistsCompanion.insert(
+          name: name,
+          folder: Value(folder),
+          folderLabel: Value(label),
+        ),
+      );
+
+  /// Makes an empty playlist; returns its id.
+  Future<int> createPlaylist(String name) => _db
+      .into(_db.userPlaylists)
+      .insert(UserPlaylistsCompanion.insert(name: name));
+
+  Future<void> renamePlaylist(int id, String name) =>
+      (_db.update(_db.userPlaylists)..where((p) => p.id.equals(id))).write(
+        UserPlaylistsCompanion(name: Value(name)),
+      );
+
+  /// Removes the playlist; the files stay.
+  Future<void> deletePlaylist(int id) => _db.transaction(() async {
+    await (_db.delete(
+      _db.playlistTracks,
+    )..where((t) => t.playlist.equals(id))).go();
+    await (_db.delete(_db.userPlaylists)..where((p) => p.id.equals(id))).go();
+  });
+
+  /// Puts the playlists in the order of [ids]; any left out keep their
+  /// place after them.
+  Future<void> orderPlaylists(List<int> ids) => _db.transaction(() async {
+    for (final (position, id) in ids.indexed) {
+      await (_db.update(_db.userPlaylists)..where((p) => p.id.equals(id)))
+          .write(UserPlaylistsCompanion(position: Value(position)));
+    }
+  });
+
+  /// In the user's order; new ones last.
+  Future<List<UserPlaylist>> playlists() async {
+    final count = _db.playlistTracks.id.count();
+    final query =
+        _db.select(_db.userPlaylists).join([
+            leftOuterJoin(
+              _db.playlistTracks,
+              _db.playlistTracks.playlist.equalsExp(_db.userPlaylists.id),
+            ),
+          ])
+          ..addColumns([count])
+          ..groupBy([_db.userPlaylists.id])
+          // Ordered ones by their place, then the others as made.
+          ..orderBy([
+            OrderingTerm.asc(
+              coalesce([
+                _db.userPlaylists.position,
+                _db.userPlaylists.id + const Constant(1 << 30),
+              ]),
+            ),
+          ]);
+    return [
+      for (final row in await query.get())
+        UserPlaylist(
+          id: row.readTable(_db.userPlaylists).id,
+          name: row.readTable(_db.userPlaylists).name,
+          trackCount: row.read(count) ?? 0,
+          folder: row.readTable(_db.userPlaylists).folder,
+          folderLabel: row.readTable(_db.userPlaylists).folderLabel,
+        ),
+    ];
+  }
+
+  /// In play order.
+  Future<List<PlaylistTrack>> playlistTracks(int id) async {
+    final query = _db.select(_db.playlistTracks)
+      ..where((t) => t.playlist.equals(id))
+      ..orderBy([(t) => OrderingTerm.asc(t.position)]);
+    return [
+      for (final row in await query.get())
+        PlaylistTrack(
+          videoId: row.videoId,
+          title: row.title,
+          format: MediaFormat.values.byName(row.format),
+          path: row.path,
+        ),
+    ];
+  }
+
+  /// Appends [track] at the end of playlist [id].
+  Future<void> addToPlaylist(int id, PlaylistTrack track) =>
+      _db.transaction(() async {
+        final tracks = await playlistTracks(id);
+        await _insertTrack(id, tracks.length, track);
+      });
+
+  /// Replaces the tracks of playlist [id]: to remove or reorder.
+  Future<void> setPlaylistTracks(int id, List<PlaylistTrack> tracks) =>
+      _db.transaction(() async {
+        await (_db.delete(
+          _db.playlistTracks,
+        )..where((t) => t.playlist.equals(id))).go();
+        for (final (position, track) in tracks.indexed) {
+          await _insertTrack(id, position, track);
+        }
+      });
+
+  Future<void> _insertTrack(int playlist, int position, PlaylistTrack track) =>
+      _db
+          .into(_db.playlistTracks)
+          .insert(
+            PlaylistTracksCompanion.insert(
+              playlist: playlist,
+              position: position,
+              videoId: track.videoId,
+              title: track.title,
+              format: track.format.name,
+              path: track.path,
+            ),
+          );
 
   Future<void> close() => _db.close();
 }

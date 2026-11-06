@@ -7,13 +7,16 @@ import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_engine_explode/ka7_engine_explode.dart';
 import 'package:ka7_engine_ytdlp/ka7_engine_ytdlp.dart';
 import 'package:ka7_store/ka7_store.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
+import 'features/player/media_kit_backend.dart';
 import 'platform/android_background.dart';
 import 'platform/android_ytdlp.dart';
 import 'platform/desktop_notifier.dart';
 import 'platform/desktop_open.dart';
+import 'platform/folder_media.dart';
 import 'platform/media_store.dart';
 import 'platform/open_url.dart';
 import 'platform/shared_links.dart';
@@ -36,6 +39,7 @@ ImageProvider _thumbnail(String videoId) =>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   // Same folder as the CLI on desktop: one archive, one history.
   final support = await getApplicationSupportDirectory();
   final store = Ka7Store.open(File('${support.path}/ka7.sqlite'));
@@ -64,6 +68,7 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
   );
   return Ka7App(
     thumbnail: _thumbnail,
+    mediaBackend: MediaKitBackend.new,
     picture: NetworkImage.new,
     engineSetup: _daily(store, binaries, (b) => b.updateYtDlp()),
     enginesFor: (status, settings) => (
@@ -81,6 +86,13 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
     },
     pickFolder: FilePicker.getDirectoryPath,
     openFolder: open,
+    pickMediaFolder: (from) async {
+      final path = await FilePicker.getDirectoryPath(initialDirectory: from);
+      return path == null
+          ? null
+          : (folder: path, label: folderLabel(path, home: home));
+    },
+    listMediaFolder: listFolderMedia,
     acceptDrops: true,
     appVersion: _appVersion,
     latestRelease: fetchLatestRelease,
@@ -120,6 +132,7 @@ Future<Ka7App> _mobile(Ka7Store store) async {
         folders[format == MediaFormat.mp4 ? format : MediaFormat.mp3]!;
     return Ka7App(
       thumbnail: _thumbnail,
+      mediaBackend: MediaKitBackend.new,
       picture: NetworkImage.new,
       engineSetup: _daily(
         store,
@@ -170,6 +183,16 @@ Future<Ka7App> _mobile(Ka7Store store) async {
         tree: (format) => destinations?.destinationFor(format)?.uri,
       ),
       pickDestination: pickAndroidFolder,
+      // Any folder, SD card included, played as a list.
+      // `from`: the destination chosen, if any (else the app's own folder,
+      // useless here: Music/Ka7).
+      pickMediaFolder: (from) async => switch (await pickAndroidFolder(
+        from: from != null && from.startsWith('content://') ? from : null,
+      )) {
+        (:final uri, :final label) => (folder: uri, label: label),
+        null => null,
+      },
+      listMediaFolder: listAndroidFolder,
       // Downloaded first to the app's own folder, no picker: MediaStore files them.
       defaultFolders: folders,
     );
@@ -177,6 +200,7 @@ Future<Ka7App> _mobile(Ka7Store store) async {
   final engine = ExplodeEngine(source: YoutubeExplodeSource());
   return Ka7App(
     thumbnail: _thumbnail,
+    mediaBackend: MediaKitBackend.new,
     picture: NetworkImage.new,
     enginesFor: (_, settings) => (extractor: engine, downloader: engine),
     store: store,

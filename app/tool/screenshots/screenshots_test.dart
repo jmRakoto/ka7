@@ -20,6 +20,7 @@ import 'package:ka7_store/ka7_store.dart';
 import '../../test/helpers/controlled_downloader.dart';
 import '../../test/helpers/fake_engine_setup.dart';
 import '../../test/helpers/fake_extractor.dart';
+import '../../test/helpers/fake_media_backend.dart';
 import '../../test/helpers/probes.dart';
 
 final _out = Platform.environment['KA7_SHOTS'] ?? 'build/screenshots';
@@ -57,6 +58,19 @@ final _extractor = FakeExtractor({
     items: ericMananaPlaylist.items.take(2).toList(),
   ),
 });
+
+/// Reads like [_extractor], and gives stream addresses.
+class _Streams implements Extractor, StreamUrls {
+  @override
+  String get name => 'streams';
+
+  @override
+  Future<Probe> probe(MediaEntry entry) => _extractor.probe(entry);
+
+  @override
+  Future<String> streamUrl(String videoId, {required bool video}) async =>
+      'https://stream/$videoId';
+}
 
 /// Never answers: the preview stays on its loading view.
 class _Pending implements Extractor {
@@ -356,6 +370,128 @@ void main() {
           ),
         );
         await shot('7-interrupted');
+      });
+    }
+  }
+
+  // The player: Library with its buttons, mini player, whole player,
+  // playlists, and ▶ in the preview.
+  for (final (name, size) in [
+    ('desktop', const Size(1280, 800)),
+    ('phone', const Size(400, 860)),
+  ]) {
+    for (final brightness in Brightness.values) {
+      testWidgets('player $name ${brightness.name}', (tester) async {
+        tester.view
+          ..physicalSize = size
+          ..devicePixelRatio = 1;
+        tester.platformDispatcher.platformBrightnessTestValue = brightness;
+        addTearDown(tester.view.reset);
+        addTearDown(tester.platformDispatcher.clearAllTestValues);
+        final prefix = '$_out/$name-${brightness.name}';
+        Directory(_out).createSync(recursive: true);
+        Future<void> shot(String screen) async {
+          await tester.pumpAndSettle();
+          final boundary = tester.renderObject<RenderRepaintBoundary>(
+            find.byType(RepaintBoundary).first,
+          );
+          await tester.runAsync(() async {
+            final image = await boundary.toImage();
+            final png = await image.toByteData(format: ui.ImageByteFormat.png);
+            File(
+              '$prefix-$screen.png',
+            ).writeAsBytesSync(png!.buffer.asUint8List());
+          });
+        }
+
+        final store = Ka7Store.inMemory();
+        addTearDown(store.close);
+        await store.setSetting('language', 'fr');
+        await store.setSetting('onboarding.done', '1');
+        for (final (i, item) in ericMananaPlaylist.items.take(2).indexed) {
+          await store.record(
+            JobSucceeded(
+              PlannedDownload(
+                source: ericMananaPlaylist,
+                item: item,
+                index: i + 1,
+              ),
+              '/home/rakoto/Musique/Ka7/${item.title}.mp3',
+            ),
+            MediaFormat.mp3,
+            DateTime.now().subtract(Duration(minutes: 10 - i)),
+          );
+        }
+        await store.createFolderPlaylist(
+          'Mahaleo',
+          folder: '/home/rakoto/Musique/Mahaleo',
+          label: 'Musique/Mahaleo',
+        );
+        final party = await store.createPlaylist('Soirée');
+        for (final item in await store.history()) {
+          await store.addToPlaylist(party, PlaylistTrack.of(item));
+        }
+        final backend = FakeMediaBackend();
+        await tester.pumpWidget(
+          RepaintBoundary(
+            child: Ka7App(
+              engineSetup: FakeEngineSetup.ready(),
+              enginesFor: (_, _) =>
+                  (extractor: _Streams(), downloader: ControlledDownloader()),
+              store: store,
+              defaultFolders: const {
+                MediaFormat.mp3: '/home/rakoto/Musique',
+                MediaFormat.mp4: '/home/rakoto/Vidéos',
+              },
+              pickFolder: () async => null,
+              openFolder: (_) {},
+              mediaBackend: () => backend,
+              pickMediaFolder: (_) async => null,
+              listMediaFolder: (folder) async => const [
+                MediaFile(path: '/m/1 Bonga.mp3', name: '1 Bonga.mp3'),
+                MediaFile(path: '/m/2 Veloma.flac', name: '2 Veloma.flac'),
+                MediaFile(path: '/m/Live/Hafatra.mp4', name: 'Hafatra.mp4'),
+              ],
+              thumbnail: (_) => MemoryImage(Uint8List(0)),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Lecteur').last);
+        await shot('8-player-hub');
+        await tester.tap(find.text('Tsy Ferana'));
+        await tester.pumpAndSettle();
+        backend
+          ..lasts(const Duration(minutes: 5, seconds: 41))
+          ..at(const Duration(minutes: 1, seconds: 12));
+        await shot('8b-mini-player');
+        await tester.tap(find.bySemanticsLabel('Ouvrir le lecteur'));
+        await shot('8c-player');
+        await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
+        await tester.pumpAndSettle();
+        await shot('8b-player-hub-playing');
+        await tester.tap(find.textContaining('Listes ·'));
+        await shot('8d-playlists');
+        await tester.tap(find.text('Mahaleo'));
+        await shot('8h-folder-list');
+        await tester.tap(find.byType(BackButton).last);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Soirée'));
+        await shot('8e-playlist');
+        await tester.tap(find.byType(BackButton).last);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Ajouter').last);
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'PLe7rK2mErickManana01');
+        await tester.pump();
+        await tester.tap(find.text("Voir l'aperçu"));
+        await shot('8f-preview-play');
+        await tester.tap(find.byTooltip('Écouter avant de télécharger').first);
+        await tester.pumpAndSettle();
+        backend
+          ..lasts(const Duration(minutes: 4, seconds: 12))
+          ..at(const Duration(seconds: 47));
+        await shot('8g-preview-listening');
       });
     }
   }

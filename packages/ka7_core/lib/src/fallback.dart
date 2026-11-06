@@ -4,13 +4,15 @@ import 'download.dart';
 import 'link_entry.dart';
 import 'probe.dart';
 import 'search_channels.dart';
+import 'stream_urls.dart';
 
 /// Failures every engine would agree on: no point asking the next one.
 const _final = {FailureReason.private, FailureReason.unavailable};
 
 /// Reads a link with the first engine that manages to (flow 3: "another
 /// engine exists").
-final class FallbackExtractor implements Extractor, ChannelPictures {
+final class FallbackExtractor
+    implements Extractor, ChannelPictures, StreamUrls {
   FallbackExtractor(this.engines);
 
   /// From the first engine able to find one; a failure is just no picture.
@@ -26,6 +28,22 @@ final class FallbackExtractor implements Extractor, ChannelPictures {
       }
     }
     return null;
+  }
+
+  /// From the first engine able to give one.
+  @override
+  Future<String> streamUrl(String videoId, {required bool video}) async {
+    ProbeFailure? first;
+    for (final engine in engines.whereType<StreamUrls>()) {
+      try {
+        return await engine.streamUrl(videoId, video: video);
+      } on ProbeFailure catch (failure) {
+        first ??= failure;
+        if (_final.contains(failure.reason)) break;
+      }
+    }
+    throw first ??
+        const ProbeFailure(FailureReason.unknown, 'no engine plays online');
   }
 
   /// In the order to try them.

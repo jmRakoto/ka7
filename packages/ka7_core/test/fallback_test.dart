@@ -209,6 +209,52 @@ void main() {
       expect(await fallback.pictureOf('UCy'), isNull);
     });
   });
+
+  group('stream addresses', () {
+    test('asks the engines in turn, past a failing one', () async {
+      final fallback = FallbackExtractor([
+        _Streams(const ProbeFailure(FailureReason.network, 'down')),
+        FakeExtractor('explode', _zoo),
+        _Streams('https://googlevideo/zoo'),
+      ]);
+
+      expect(
+        await fallback.streamUrl('jNQXAC9IVRw', video: false),
+        'https://googlevideo/zoo',
+      );
+    });
+
+    test('fails with the first reason when none can', () async {
+      final fallback = FallbackExtractor([
+        _Streams(const ProbeFailure(FailureReason.network, 'down')),
+      ]);
+
+      expect(
+        fallback.streamUrl('jNQXAC9IVRw', video: false),
+        throwsA(isA<ProbeFailure>()),
+      );
+    });
+  });
+}
+
+/// Gives a stream address, or fails.
+final class _Streams implements Extractor, StreamUrls {
+  _Streams(this.answer);
+
+  final Object answer;
+
+  @override
+  String get name => 'streams';
+
+  @override
+  Future<Probe> probe(MediaEntry entry) => throw UnimplementedError();
+
+  @override
+  Future<String> streamUrl(String videoId, {required bool video}) async =>
+      switch (answer) {
+        final String url => url,
+        final Object error => throw error,
+      };
 }
 
 final class _Hanging implements Downloader {

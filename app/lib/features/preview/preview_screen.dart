@@ -21,6 +21,8 @@ class PreviewScreen extends StatefulWidget {
     this.isFollowed,
     this.onFollow,
     this.thumbnail,
+    this.onPlay,
+    this.onPrefetch,
     this.queueStatus,
     this.queueChanges,
     this.onSearch,
@@ -91,6 +93,14 @@ class PreviewScreen extends StatefulWidget {
 
   /// Picked at first: the default of Settings.
   final Quality quality;
+
+  /// Plays a video online, before downloading it; null where there is no
+  /// player.
+  final void Function(ProbeItem item, {required bool video})? onPlay;
+
+  /// A title came on screen: its address can be asked ahead, so ▶ starts at
+  /// once.
+  final void Function(ProbeItem item, {required bool video})? onPrefetch;
 
   @override
   State<PreviewScreen> createState() => _PreviewScreenState();
@@ -373,6 +383,21 @@ class _PreviewScreenState extends State<PreviewScreen> {
           if (_probes[entry] case final probe?)
             ..._ProbeGroup(
               id: entry.url,
+              onPlay: switch (widget.onPlay) {
+                final play? => (item) => play(
+                  item,
+                  video: _format == MediaFormat.mp4,
+                ),
+                null => null,
+              },
+              video: _format == MediaFormat.mp4,
+              onPrefetch: switch (widget.onPrefetch) {
+                final prefetch? => (item) => prefetch(
+                  item,
+                  video: _format == MediaFormat.mp4,
+                ),
+                null => null,
+              },
               now: widget.now(),
               filter: _filters[entry] ?? '',
               onFilter: (text) => setState(() => _filters[entry] = text),
@@ -468,7 +493,19 @@ class _ProbeGroup {
     this.onOpenChannel,
     this.onWebChannel,
     this.channelPicture,
+    this.onPlay,
+    this.onPrefetch,
+    this.video = false,
   });
+
+  /// The title came on screen.
+  final void Function(ProbeItem item)? onPrefetch;
+
+  /// Plays a video online, before downloading it.
+  final void Function(ProbeItem item)? onPlay;
+
+  /// MP4 chosen: played as a video.
+  final bool video;
 
   /// The link it comes from, to key its rows.
   final String id;
@@ -666,14 +703,14 @@ class _ProbeGroup {
                   _showVideo(context, item, thumbnail?.call(item.videoId)),
             ),
             subtitle: _details(context, item),
-            secondary: switch (thumbnail) {
+            secondary: _withPlay(context, switch (thumbnail) {
               final thumbnail? => VideoThumbnail(
                 image: thumbnail(item.videoId),
                 onLongPress: () =>
                     _showVideo(context, item, thumbnail(item.videoId)),
               ),
               null => null,
-            },
+            }, item),
           )
         else
           CheckboxListTile(
@@ -688,6 +725,71 @@ class _ProbeGroup {
           ),
     ];
   }
+}
+
+extension on _ProbeGroup {
+  /// A ▶ over the thumbnail, to check it is the right one before
+  /// downloading.
+  Widget? _withPlay(BuildContext context, Widget? picture, ProbeItem item) {
+    final play = onPlay;
+    if (play == null) return picture;
+    final l10n = AppLocalizations.of(context);
+    final button = IconButton.filled(
+      tooltip: video ? l10n.watchOnline : l10n.listenOnline,
+      visualDensity: VisualDensity.compact,
+      onPressed: () => play(item),
+      // The row's icon theme would dim it on the accent.
+      icon: Icon(
+        video ? Icons.smart_display_outlined : Icons.play_arrow,
+        color: Theme.of(context).colorScheme.onPrimary,
+      ),
+    );
+    final shown = picture == null
+        ? button
+        : Stack(alignment: Alignment.center, children: [picture, button]);
+    return switch (onPrefetch) {
+      final prefetch? => _Prefetch(
+        video: video,
+        onShown: () => prefetch(item),
+        child: shown,
+      ),
+      null => shown,
+    };
+  }
+}
+
+/// Says once when its row is built (on screen: the page builds as it
+/// scrolls), and again when the format moves between audio and video.
+class _Prefetch extends StatefulWidget {
+  const _Prefetch({
+    required this.video,
+    required this.onShown,
+    required this.child,
+  });
+
+  final bool video;
+  final VoidCallback onShown;
+  final Widget child;
+
+  @override
+  State<_Prefetch> createState() => _PrefetchState();
+}
+
+class _PrefetchState extends State<_Prefetch> {
+  @override
+  void initState() {
+    super.initState();
+    widget.onShown();
+  }
+
+  @override
+  void didUpdateWidget(_Prefetch old) {
+    super.didUpdateWidget(old);
+    if (old.video != widget.video) widget.onShown();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// From this many videos, a list gets a field to find titles in.

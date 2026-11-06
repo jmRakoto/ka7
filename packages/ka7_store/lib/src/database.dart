@@ -83,6 +83,37 @@ class Subscriptions extends Table {
   TextColumn get title => text()();
 }
 
+/// Playlists the user made from downloaded files.
+@DataClassName('UserPlaylistRow')
+class UserPlaylists extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+
+  /// The folder it plays, read on opening; null when made by hand (v8).
+  TextColumn get folder => text().nullable()();
+  TextColumn get folderLabel => text().nullable()();
+
+  /// Place chosen by the user; null until ordered: after, by creation (v9).
+  IntColumn get position => integer().nullable()();
+}
+
+/// The files of each user playlist; a snapshot of the history line.
+@DataClassName('PlaylistTrackRow')
+class PlaylistTracks extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get playlist =>
+      integer().references(UserPlaylists, #id, onDelete: KeyAction.cascade)();
+
+  /// 0-based play order.
+  IntColumn get position => integer()();
+  TextColumn get videoId => text()();
+  TextColumn get title => text()();
+
+  /// [MediaFormat.name].
+  TextColumn get format => text()();
+  TextColumn get path => text()();
+}
+
 @DriftDatabase(
   tables: [
     ArchiveEntries,
@@ -90,16 +121,19 @@ class Subscriptions extends Table {
     Settings,
     PendingDownloads,
     Subscriptions,
+    UserPlaylists,
+    PlaylistTracks,
   ],
 )
 class Ka7Database extends _$Ka7Database {
   Ka7Database(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),
     onUpgrade: (migrator, from, to) async {
       if (from < 2) await migrator.createTable(settings);
       if (from < 3) await migrator.createTable(pendingDownloads);
@@ -117,6 +151,18 @@ class Ka7Database extends _$Ka7Database {
           pendingDownloads,
           pendingDownloads.videoQuality,
         );
+      }
+      if (from < 7) {
+        await migrator.createTable(userPlaylists);
+        await migrator.createTable(playlistTracks);
+      }
+      // Made with these columns when created above (before v7).
+      if (from == 7) {
+        await migrator.addColumn(userPlaylists, userPlaylists.folder);
+        await migrator.addColumn(userPlaylists, userPlaylists.folderLabel);
+      }
+      if (from >= 7 && from < 9) {
+        await migrator.addColumn(userPlaylists, userPlaylists.position);
       }
     },
   );

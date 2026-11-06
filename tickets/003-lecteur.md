@@ -1,6 +1,6 @@
 # 003 · Lecteur audio / vidéo, avant et après téléchargement
 
-- **État** : À faire
+- **État** : En cours
 - **Taille** : grosse
 - **Plateformes** : Android et Linux (iOS plus tard)
 
@@ -12,7 +12,9 @@ Ka7 télécharge mais ne lit pas : pour écouter, il faut une autre app. Le docu
 
 1. **Avant téléchargement (en ligne)** : depuis l'aperçu, écouter ou regarder un titre pour vérifier que c'est le bon, sans le télécharger.
 2. **Après téléchargement (hors ligne)** : depuis la Bibliothèque, lire les fichiers téléchargés.
-3. **Arrière-plan** : l'audio continue écran éteint ou app en arrière-plan, avec les commandes dans la notification et l'écran de verrouillage (lecture, pause, suivant, précédent).
+3. **Commandes** : comme un lecteur classique : lecture, pause, stop, suivant, précédent, avance et recul (±10 s), barre de progression déplaçable.
+4. **Listes de lecture** : créer ses propres listes avec les fichiers téléchargés (ajouter, retirer, réordonner, renommer, supprimer) et les lire hors ligne ; file d'attente « lire ensuite » ; modes répétition et aléatoire.
+5. **Arrière-plan** : l'audio continue écran éteint ou app en arrière-plan, avec les commandes dans la notification et l'écran de verrouillage (lecture, pause, stop, suivant, précédent).
 
 ## À faire
 
@@ -21,13 +23,18 @@ Ka7 télécharge mais ne lit pas : pour écouter, il faut une autre app. Le docu
 - **Lecture hors ligne** : chemin du fichier, déjà dans l'historique (`HistoryItem.path`) ; sur Android, URI MediaStore (`Music/Ka7`).
 - **Arrière-plan Android** : service de premier plan de type `mediaPlayback` (le `DownloadService` existant est `dataSync`), permission et notification média.
 - **Interface** : mini-lecteur en bas (au-dessus de la barre d'onglets), écran plein pour la vidéo ; bouton ▶ sur les lignes de l'aperçu et de la Bibliothèque.
-- **File de lecture** : lire une playlist téléchargée dans l'ordre.
+- **File de lecture** : lire une playlist téléchargée dans l'ordre ; « lire ensuite » et « ajouter à la file » depuis la Bibliothèque.
+- **Listes de lecture utilisateur** : modèle `UserPlaylist` (nom, liste ordonnée d'entrées de l'historique) dans le cœur, stockage local à côté de l'historique ; écran de gestion (créer, renommer, supprimer, glisser pour réordonner) ; « Ajouter à une liste » sur les lignes de la Bibliothèque. Un fichier supprimé du disque est signalé et sauté, pas un plantage.
+- **Commandes** : stop (arrête et revient au début, ferme la notification), avance/recul ±10 s, seek par la barre, répétition (aucune / une / toutes), aléatoire.
 
 ## Critères d'acceptation
 
 - [ ] ▶ dans l'aperçu lit le titre en ligne en moins de 5 s sur une connexion correcte.
 - [ ] ▶ dans la Bibliothèque lit le fichier sans réseau (mode avion).
 - [ ] L'audio continue écran éteint ; pause/suivant marchent depuis la notification et l'écran de verrouillage.
+- [ ] Lecture, pause, stop, suivant, précédent, ±10 s et seek marchent dans l'app, sur l'audio comme sur la vidéo.
+- [ ] Je crée une liste, y ajoute des titres téléchargés, la réordonne, la lis hors ligne de bout en bout ; elle survit au redémarrage de l'app.
+- [ ] Répétition et aléatoire marchent sur une liste.
 - [ ] La vidéo se lit en plein écran, rotation comprise.
 - [ ] Un téléchargement en cours ne coupe pas la lecture, et l'inverse.
 

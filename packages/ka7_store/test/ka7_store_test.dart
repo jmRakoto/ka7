@@ -392,4 +392,215 @@ void main() {
       expect(await upgraded.setting('folder.mp3'), '/home/me/Musique');
     },
   );
+
+  group('user playlists', () {
+    const zoo = PlaylistTrack(
+      videoId: 'jNQXAC9IVRw',
+      title: 'Me at the zoo',
+      format: MediaFormat.mp3,
+      path: '/music/Me at the zoo.mp3',
+    );
+    const song = PlaylistTrack(
+      videoId: 'yXs506QBhJY',
+      title: 'Tanalahy ny foko',
+      format: MediaFormat.mp3,
+      path: '/music/Mahaleo/Tanalahy ny foko.mp3',
+    );
+
+    test('a new playlist is listed empty', () async {
+      final id = await store.createPlaylist('Soirée');
+
+      final [playlist] = await store.playlists();
+      expect(playlist.id, id);
+      expect(playlist.name, 'Soirée');
+      expect(playlist.trackCount, 0);
+      expect(await store.playlistTracks(id), isEmpty);
+    });
+
+    test('lists playlists oldest first', () async {
+      await store.createPlaylist('Soirée');
+      await store.createPlaylist('Route');
+
+      expect(
+        [for (final p in await store.playlists()) p.name],
+        ['Soirée', 'Route'],
+      );
+    });
+
+    test('keeps added tracks in order, the same one twice too', () async {
+      final id = await store.createPlaylist('Soirée');
+      await store.addToPlaylist(id, song);
+      await store.addToPlaylist(id, zoo);
+      await store.addToPlaylist(id, song);
+
+      expect(await store.playlistTracks(id), [song, zoo, song]);
+      expect((await store.playlists()).single.trackCount, 3);
+    });
+
+    test('replacing the tracks removes and reorders them', () async {
+      final id = await store.createPlaylist('Soirée');
+      await store.addToPlaylist(id, song);
+      await store.addToPlaylist(id, zoo);
+
+      await store.setPlaylistTracks(id, [zoo]);
+
+      expect(await store.playlistTracks(id), [zoo]);
+    });
+
+    test('keeps each playlist apart', () async {
+      final party = await store.createPlaylist('Soirée');
+      final road = await store.createPlaylist('Route');
+      await store.addToPlaylist(party, song);
+      await store.addToPlaylist(road, zoo);
+
+      expect(await store.playlistTracks(party), [song]);
+      expect(await store.playlistTracks(road), [zoo]);
+    });
+
+    test('renames a playlist', () async {
+      final id = await store.createPlaylist('Soirée');
+      await store.renamePlaylist(id, 'Fête');
+
+      expect((await store.playlists()).single.name, 'Fête');
+    });
+
+    test('deleting a playlist drops its tracks too', () async {
+      final party = await store.createPlaylist('Soirée');
+      await store.addToPlaylist(party, song);
+      await store.deletePlaylist(party);
+
+      expect(await store.playlists(), isEmpty);
+      expect(await store.playlistTracks(party), isEmpty);
+    });
+
+    test('a track comes from a successful history line', () {
+      final track = PlaylistTrack.of(
+        HistoryItem(
+          videoId: 'jNQXAC9IVRw',
+          title: 'Me at the zoo',
+          format: MediaFormat.mp3,
+          status: HistoryStatus.succeeded,
+          path: '/music/Me at the zoo.mp3',
+          at: _monday,
+        ),
+      );
+      expect(track, zoo);
+    });
+  });
+
+  test('upgrades a store from before user playlists', () async {
+    final folder = Directory.systemTemp.createTempSync('ka7_store_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}/ka7.sqlite');
+    sqlite3.open(file.path)
+      ..execute(File('test/fixtures/schema_v6.sql').readAsStringSync())
+      ..close();
+
+    final upgraded = Ka7Store.open(file);
+    addTearDown(upgraded.close);
+
+    expect(await upgraded.history(), hasLength(1));
+    final id = await upgraded.createPlaylist('Soirée');
+    expect((await upgraded.playlists()).single.id, id);
+  });
+
+  group('folder playlists', () {
+    test('keeps the folder a playlist plays', () async {
+      final id = await store.createFolderPlaylist(
+        'Mahaleo',
+        folder: '/home/me/Musique/Mahaleo',
+        label: 'Musique/Mahaleo',
+      );
+
+      final [playlist] = await store.playlists();
+      expect(playlist.id, id);
+      expect(playlist.name, 'Mahaleo');
+      expect(playlist.isFolder, isTrue);
+      expect(playlist.folder, '/home/me/Musique/Mahaleo');
+      expect(playlist.folderLabel, 'Musique/Mahaleo');
+    });
+
+    test('a playlist made by hand has no folder', () async {
+      await store.createPlaylist('Soirée');
+
+      expect((await store.playlists()).single.isFolder, isFalse);
+    });
+  });
+
+  test('upgrades a store from before folder playlists', () async {
+    final folder = Directory.systemTemp.createTempSync('ka7_store_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}/ka7.sqlite');
+    sqlite3.open(file.path)
+      ..execute(File('test/fixtures/schema_v7.sql').readAsStringSync())
+      ..close();
+
+    final upgraded = Ka7Store.open(file);
+    addTearDown(upgraded.close);
+
+    final [kept] = await upgraded.playlists();
+    expect(kept.name, 'Soirée');
+    expect(kept.trackCount, 1);
+    expect(kept.isFolder, isFalse);
+    await upgraded.createFolderPlaylist('M', folder: '/m', label: 'm');
+    expect((await upgraded.playlists()).last.folder, '/m');
+  });
+
+  group('order of playlists', () {
+    test('new playlists come last', () async {
+      await store.createPlaylist('A');
+      await store.createFolderPlaylist('B', folder: '/b', label: 'b');
+      await store.createPlaylist('C');
+
+      expect(
+        [for (final p in await store.playlists()) p.name],
+        ['A', 'B', 'C'],
+      );
+    });
+
+    test('keeps the order the user chose', () async {
+      final a = await store.createPlaylist('A');
+      final b = await store.createPlaylist('B');
+      final c = await store.createPlaylist('C');
+
+      await store.orderPlaylists([b, a, c]);
+
+      expect(
+        [for (final p in await store.playlists()) p.name],
+        ['B', 'A', 'C'],
+      );
+    });
+
+    test('a playlist made after ordering comes last', () async {
+      final a = await store.createPlaylist('A');
+      final b = await store.createPlaylist('B');
+      await store.orderPlaylists([b, a]);
+      await store.createPlaylist('C');
+
+      expect(
+        [for (final p in await store.playlists()) p.name],
+        ['B', 'A', 'C'],
+      );
+    });
+  });
+
+  test('upgrades a store from before playlists had an order', () async {
+    final folder = Directory.systemTemp.createTempSync('ka7_store_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final file = File('${folder.path}/ka7.sqlite');
+    sqlite3.open(file.path)
+      ..execute(File('test/fixtures/schema_v8.sql').readAsStringSync())
+      ..close();
+
+    final upgraded = Ka7Store.open(file);
+    addTearDown(upgraded.close);
+
+    final kept = await upgraded.playlists();
+    expect([for (final p in kept) p.name], ['Soirée', 'Mahaleo']);
+    await upgraded.orderPlaylists([kept.last.id, kept.first.id]);
+    expect(
+      [for (final p in await upgraded.playlists()) p.name],
+      ['Mahaleo', 'Soirée'],
+    );
+  });
 }

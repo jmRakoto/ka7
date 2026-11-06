@@ -914,4 +914,169 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateDownload => 'Download the update';
+
+  @override
+  String get playerPlay => 'Play';
+
+  @override
+  String get playerPause => 'Pause';
+
+  @override
+  String get playerStop => 'Stop';
+
+  @override
+  String get playerNext => 'Next';
+
+  @override
+  String get playerPrevious => 'Previous';
+
+  @override
+  String get playerForward => 'Forward 10 s';
+
+  @override
+  String get playerBack => 'Back 10 s';
+
+  @override
+  String get playerRepeatOff => 'Repeat: off';
+
+  @override
+  String get playerRepeatAll => 'Repeat the list';
+
+  @override
+  String get playerRepeatOne => 'Repeat this track';
+
+  @override
+  String get playerShuffle => 'Shuffle';
+
+  @override
+  String get playerClose => 'Close the player';
+
+  @override
+  String get playerOpen => 'Open the player';
+
+  @override
+  String get playerQueue => 'Play queue';
+
+  @override
+  String get playerNowPlaying => 'Now playing';
+
+  @override
+  String get playerRemoveFromQueue => 'Remove from the play queue';
+
+  @override
+  String get playerMissingFile => 'File not found: moved or deleted';
+
+  @override
+  String get playerOffline => 'Can\'t play online: no network';
+
+  @override
+  String get playerUnavailable => 'This track can\'t be played';
+
+  @override
+  String get playerLoading => 'Loading…';
+
+  @override
+  String get playerMissingBadge => 'Not found';
+
+  @override
+  String get playNext => 'Play next';
+
+  @override
+  String get enqueue => 'Add to the play queue';
+
+  @override
+  String get addToPlaylist => 'Add to a playlist…';
+
+  @override
+  String get playAll => 'Play all';
+
+  @override
+  String get shuffleAll => 'Shuffle';
+
+  @override
+  String get playlistsTitle => 'Playlists';
+
+  @override
+  String get playlistsOpen => 'My playlists';
+
+  @override
+  String get newPlaylist => 'New playlist';
+
+  @override
+  String get playlistName => 'Playlist name';
+
+  @override
+  String get createButton => 'Create';
+
+  @override
+  String get saveButton => 'Save';
+
+  @override
+  String get renamePlaylist => 'Rename';
+
+  @override
+  String get deletePlaylist => 'Delete the playlist';
+
+  @override
+  String deletePlaylistTitle(String name) {
+    return 'Delete “$name”?';
+  }
+
+  @override
+  String get deletePlaylistBody => 'Only the playlist goes: the files stay.';
+
+  @override
+  String get playlistsEmpty =>
+      'No playlists yet. Make one, then add tracks to it from the Library.';
+
+  @override
+  String get playlistEmpty =>
+      'Empty playlist: add tracks from the Library, ⋮ menu “Add to a playlist…”.';
+
+  @override
+  String addedToPlaylist(String name) {
+    return 'Added to “$name”';
+  }
+
+  @override
+  String get removeFromPlaylist => 'Remove from the playlist';
+
+  @override
+  String get playlistActions => 'Playlist actions';
+
+  @override
+  String get listenOnline => 'Listen before downloading';
+
+  @override
+  String get watchOnline => 'Watch before downloading';
+
+  @override
+  String get navPlayer => 'Player';
+
+  @override
+  String playerTitles(int count) {
+    return 'Tracks · $count';
+  }
+
+  @override
+  String playerLists(int count) {
+    return 'Playlists · $count';
+  }
+
+  @override
+  String get playerEmpty =>
+      'Nothing to play yet: downloaded tracks land here, ready to play offline.';
+
+  @override
+  String get playerSearch => 'Search a track';
+
+  @override
+  String get playerNoMatch => 'No track matches.';
+
+  @override
+  String get addFolder => 'Add a folder';
+
+  @override
+  String get folderEmpty =>
+      'No file to play in this folder: empty, moved, or no longer reachable.';
 }

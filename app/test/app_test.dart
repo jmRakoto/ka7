@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ka7/app.dart';
 import 'package:ka7/features/add_links/add_links_screen.dart';
+import 'package:ka7/features/player/media_backend.dart';
 import 'package:ka7/features/queue/finished_run.dart';
 import 'package:ka7/features/queue/run_view.dart';
 import 'package:ka7/platform/background_work.dart';
@@ -21,6 +22,7 @@ import 'package:ka7_store/ka7_store.dart';
 import 'helpers/controlled_downloader.dart';
 import 'helpers/fake_engine_setup.dart';
 import 'helpers/fake_extractor.dart';
+import 'helpers/fake_media_backend.dart';
 import 'helpers/probes.dart';
 
 const _sungByErick = Probe(
@@ -93,6 +95,11 @@ void main() {
     void Function(String url)? openUrl,
     FileExists? fileExists,
     Future<Destination?> Function()? pickDestination,
+    MediaBackend Function()? mediaBackend,
+    Extractor? extractor,
+    Future<({String folder, String label})?> Function(String? from)?
+    pickMediaFolder,
+    Future<List<MediaFile>> Function(String folder)? listMediaFolder,
     Size size = const Size(1280, 900),
   }) async {
     tester.view
@@ -114,9 +121,12 @@ void main() {
         openUrl: openUrl,
         fileExists: fileExists,
         pickDestination: pickDestination,
+        mediaBackend: mediaBackend,
+        pickMediaFolder: pickMediaFolder,
+        listMediaFolder: listMediaFolder,
         enginesFor: (status, settings) {
           onEngines?.call(settings);
-          return (extractor: _extractor, downloader: downloader);
+          return (extractor: extractor ?? _extractor, downloader: downloader);
         },
         store: store,
         defaultFolders: const {
@@ -2052,6 +2062,239 @@ void main() {
     expect(find.text('Une dernière étape'), findsOneWidget);
     expect(find.byType(AddLinksScreen), findsNothing);
   });
+
+  group('player', () {
+    const song = ProbeItem(videoId: 'aB3dE5fG7hI', title: 'Tsy Ferana');
+    late FakeMediaBackend backend;
+
+    setUp(() async {
+      backend = FakeMediaBackend();
+      await store.record(
+        JobSucceeded(
+          const PlannedDownload(source: hafatraVideo, item: song, index: 1),
+          '/home/me/Musique/Tsy Ferana.mp3',
+        ),
+        MediaFormat.mp3,
+        DateTime(2026, 10, 30, 9),
+      );
+    });
+
+    testWidgets('plays a downloaded file from the Lecteur section', (
+      tester,
+    ) async {
+      await pumpKa7(tester, mediaBackend: () => backend);
+      await tester.tap(_nav('Lecteur'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Tsy Ferana'));
+      await tester.pumpAndSettle();
+
+      expect(backend.opened, ['/home/me/Musique/Tsy Ferana.mp3']);
+      // The mini player, over every section.
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Fermer le lecteur'), findsOneWidget);
+    });
+
+    testWidgets('the mini player opens the whole player', (tester) async {
+      await pumpKa7(tester, mediaBackend: () => backend);
+      await tester.tap(_nav('Lecteur'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tsy Ferana'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Ouvrir le lecteur'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('En cours de lecture'), findsOneWidget);
+      expect(find.byTooltip('Avancer de 10 s'), findsOneWidget);
+    });
+
+    testWidgets('Lecteur comes after Bibliothèque', (tester) async {
+      await pumpKa7(tester, mediaBackend: () => backend);
+
+      final x = [
+        for (final label in ['Bibliothèque', 'Lecteur', 'Réglages'])
+          tester.getTopLeft(_nav(label)).dy,
+      ];
+      expect(x, orderedEquals([...x]..sort()));
+    });
+
+    testWidgets('a playlist opens beside the sidebar', (tester) async {
+      await store.createPlaylist('Soirée');
+      await pumpKa7(tester, mediaBackend: () => backend);
+      await tester.tap(_nav('Lecteur'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Listes · 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Soirée'));
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Actions de la liste'), findsOneWidget);
+      expect(_nav('Lecteur'), findsOneWidget);
+    });
+
+    testWidgets('the Library is the history only, no play buttons', (
+      tester,
+    ) async {
+      await pumpKa7(tester, mediaBackend: () => backend);
+      await tester.tap(_nav('Bibliothèque'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Tsy Ferana'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tout lire'), findsNothing);
+      expect(backend.opened, isEmpty);
+    });
+
+    testWidgets('the preview offers to listen first', (tester) async {
+      await pumpKa7(tester, mediaBackend: () => backend);
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'PLe7rK2mErickManana01');
+      await tester.pump();
+      await tester.tap(find.text("Voir l'aperçu"));
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Écouter avant de télécharger'), findsWidgets);
+    });
+
+    testWidgets('▶ in the preview uses the address asked ahead', (
+      tester,
+    ) async {
+      final streams = _Streams(_extractor);
+      await pumpKa7(tester, mediaBackend: () => backend, extractor: streams);
+      await tester.tap(_nav('Ajouter'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'PLe7rK2mErickManana01');
+      await tester.pump();
+      await tester.tap(find.text("Voir l'aperçu"));
+      await tester.pumpAndSettle();
+      // Both available titles, asked as soon as they show.
+      expect(streams.asked, ['aB3dE5fG7hI', 'jK9lM1nO3pQ']);
+
+      await tester.tap(find.byTooltip('Écouter avant de télécharger').first);
+      await tester.pumpAndSettle();
+
+      expect(backend.opened, ['https://stream/aB3dE5fG7hI']);
+      expect(streams.asked, hasLength(2));
+    });
+
+    for (final (name, size) in [
+      ('desktop', const Size(1280, 900)),
+      ('phone', const Size(400, 860)),
+    ]) {
+      testWidgets('a message shows above the mini player ($name)', (
+        tester,
+      ) async {
+        await pumpKa7(tester, mediaBackend: () => backend, size: size);
+        await tester.tap(_nav('Lecteur'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Tsy Ferana'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byTooltip('Actions'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Ajouter à une liste…'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Nouvelle liste'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField).last, 'Soirée');
+        await tester.tap(find.text('Créer'));
+        await tester.pumpAndSettle();
+
+        final message = tester.getRect(find.byType(SnackBar));
+        final player = tester.getRect(find.byTooltip('Fermer le lecteur'));
+        expect(message.bottom, lessThanOrEqualTo(player.top));
+      });
+    }
+
+    testWidgets('plays a folder picked as a list, FLAC included', (
+      tester,
+    ) async {
+      final checked = <String>[];
+      Future<void> pumpFolder(WidgetTester tester) => pumpKa7(
+        tester,
+        mediaBackend: () => backend,
+        fileExists: (path, _) async {
+          checked.add(path);
+          return true;
+        },
+        pickMediaFolder: (_) async =>
+            (folder: '/home/me/Mahaleo', label: 'Mahaleo'),
+        listMediaFolder: (folder) async => const [
+          MediaFile(
+            path: '/home/me/Mahaleo/1 Bonga.flac',
+            name: '1 Bonga.flac',
+          ),
+        ],
+      );
+      await pumpFolder(tester);
+      await tester.tap(_nav('Lecteur'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Listes ·'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Ajouter un dossier'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Mahaleo').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Tout lire'));
+      await tester.pumpAndSettle();
+
+      expect(backend.opened, ['/home/me/Mahaleo/1 Bonga.flac']);
+    });
+
+    Future<String?> pickerOpensOn(WidgetTester tester) async {
+      String? from;
+      await pumpKa7(
+        tester,
+        mediaBackend: () => backend,
+        pickMediaFolder: (start) async {
+          from = start;
+          return null;
+        },
+        listMediaFolder: (_) async => const [],
+      );
+      await tester.tap(_nav('Lecteur'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Listes ·'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ajouter un dossier'));
+      await tester.pumpAndSettle();
+      return from;
+    }
+
+    testWidgets('the folder picker opens on the music folder of Settings', (
+      tester,
+    ) async {
+      expect(await pickerOpensOn(tester), '/home/me/Musique');
+    });
+
+    testWidgets('…on the one chosen in Settings', (tester) async {
+      await store.setSetting('folder.mp3', '/music/k7');
+
+      expect(await pickerOpensOn(tester), '/music/k7');
+    });
+
+    testWidgets('…on the Android destination when one is chosen', (
+      tester,
+    ) async {
+      await store.setSetting('destination.mp3', 'content://tree/primary%3AK7');
+      await store.setSetting('destination.mp3.label', 'K7');
+
+      expect(await pickerOpensOn(tester), 'content://tree/primary%3AK7');
+    });
+
+    testWidgets('no player, no Lecteur section', (tester) async {
+      await pumpKa7(tester);
+
+      expect(_nav('Lecteur'), findsNothing);
+      expect(_nav('Réglages'), findsOneWidget);
+    });
+  });
 }
 
 final class _FakeBackground implements BackgroundWork {
@@ -2071,6 +2314,26 @@ class _FakeNotifier implements RunNotifier {
   @override
   void finished({required String title, required String body}) =>
       log.add('$title | $body');
+}
+
+/// Reads like [_extractor], and gives stream addresses.
+class _Streams implements Extractor, StreamUrls {
+  _Streams(this.links);
+
+  final Extractor links;
+  final asked = <String>[];
+
+  @override
+  String get name => 'streams';
+
+  @override
+  Future<Probe> probe(MediaEntry entry) => links.probe(entry);
+
+  @override
+  Future<String> streamUrl(String videoId, {required bool video}) async {
+    asked.add(videoId);
+    return 'https://stream/$videoId';
+  }
 }
 
 /// A section in the sidebar or the bottom bar, not a title that says the same.

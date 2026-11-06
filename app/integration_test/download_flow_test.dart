@@ -59,7 +59,11 @@ void main() {
     await _waitFor(tester, find.text('1 réussi'), timeout: 180);
 
     expect(find.text('1 réussi'), findsOneWidget);
-    expect(File('${folder.path}/Me at the zoo.mp3').existsSync(), isTrue);
+    // Filed in its channel's folder (default since 0.3.6): where the
+    // history says.
+    final [saved] = await store.history();
+    expect(saved.path, endsWith('/Me at the zoo.mp3'));
+    expect(File(saved.path!).existsSync(), isTrue);
   });
 
   testWidgets('resumes after a crash mid-download, from the store on disk', (
@@ -98,7 +102,10 @@ void main() {
     await _waitFor(tester, find.text('1 réussi'), timeout: 180);
 
     expect(find.text('1 réussi'), findsOneWidget);
-    expect(File('${folder.path}/Me at the zoo.mp3').existsSync(), isTrue);
+    final saved = (await second.history()).firstWhere(
+      (item) => item.path != null,
+    );
+    expect(File(saved.path!).existsSync(), isTrue);
     expect(await second.pending(), isEmpty);
   });
 

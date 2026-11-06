@@ -934,4 +934,170 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get updateDownload => 'Télécharger la mise à jour';
+
+  @override
+  String get playerPlay => 'Lire';
+
+  @override
+  String get playerPause => 'Pause';
+
+  @override
+  String get playerStop => 'Arrêter';
+
+  @override
+  String get playerNext => 'Suivant';
+
+  @override
+  String get playerPrevious => 'Précédent';
+
+  @override
+  String get playerForward => 'Avancer de 10 s';
+
+  @override
+  String get playerBack => 'Reculer de 10 s';
+
+  @override
+  String get playerRepeatOff => 'Répéter : non';
+
+  @override
+  String get playerRepeatAll => 'Répéter la liste';
+
+  @override
+  String get playerRepeatOne => 'Répéter ce titre';
+
+  @override
+  String get playerShuffle => 'Lecture aléatoire';
+
+  @override
+  String get playerClose => 'Fermer le lecteur';
+
+  @override
+  String get playerOpen => 'Ouvrir le lecteur';
+
+  @override
+  String get playerQueue => 'File de lecture';
+
+  @override
+  String get playerNowPlaying => 'En cours de lecture';
+
+  @override
+  String get playerRemoveFromQueue => 'Retirer de la file de lecture';
+
+  @override
+  String get playerMissingFile => 'Fichier introuvable : déplacé ou supprimé';
+
+  @override
+  String get playerOffline => 'Lecture en ligne impossible : pas de réseau';
+
+  @override
+  String get playerUnavailable => 'Ce titre ne peut pas être lu';
+
+  @override
+  String get playerLoading => 'Chargement…';
+
+  @override
+  String get playerMissingBadge => 'Introuvable';
+
+  @override
+  String get playNext => 'Lire ensuite';
+
+  @override
+  String get enqueue => 'Ajouter à la file de lecture';
+
+  @override
+  String get addToPlaylist => 'Ajouter à une liste…';
+
+  @override
+  String get playAll => 'Tout lire';
+
+  @override
+  String get shuffleAll => 'Lecture aléatoire';
+
+  @override
+  String get playlistsTitle => 'Listes de lecture';
+
+  @override
+  String get playlistsOpen => 'Mes listes';
+
+  @override
+  String get newPlaylist => 'Nouvelle liste';
+
+  @override
+  String get playlistName => 'Nom de la liste';
+
+  @override
+  String get createButton => 'Créer';
+
+  @override
+  String get saveButton => 'Enregistrer';
+
+  @override
+  String get renamePlaylist => 'Renommer';
+
+  @override
+  String get deletePlaylist => 'Supprimer la liste';
+
+  @override
+  String deletePlaylistTitle(String name) {
+    return 'Supprimer « $name » ?';
+  }
+
+  @override
+  String get deletePlaylistBody =>
+      'Seule la liste disparaît : les fichiers restent.';
+
+  @override
+  String get playlistsEmpty =>
+      'Aucune liste pour l\'instant. Crée-en une, puis ajoute-y des titres depuis la Bibliothèque.';
+
+  @override
+  String get playlistEmpty =>
+      'Liste vide : ajoute des titres depuis la Bibliothèque, menu ⋮ « Ajouter à une liste… ».';
+
+  @override
+  String addedToPlaylist(String name) {
+    return 'Ajouté à « $name »';
+  }
+
+  @override
+  String get removeFromPlaylist => 'Retirer de la liste';
+
+  @override
+  String get playlistActions => 'Actions de la liste';
+
+  @override
+  String get listenOnline => 'Écouter avant de télécharger';
+
+  @override
+  String get watchOnline => 'Regarder avant de télécharger';
+
+  @override
+  String get navPlayer => 'Lecteur';
+
+  @override
+  String playerTitles(int count) {
+    return 'Titres · $count';
+  }
+
+  @override
+  String playerLists(int count) {
+    return 'Listes · $count';
+  }
+
+  @override
+  String get playerEmpty =>
+      'Rien à écouter pour l\'instant : les titres téléchargés arrivent ici, prêts à lire sans réseau.';
+
+  @override
+  String get playerSearch => 'Chercher un titre';
+
+  @override
+  String get playerNoMatch => 'Aucun titre ne correspond.';
+
+  @override
+  String get addFolder => 'Ajouter un dossier';
+
+  @override
+  String get folderEmpty =>
+      'Aucun fichier à lire dans ce dossier : vide, déplacé, ou plus accessible.';
 }
