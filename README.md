@@ -94,7 +94,7 @@ tool/release.sh --dry-run notes.md   # tout, sauf l'étiquette et l'envoi
 tool/release.sh notes.md             # publie la version de app/pubspec.yaml
 ```
 
-Le script refuse si des changements ne sont pas commités, si la branche n'est pas poussée, si l'étiquette existe déjà, si le `+N` n'a pas augmenté depuis la dernière release, ou si la clé de publication manque. Puis il lance `tool/check.sh`, construit tous les paquets, vérifie la signature des APK, ajoute aux notes le guide d'installation et les empreintes SHA-256 (calculées sur les fichiers envoyés), crée l'étiquette `v<version>`, publie les 4 fichiers (APK `arm64-v8a` et `armeabi-v7a`, `.deb`, AppImage) et les retélécharge pour les comparer.
+Le script refuse si des changements ne sont pas commités, si la branche n'est pas poussée, si l'étiquette existe déjà, si le `+N` n'a pas augmenté depuis la dernière release, ou si la clé de publication manque. Puis il lance `tool/check.sh`, construit tous les paquets, démarre les paquets Linux sur Ubuntu 22.04 (`tool/linux/check_old_linux.sh`), vérifie la signature des APK, ajoute aux notes le guide d'installation et les empreintes SHA-256 (calculées sur les fichiers envoyés), crée l'étiquette `v<version>`, publie les 4 fichiers (APK `arm64-v8a` et `armeabi-v7a`, `.deb`, AppImage) et les retélécharge pour les comparer.
 
 Les utilisateurs téléchargent ensuite depuis `https://github.com/jmRakoto/ka7/releases`.
 

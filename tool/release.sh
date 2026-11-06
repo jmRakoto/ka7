@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Publishes a Ka7 version on GitHub Releases, from start to end:
-#   checks → tool/check.sh → Linux and Android packages → signature check
+#   checks → tool/check.sh → Linux and Android packages → Linux packages
+#   started on Ubuntu 22.04 → signature check
 #   → notes (yours + install guide + SHA-256) → tag v<version> → upload
 #   → downloads each file back and compares it.
 #
@@ -94,6 +95,11 @@ for file in "${files[@]}"; do
   [[ -f $file ]] || fail "$file n'a pas été produit"
 done
 
+# Built here they would need a recent Linux: checked on the oldest promised.
+step "Paquets Linux sur Ubuntu 22.04"
+tool/linux/check_old_linux.sh "${files[3]}" "${files[2]}" ||
+  fail "les paquets Linux ne démarrent pas sur Ubuntu 22.04"
+
 step "Signature des APK"
 apksigner=$(ls -d "${ANDROID_HOME:-$HOME/Android/Sdk}"/build-tools/*/apksigner |
   sort -V | tail -1)
@@ -130,7 +136,7 @@ Tu avais une version précédente ? Installe simplement par-dessus : ton histori
 
 Les fichiers arrivent dans les dossiers **Music/Ka7** et **Movies/Ka7**, visibles par toutes les apps de musique.
 
-### Linux (64 bits)
+### Linux (64 bits ; Ubuntu 22.04, Debian 12 ou plus récent)
 
 - **Ubuntu, Debian** : télécharge \`ka7_${version}_amd64.deb\`, puis
   \`\`\`bash
