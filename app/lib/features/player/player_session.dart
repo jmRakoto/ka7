@@ -4,12 +4,13 @@ import '../../l10n/app_localizations.dart';
 import 'player_controller.dart';
 import 'player_texts.dart';
 import 'position_slider.dart';
+import 'track.dart';
 
 /// The player as the system sees it (Android): the media notification, the
 /// lock screen, headset buttons. Mirrors [player], and sends their presses
 /// back to it.
 class PlayerSession extends BaseAudioHandler with SeekHandler {
-  PlayerSession(this.player, {this.l10n}) {
+  PlayerSession(this.player, {this.l10n, this.cover}) {
     player.addListener(_mirror);
     _mirror();
   }
@@ -18,6 +19,10 @@ class PlayerSession extends BaseAudioHandler with SeekHandler {
 
   /// For the reason a track does not play; none in tests.
   final AppLocalizations? l10n;
+
+  /// The picture shown with a track (notification, lock screen); null for
+  /// none.
+  final Uri? Function(Track track)? cover;
 
   /// What was last shown: a new state only when one of these moves (the
   /// system runs the clock itself between two).
@@ -46,6 +51,7 @@ class PlayerSession extends BaseAudioHandler with SeekHandler {
         id: track.path ?? track.videoId,
         title: track.title,
         album: 'Ka7',
+        artUri: cover?.call(track),
         duration: player.duration > Duration.zero ? player.duration : null,
       ),
     );

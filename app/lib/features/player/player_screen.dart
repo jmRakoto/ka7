@@ -3,6 +3,7 @@ import 'package:ka7_core/ka7_core.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../widgets/ka7_logo.dart';
+import 'fullscreen_video.dart';
 import 'player_controller.dart';
 import 'player_texts.dart';
 import 'position_slider.dart';
@@ -16,6 +17,18 @@ class PlayerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // A phone turned sideways on a video: the video, over all the screen.
+    final size = MediaQuery.sizeOf(context);
+    final sideways = size.width > size.height && size.shortestSide < 600;
+    return ListenableBuilder(
+      listenable: player,
+      builder: (context, _) => sideways && (player.current?.video ?? false)
+          ? FullscreenVideo(player: player, immersive: false)
+          : _page(context, l10n),
+    );
+  }
+
+  Widget _page(BuildContext context, AppLocalizations l10n) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -138,12 +151,31 @@ class _Picture extends StatelessWidget {
         aspectRatio: 16 / 9,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: RepaintBoundary(
-            key: const Key('video-picture'),
-            child: ColoredBox(
-              color: Colors.black,
-              child: player.backend.videoView(),
-            ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              RepaintBoundary(
+                key: const Key('video-picture'),
+                child: ColoredBox(
+                  color: Colors.black,
+                  child: player.backend.videoView(),
+                ),
+              ),
+              Positioned(
+                right: 4,
+                bottom: 4,
+                child: IconButton(
+                  tooltip: AppLocalizations.of(context).playerFullscreen,
+                  color: Colors.white,
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => FullscreenVideo(player: player),
+                    ),
+                  ),
+                  icon: const Icon(Icons.fullscreen),
+                ),
+              ),
+            ],
           ),
         ),
       );

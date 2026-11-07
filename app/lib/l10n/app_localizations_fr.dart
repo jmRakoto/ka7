@@ -1103,4 +1103,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get playerNotificationChannel => 'Lecture';
+
+  @override
+  String get playerFullscreen => 'Plein écran';
+
+  @override
+  String get playerExitFullscreen => 'Quitter le plein écran';
 }

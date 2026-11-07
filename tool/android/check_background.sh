@@ -61,4 +61,12 @@ wait_for NEXT 30
 wait_for "BACKGROUND OK" 60
 key KEYCODE_WAKEUP
 
+echo "== a phone call (audio focus)"
+# The emulator's own phone line rings, then the caller hangs up.
+"$adb" emu gsm call 0340000007 >/dev/null
+wait_for "CALL PAUSED" 40
+sleep 3
+"$adb" emu gsm cancel 0340000007 >/dev/null
+wait_for "CALL RESUMED" 40
+
 wait "$test_pid" && echo "== OK" || { echo "FAILED: the test itself"; tail -30 "$log"; exit 1; }

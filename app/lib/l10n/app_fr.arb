@@ -578,5 +578,7 @@
   "playerNoMatch": "Aucun titre ne correspond.",
   "addFolder": "Ajouter un dossier",
   "folderEmpty": "Aucun fichier à lire dans ce dossier : vide, déplacé, ou plus accessible.",
-  "playerNotificationChannel": "Lecture"
+  "playerNotificationChannel": "Lecture",
+  "playerFullscreen": "Plein écran",
+  "playerExitFullscreen": "Quitter le plein écran"
 }

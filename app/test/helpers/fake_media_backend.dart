@@ -66,6 +66,15 @@ class FakeMediaBackend implements MediaBackend {
     _position.add(to);
   }
 
+  /// 0 to 1, as last set.
+  var volume = 1.0;
+
+  @override
+  Future<void> setVolume(double volume) async {
+    calls.add('volume $volume');
+    this.volume = volume;
+  }
+
   @override
   Stream<Duration> get position => _position.stream;
 

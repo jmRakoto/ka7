@@ -369,5 +369,7 @@
   "playerNoMatch": "No track matches.",
   "addFolder": "Add a folder",
   "folderEmpty": "No file to play in this folder: empty, moved, or no longer reachable.",
-  "playerNotificationChannel": "Playback"
+  "playerNotificationChannel": "Playback",
+  "playerFullscreen": "Fullscreen",
+  "playerExitFullscreen": "Exit fullscreen"
 }

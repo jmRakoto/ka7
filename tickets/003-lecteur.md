@@ -35,8 +35,13 @@ Ka7 télécharge mais ne lit pas : pour écouter, il faut une autre app. Le docu
 - [ ] Lecture, pause, stop, suivant, précédent, ±10 s et seek marchent dans l'app, sur l'audio comme sur la vidéo.
 - [ ] Je crée une liste, y ajoute des titres téléchargés, la réordonne, la lis hors ligne de bout en bout ; elle survit au redémarrage de l'app.
 - [ ] Répétition et aléatoire marchent sur une liste.
-- [ ] La vidéo se lit en plein écran, rotation comprise.
-- [ ] Un téléchargement en cours ne coupe pas la lecture, et l'inverse.
+- [x] La vidéo se lit en plein écran, rotation comprise (bouton plein écran : paysage et sans barres ; téléphone tourné sur une vidéo : plein écran ; tests d'écran).
+- [x] Un téléchargement en cours ne coupe pas la lecture, et l'inverse (test d'app ; pas encore essayé sur téléphone).
+
+## Ajouté en cours de route
+
+- [x] Focus audio (Android) : pause pendant un appel puis reprise à la fin, pause pour une autre app (sans reprise), volume baissé sous un son de notification, pause quand on débranche le casque. Vérifié sur émulateur avec un vrai appel simulé (`adb emu gsm call`).
+- [x] Image du titre dans la notification et sur l'écran verrouillé (image YouTube ; aucune pour les fichiers d'un dossier).
 
 ## Risques
 

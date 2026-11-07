@@ -9,13 +9,16 @@ import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_engine_explode/ka7_engine_explode.dart';
 import 'package:ka7_engine_ytdlp/ka7_engine_ytdlp.dart';
 import 'package:ka7_store/ka7_store.dart';
-import 'package:media_kit/media_kit.dart';
+import 'package:media_kit/media_kit.dart' show MediaKit;
 import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
 import 'features/player/player_controller.dart';
+import 'features/player/audio_focus.dart';
 import 'features/player/player_session.dart';
+import 'platform/android_audio_focus.dart';
 import 'features/player/position_slider.dart' show jump;
+import 'features/player/track.dart';
 import 'l10n/app_localizations.dart';
 import 'features/player/media_kit_backend.dart';
 import 'platform/android_background.dart';
@@ -250,8 +253,11 @@ Future<void> _mediaSession(
   PlayerController player,
   AppLocalizations l10n,
 ) async {
+  // Pauses for a call or another app, quieter under a notification sound,
+  // pauses when headphones are pulled out.
+  AudioFocus(player, await AndroidFocusEvents.start());
   await AudioService.init(
-    builder: () => PlayerSession(player, l10n: l10n),
+    builder: () => PlayerSession(player, l10n: l10n, cover: _cover),
     config: AudioServiceConfig(
       androidNotificationChannelId: 'mg.rakoto.ka7.playback',
       androidNotificationChannelName: l10n.playerNotificationChannel,
@@ -264,6 +270,14 @@ Future<void> _mediaSession(
     ),
   );
 }
+
+/// YouTube's picture of the track (480×360), when it comes from YouTube;
+/// none for a folder's own file. Kept by the system once fetched: shown
+/// offline too, after a first time online.
+Uri? _cover(Track track) =>
+    RegExp(r'^[A-Za-z0-9_-]{11}$').hasMatch(track.videoId)
+    ? Uri.parse('https://i.ytimg.com/vi/${track.videoId}/hqdefault.jpg')
+    : null;
 
 /// When the app's own yt-dlp last updated itself (ISO 8601, UTC).
 const _ytDlpUpdatedKey = 'ytdlp.updated';

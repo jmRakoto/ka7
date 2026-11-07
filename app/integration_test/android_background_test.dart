@@ -5,10 +5,12 @@ import 'dart:typed_data';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:ka7/features/player/audio_focus.dart';
 import 'package:ka7/features/player/media_kit_backend.dart';
 import 'package:ka7/features/player/player_controller.dart';
 import 'package:ka7/features/player/player_session.dart';
 import 'package:ka7/features/player/track.dart';
+import 'package:ka7/platform/android_audio_focus.dart';
 import 'package:media_kit/media_kit.dart' show MediaKit;
 import 'package:path_provider/path_provider.dart';
 
@@ -30,8 +32,15 @@ void main() {
       ..writeAsBytesSync(_tone(660));
     final backend = MediaKitBackend();
     final player = PlayerController(backend: backend);
+    // As main.dart does on Android: focus first, then the session.
+    final focus = AudioFocus(player, await AndroidFocusEvents.start());
+    addTearDown(focus.dispose);
     await AudioService.init(
-      builder: () => PlayerSession(player),
+      builder: () => PlayerSession(
+        player,
+        cover: (_) =>
+            Uri.parse('https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg'),
+      ),
       config: const AudioServiceConfig(
         androidNotificationChannelId: 'mg.rakoto.ka7.playback',
         androidNotificationChannelName: 'Lecture',
@@ -82,6 +91,12 @@ void main() {
       'the next one plays on, screen off',
     );
     _say('BACKGROUND OK at ${player.position.inSeconds} s');
+
+    // A phone call rings: Ka7 pauses; hung up: it plays on by itself.
+    await until(() => !player.playing, 'paused for the call');
+    _say('CALL PAUSED');
+    await until(() => player.playing, 'played again after the call');
+    _say('CALL RESUMED');
     await player.close();
   });
 }

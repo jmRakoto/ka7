@@ -13,6 +13,9 @@ abstract interface class MediaBackend {
   Future<void> stop();
   Future<void> seek(Duration to);
 
+  /// 0 (silent) to 1 (full).
+  Future<void> setVolume(double volume);
+
   Stream<Duration> get position;
 
   /// Length of what is loaded; zero until known.

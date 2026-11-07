@@ -33,6 +33,10 @@ final class MediaKitBackend implements MediaBackend {
   @override
   Future<void> seek(Duration to) => _player.seek(to);
 
+  /// media_kit counts up to 100.
+  @override
+  Future<void> setVolume(double volume) => _player.setVolume(volume * 100);
+
   @override
   Stream<Duration> get position => _player.stream.position;
 

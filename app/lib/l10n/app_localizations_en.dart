@@ -1082,4 +1082,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerNotificationChannel => 'Playback';
+
+  @override
+  String get playerFullscreen => 'Fullscreen';
+
+  @override
+  String get playerExitFullscreen => 'Exit fullscreen';
 }

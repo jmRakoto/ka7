@@ -2310,6 +2310,40 @@ void main() {
       expect(handed.single.current?.title, 'Tsy Ferana');
     });
 
+    testWidgets('a download does not stop the music, nor the music it', (
+      tester,
+    ) async {
+      late PlayerController player;
+      await pumpKa7(
+        tester,
+        mediaBackend: () => backend,
+        onPlayer: (handed, _) => player = handed,
+      );
+      await tester.tap(_nav('Lecteur'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tsy Ferana'));
+      await tester.pumpAndSettle();
+      final played = [...backend.calls];
+
+      // A playlist downloaded while the song plays.
+      await download(tester, 'PLe7rK2mErickManana01');
+      downloader.progress('aB3dE5fG7hI', 0.5);
+      await tester.pumpAndSettle();
+      expect(backend.isPlaying, isTrue);
+      // The music is paused, then played again, during the download.
+      await player.toggle();
+      await player.toggle();
+      downloader
+        ..finish('aB3dE5fG7hI')
+        ..finish('jK9lM1nO3pQ');
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('2 réussis'), findsWidgets);
+      expect(backend.isPlaying, isTrue);
+      // Nothing but the user's own pause and play reached the player.
+      expect(backend.calls, [...played, 'pause', 'play']);
+    });
+
     testWidgets('no player, nothing handed to the system', (tester) async {
       final handed = <PlayerController>[];
       await pumpKa7(tester, onPlayer: (player, _) => handed.add(player));

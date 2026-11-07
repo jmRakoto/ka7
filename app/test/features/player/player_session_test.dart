@@ -66,6 +66,24 @@ void main() {
       expect(state().updatePosition, const Duration(seconds: 42));
     });
 
+    test('the cover, when the track has one', () async {
+      session.dispose();
+      session = PlayerSession(
+        player,
+        cover: (track) => track.videoId == 'a'
+            ? Uri.parse('https://i.ytimg.com/vi/a/hqdefault.jpg')
+            : null,
+      );
+      await player.playAll([_a, _b]);
+      expect(
+        session.mediaItem.value!.artUri,
+        Uri.parse('https://i.ytimg.com/vi/a/hqdefault.jpg'),
+      );
+
+      await player.next();
+      expect(session.mediaItem.value!.artUri, isNull);
+    });
+
     test('follows the next track', () async {
       await player.playAll([_a, _b]);
       await player.next();
