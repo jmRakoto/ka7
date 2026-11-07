@@ -2,11 +2,15 @@ package mg.rakoto.ka7
 
 import android.content.Intent
 import android.net.Uri
-import io.flutter.embedding.android.FlutterActivity
+import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
+/**
+ * AudioServiceActivity: the Flutter engine is audio_service's, kept alive by
+ * its playback service: music goes on with the app closed or the screen off.
+ */
+class MainActivity : AudioServiceActivity() {
     private var share: MethodChannel? = null
     private var folders: FolderPicker? = null
 

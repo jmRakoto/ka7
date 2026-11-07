@@ -1079,4 +1079,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get folderEmpty =>
       'No file to play in this folder: empty, moved, or no longer reachable.';
+
+  @override
+  String get playerNotificationChannel => 'Playback';
 }

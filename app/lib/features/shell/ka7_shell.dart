@@ -54,6 +54,7 @@ class Ka7Shell extends StatefulWidget {
     this.mediaBackend,
     this.pickMediaFolder,
     this.listMediaFolder,
+    this.onPlayer,
     this.appVersion,
     this.latestRelease,
     this.openUrl,
@@ -90,6 +91,10 @@ class Ka7Shell extends StatefulWidget {
   /// `content://` tree on Android).
   final Future<({String folder, String label})?> Function(String? from)?
   pickMediaFolder;
+
+  /// Handed the player once it exists: the system's media session
+  /// (Android notification, lock screen); null where there is none.
+  final void Function(PlayerController player, AppLocalizations l10n)? onPlayer;
 
   /// The playable files of a folder list.
   final Future<List<MediaFile>> Function(String folder)? listMediaFolder;
@@ -240,6 +245,18 @@ class _Ka7ShellState extends State<Ka7Shell> {
     _links.text = current.isEmpty ? added : '$current\n$added';
     _addNavigator.currentState?.popUntil((route) => route.isFirst);
     setState(() => _section = _Section.add);
+  }
+
+  /// Handed to the system once, with the language it was first shown in.
+  var _handedPlayer = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final player = _player;
+    if (_handedPlayer || player == null) return;
+    _handedPlayer = true;
+    widget.onPlayer?.call(player, AppLocalizations.of(context));
   }
 
   @override

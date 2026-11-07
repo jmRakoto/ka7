@@ -577,5 +577,6 @@
   "playerSearch": "Chercher un titre",
   "playerNoMatch": "Aucun titre ne correspond.",
   "addFolder": "Ajouter un dossier",
-  "folderEmpty": "Aucun fichier à lire dans ce dossier : vide, déplacé, ou plus accessible."
+  "folderEmpty": "Aucun fichier à lire dans ce dossier : vide, déplacé, ou plus accessible.",
+  "playerNotificationChannel": "Lecture"
 }

@@ -1831,6 +1831,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucun fichier à lire dans ce dossier : vide, déplacé, ou plus accessible.'**
   String get folderEmpty;
+
+  /// No description provided for @playerNotificationChannel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture'**
+  String get playerNotificationChannel;
 }
 
 class _AppLocalizationsDelegate

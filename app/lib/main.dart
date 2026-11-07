@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:audio_service/audio_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:ka7_core/ka7_core.dart';
@@ -11,6 +13,10 @@ import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
+import 'features/player/player_controller.dart';
+import 'features/player/player_session.dart';
+import 'features/player/position_slider.dart' show jump;
+import 'l10n/app_localizations.dart';
 import 'features/player/media_kit_backend.dart';
 import 'platform/android_background.dart';
 import 'platform/android_ytdlp.dart';
@@ -207,6 +213,9 @@ Future<Ka7App> _mobile(Ka7Store store) async {
         tree: (format) => destinations?.destinationFor(format)?.uri,
       ),
       pickDestination: pickAndroidFolder,
+      // Music goes on with the screen off; controls in the notification
+      // and on the lock screen.
+      onPlayer: (player, l10n) => unawaited(_mediaSession(player, l10n)),
       // Any folder, SD card included, played as a list.
       // `from`: the destination chosen, if any (else the app's own folder,
       // useless here: Music/Ka7).
@@ -232,6 +241,27 @@ Future<Ka7App> _mobile(Ka7Store store) async {
     defaultFolders: folders,
     pickLinksFile: _pickLinksFile,
     pickFolder: FilePicker.getDirectoryPath,
+  );
+}
+
+/// Android's media session: a playback service (`mediaPlayback`, beside the
+/// downloads' `dataSync`), the notification and lock screen controls.
+Future<void> _mediaSession(
+  PlayerController player,
+  AppLocalizations l10n,
+) async {
+  await AudioService.init(
+    builder: () => PlayerSession(player, l10n: l10n),
+    config: AudioServiceConfig(
+      androidNotificationChannelId: 'mg.rakoto.ka7.playback',
+      androidNotificationChannelName: l10n.playerNotificationChannel,
+      androidNotificationIcon: 'drawable/ic_notification',
+      // Kept while paused: Android 12+ may refuse to start it again from
+      // the lock screen.
+      androidStopForegroundOnPause: false,
+      fastForwardInterval: jump,
+      rewindInterval: jump,
+    ),
   );
 }
 

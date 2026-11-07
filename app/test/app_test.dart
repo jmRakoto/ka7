@@ -9,6 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ka7/app.dart';
 import 'package:ka7/features/add_links/add_links_screen.dart';
 import 'package:ka7/features/player/media_backend.dart';
+import 'package:ka7/features/player/player_controller.dart';
+import 'package:ka7/l10n/app_localizations.dart';
 import 'package:ka7/features/queue/finished_run.dart';
 import 'package:ka7/features/queue/run_view.dart';
 import 'package:ka7/platform/background_work.dart';
@@ -100,6 +102,7 @@ void main() {
     Future<({String folder, String label})?> Function(String? from)?
     pickMediaFolder,
     Future<List<MediaFile>> Function(String folder)? listMediaFolder,
+    void Function(PlayerController player, AppLocalizations l10n)? onPlayer,
     Size size = const Size(1280, 900),
   }) async {
     tester.view
@@ -124,6 +127,7 @@ void main() {
         mediaBackend: mediaBackend,
         pickMediaFolder: pickMediaFolder,
         listMediaFolder: listMediaFolder,
+        onPlayer: onPlayer,
         enginesFor: (status, settings) {
           onEngines?.call(settings);
           return (extractor: extractor ?? _extractor, downloader: downloader);
@@ -2286,6 +2290,31 @@ void main() {
       await store.setSetting('destination.mp3.label', 'K7');
 
       expect(await pickerOpensOn(tester), 'content://tree/primary%3AK7');
+    });
+
+    testWidgets('hands the player to the system once (Android notification)', (
+      tester,
+    ) async {
+      final handed = <PlayerController>[];
+      await pumpKa7(
+        tester,
+        mediaBackend: () => backend,
+        onPlayer: (player, _) => handed.add(player),
+      );
+      await tester.tap(_nav('Lecteur'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tsy Ferana'));
+      await tester.pumpAndSettle();
+
+      expect(handed, hasLength(1));
+      expect(handed.single.current?.title, 'Tsy Ferana');
+    });
+
+    testWidgets('no player, nothing handed to the system', (tester) async {
+      final handed = <PlayerController>[];
+      await pumpKa7(tester, onPlayer: (player, _) => handed.add(player));
+
+      expect(handed, isEmpty);
     });
 
     testWidgets('no player, no Lecteur section', (tester) async {

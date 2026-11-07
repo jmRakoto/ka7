@@ -31,7 +31,7 @@ Ka7 télécharge mais ne lit pas : pour écouter, il faut une autre app. Le docu
 
 - [ ] ▶ dans l'aperçu lit le titre en ligne en moins de 5 s sur une connexion correcte.
 - [ ] ▶ dans la Bibliothèque lit le fichier sans réseau (mode avion).
-- [ ] L'audio continue écran éteint ; pause/suivant marchent depuis la notification et l'écran de verrouillage.
+- [x] L'audio continue écran éteint ; pause/suivant marchent depuis la notification et l'écran de verrouillage (vérifié sur émulateur, `tool/android/check_background.sh`).
 - [ ] Lecture, pause, stop, suivant, précédent, ±10 s et seek marchent dans l'app, sur l'audio comme sur la vidéo.
 - [ ] Je crée une liste, y ajoute des titres téléchargés, la réordonne, la lis hors ligne de bout en bout ; elle survit au redémarrage de l'app.
 - [ ] Répétition et aléatoire marchent sur une liste.

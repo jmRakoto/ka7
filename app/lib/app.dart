@@ -5,6 +5,7 @@ import 'package:ka7_store/ka7_store.dart';
 
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/player/media_backend.dart';
+import 'features/player/player_controller.dart';
 import 'features/shell/ka7_shell.dart';
 import 'features/startup/engine_gate.dart';
 import 'l10n/app_localizations.dart';
@@ -45,6 +46,7 @@ class Ka7App extends StatefulWidget {
     this.mediaBackend,
     this.pickMediaFolder,
     this.listMediaFolder,
+    this.onPlayer,
     this.now = DateTime.now,
   });
 
@@ -54,6 +56,10 @@ class Ka7App extends StatefulWidget {
   /// `content://` tree on Android).
   final Future<({String folder, String label})?> Function(String? from)?
   pickMediaFolder;
+
+  /// Handed the player once it exists: the system's media session
+  /// (Android notification, lock screen); null where there is none.
+  final void Function(PlayerController player, AppLocalizations l10n)? onPlayer;
 
   /// The playable files of a folder, read each time its list opens.
   final Future<List<MediaFile>> Function(String folder)? listMediaFolder;
@@ -176,6 +182,7 @@ class _Ka7AppState extends State<Ka7App> {
       mediaBackend: widget.mediaBackend,
       pickMediaFolder: widget.pickMediaFolder,
       listMediaFolder: widget.listMediaFolder,
+      onPlayer: widget.onPlayer,
       pickFolder: widget.pickFolder,
       openFolder: widget.openFolder,
       now: widget.now,

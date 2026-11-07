@@ -1100,4 +1100,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get folderEmpty =>
       'Aucun fichier à lire dans ce dossier : vide, déplacé, ou plus accessible.';
+
+  @override
+  String get playerNotificationChannel => 'Lecture';
 }
