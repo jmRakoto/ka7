@@ -16,6 +16,7 @@ import 'platform/android_background.dart';
 import 'platform/android_ytdlp.dart';
 import 'platform/desktop_notifier.dart';
 import 'platform/desktop_open.dart';
+import 'platform/bundled_libmpv.dart';
 import 'platform/folder_media.dart';
 import 'platform/media_store.dart';
 import 'platform/open_url.dart';
@@ -39,7 +40,7 @@ ImageProvider _thumbnail(String videoId) =>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MediaKit.ensureInitialized();
+  _player = _startPlayer();
   // Same folder as the CLI on desktop: one archive, one history.
   final support = await getApplicationSupportDirectory();
   final store = Ka7Store.open(File('${support.path}/ka7.sqlite'));
@@ -48,6 +49,29 @@ Future<void> main() async {
         ? await _mobile(store)
         : await _desktop(store, support),
   );
+}
+
+/// Whether this app can play; false on a Linux without libmpv.
+var _player = false;
+
+/// The player library: libmpv, bundled everywhere. On Linux, Ka7's own
+/// (LGPL) by full path, never the system's (Ubuntu's is GPL); from source,
+/// the system's.
+bool _startPlayer() {
+  try {
+    MediaKit.ensureInitialized(
+      libmpv: Platform.isLinux
+          ? bundledLibmpv(
+              Platform.resolvedExecutable,
+              exists: (path) => File(path).existsSync(),
+            )
+          : null,
+    );
+    return true;
+  } on Object {
+    // No libmpv at all (`flutter run` on a bare system): Ka7 without player.
+    return false;
+  }
 }
 
 /// yt-dlp and ffmpeg, installed by the app when missing.
@@ -68,7 +92,7 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
   );
   return Ka7App(
     thumbnail: _thumbnail,
-    mediaBackend: MediaKitBackend.new,
+    mediaBackend: _player ? MediaKitBackend.new : null,
     picture: NetworkImage.new,
     engineSetup: _daily(store, binaries, (b) => b.updateYtDlp()),
     enginesFor: (status, settings) => (

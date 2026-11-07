@@ -3,6 +3,8 @@
 #   ka7_<version>_amd64.deb  app (menu entry, `ka7-app`) and CLI (`ka7`)
 #   Ka7-<version>-x86_64.AppImage  app only, runs without installing
 # yt-dlp and ffmpeg are not bundled: the app installs them on first launch.
+# The player library is Ka7's own: libmpv + FFmpeg built LGPL by
+# tool/linux/build_libmpv.sh (Ubuntu's is GPL), shipped beside the app.
 #
 # Built in an Ubuntu 22.04 container (tool/linux/Dockerfile), so the packages
 # run on 22.04 and newer; KA7_NATIVE_BUILD=1 builds on this machine instead
@@ -60,11 +62,28 @@ export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct)}
 same_dates() { find "$1" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +; }
 
 echo "== build app $version"
+echo "== player library"
+libmpv=$root/app/linux/libmpv
+tool/linux/build_libmpv.sh
+# media_kit's video plugin links this libmpv, not the system's.
+export PKG_CONFIG_PATH=$libmpv/lib/pkgconfig
+
 # Leftovers of earlier builds would end up in the packages; objects compiled
 # against this machine's libraries must not be reused in the container.
 rm -rf app/build/linux/x64/release
 (cd app && "${flutter[@]}" build linux --release --dart-define=KA7_VERSION="$version")
 app=$root/app/build/linux/x64/release/bundle
+
+echo "== player library (Ka7's own libmpv, LGPL)"
+plugin=$app/lib/libmedia_kit_video_plugin.so
+readelf -d "$plugin" | grep -q "Shared library: \[libmpv.so.2\]" ||
+  { echo "the video plugin is not linked to Ka7's libmpv" >&2; exit 1; }
+cp -P "$libmpv"/lib/*.so* "$app/lib/"
+# The plugin finds libmpv beside it, not where it was built.
+patchelf --set-rpath '$ORIGIN' "$plugin"
+mkdir -p "$app/licenses"
+cp "$libmpv"/VERSIONS "$libmpv"/licenses/* "$app/licenses/"
+echo "   $(ls "$libmpv"/lib/*.so.* | wc -l) libraries, $(du -shL "$libmpv/lib" | cut -f1)"
 
 echo "== build cli"
 (cd cli && "${dart[@]}" build cli -o "$stage/cli")
@@ -97,7 +116,7 @@ Section: sound
 Priority: optional
 Architecture: amd64
 Maintainer: $maintainer
-Depends: libgtk-3-0t64 | libgtk-3-0, xz-utils, xdg-utils, zenity | kdialog
+Depends: libgtk-3-0t64 | libgtk-3-0, libpulse0, libasound2t64 | libasound2, libgnutls30t64 | libgnutls30, xz-utils, xdg-utils, zenity | kdialog
 Installed-Size: $(du -sk "$deb/opt" | cut -f1)
 Homepage: https://rakoto.mg
 Description: YouTube links to clean, tagged MP3 or MP4 files
@@ -136,5 +155,29 @@ appimage_file=$dist/Ka7-$version-x86_64.AppImage
 APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 "$appimagetool" --no-appstream \
   "$appdir" "$appimage_file" >/dev/null 2>&1
 echo "   $appimage_file"
+
+echo "== player library sources (LGPL: given with the packages)"
+# FFmpeg, dav1d, libplacebo and mpv as built, with the script that built
+# them: what the LGPL asks for, published beside the packages.
+sources=${XDG_CACHE_HOME:-$HOME/.cache}/ka7-tools/sources
+src_stage=$stage/sources/ka7-$version-linux-player-sources
+mkdir -p "$src_stage"
+cp "$libmpv/VERSIONS" tool/linux/build_libmpv.sh tool/linux/Dockerfile "$src_stage/"
+cp -r "$libmpv/licenses" "$src_stage/"
+for line in $(sed -n 's/.*\(ffmpeg-[0-9.]*\.tar\.xz\).*/\1/p' "$libmpv/VERSIONS"); do
+  cp "$sources/$line" "$src_stage/"
+done
+for dir in "$sources"/{dav1d,libplacebo,mpv}-*; do
+  # Only the commit built (shallow): no git history.
+  git -C "$dir" archive --format=tar --prefix="$(basename "$dir")/" HEAD |
+    tar -x -C "$src_stage"
+  git -C "$dir" submodule --quiet foreach --recursive \
+    "git archive --format=tar --prefix=$(basename "$dir")/\$sm_path/ HEAD | tar -x -C '$src_stage'"
+done
+same_dates "$src_stage"
+sources_file=$dist/Ka7-$version-linux-player-sources.tar.xz
+tar --sort=name --owner=0 --group=0 --numeric-owner --mtime="@$SOURCE_DATE_EPOCH" \
+  -C "$stage/sources" -cJf "$sources_file" "$(basename "$src_stage")"
+echo "   $sources_file ($(du -h "$sources_file" | cut -f1))"
 
 echo "== done"

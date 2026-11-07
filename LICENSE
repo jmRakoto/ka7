@@ -1,0 +1,28 @@
+Ka7
+Copyright (c) 2026 Rakoto Ketrika. Tous droits réservés. All rights reserved.
+
+FR : Ce code est visible publiquement, mais il n'est pas libre. Aucune
+autorisation n'est donnée de le copier, le modifier, le distribuer ou
+l'utiliser dans un autre projet, en tout ou en partie, sans l'accord écrit
+de l'auteur.
+
+EN: This source code is publicly visible, but it is not open source. No
+permission is granted to copy, modify, distribute or use it in another
+project, in whole or in part, without the author's written consent.
+
+Composants tiers / Third-party components
+
+Ka7 utilise des bibliothèques qui gardent chacune leur propre licence, par
+exemple : Flutter et les paquets Dart (licences BSD, MIT, Apache 2.0),
+libmpv, libplacebo et FFmpeg (LGPL, compilés sans partie GPL ; sous Linux,
+leur code source est publié avec chaque version :
+Ka7-<version>-linux-player-sources.tar.xz), dav1d (BSD), libass (ISC),
+yt-dlp (Unlicense). Ces licences s'appliquent à ces composants, pas au code
+de Ka7.
+
+Ka7 uses libraries that each keep their own licence, for example: Flutter
+and Dart packages (BSD, MIT, Apache 2.0), libmpv, libplacebo and FFmpeg
+(LGPL, built without any GPL part; on Linux their source code is published
+with each version: Ka7-<version>-linux-player-sources.tar.xz), dav1d (BSD),
+libass (ISC), yt-dlp (Unlicense).
+Those licences apply to those components, not to Ka7's own code.

@@ -43,13 +43,15 @@ Le `+N` doit augmenter à **chaque** version : sinon Android refuse d'installer 
 
 ### 2. Linux
 
-Prérequis : `fvm`, Docker. La construction se fait dans un conteneur Ubuntu 22.04 : les paquets marchent sur Ubuntu 22.04, Debian 12 et plus récents (construits sur une machine plus récente, ils ne démarreraient pas sur les anciennes). L'outil AppImage est téléchargé seul la première fois. Sans Docker : `KA7_NATIVE_BUILD=1` (il faut alors aussi `fakeroot` et `dpkg-deb`), paquets limités aux Linux aussi récents que la machine.
+Prérequis : `fvm`, Docker. La construction se fait dans un conteneur Ubuntu 22.04 : les paquets marchent sur Ubuntu 22.04, Debian 12 et plus récents (construits sur une machine plus récente, ils ne démarreraient pas sur les anciennes). L'outil AppImage est téléchargé seul la première fois. Sans Docker : `KA7_NATIVE_BUILD=1` (il faut alors aussi `fakeroot`, `dpkg-deb`, `patchelf`, `nasm`, meson ≥ 1.3 et les paquets -dev listés dans `tool/linux/Dockerfile`), paquets limités aux Linux aussi récents que la machine.
 
 ```bash
 tool/package_linux.sh       # dist/ka7_<version>_amd64.deb et dist/Ka7-<version>-x86_64.AppImage
 tool/linux/check_old_linux.sh dist/Ka7-*-x86_64.AppImage dist/ka7_*_amd64.deb   # démarre-t-il sur Ubuntu 22.04 ?
 sudo apt install ./dist/ka7_*_amd64.deb
 ```
+
+Lecteur : Ka7 fournit sa propre bibliothèque de lecture, compilée **sans partie GPL** (celle d'Ubuntu est sous GPL, Ka7 ne peut pas la distribuer) : `tool/linux/build_libmpv.sh` compile FFmpeg 8.1.3, dav1d, libplacebo et mpv dans le conteneur (environ 7 min la première fois, sources gardées dans `~/.cache/ka7-tools/sources`), dans `app/linux/libmpv/` ; le paquet les met à côté de l'app (environ +11 Mo compressés). Le code source de ces bibliothèques est produit avec les paquets (`dist/Ka7-<version>-linux-player-sources.tar.xz`) et publié avec chaque version, comme la LGPL le demande. `check_old_linux.sh` vérifie aussi que cette bibliothèque lit vraiment des MP3, FLAC, Opus, H.264 et AV1 (`tool/linux/play_check.py`, fichiers d'essai dans `tool/linux/media/`).
 
 | Fichier | Contenu | Pour qui |
 |---|---|---|

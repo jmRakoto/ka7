@@ -90,15 +90,19 @@ files=(
   "dist/Ka7-$version-armeabi-v7a.apk"
   "dist/ka7_${version}_amd64.deb"
   "dist/Ka7-$version-x86_64.AppImage"
+  # Source of the player libraries shipped on Linux (LGPL).
+  "dist/Ka7-$version-linux-player-sources.tar.xz"
 )
 for file in "${files[@]}"; do
   [[ -f $file ]] || fail "$file n'a pas été produit"
 done
 
 # Built here they would need a recent Linux: checked on the oldest promised.
-step "Paquets Linux sur Ubuntu 22.04"
-tool/linux/check_old_linux.sh "${files[3]}" "${files[2]}" ||
-  fail "les paquets Linux ne démarrent pas sur Ubuntu 22.04"
+for system in ubuntu:22.04 ubuntu:24.04; do
+  step "Paquets Linux sur $system"
+  KA7_OLD_LINUX=$system tool/linux/check_old_linux.sh "${files[3]}" "${files[2]}" ||
+    fail "les paquets Linux ne démarrent pas sur $system"
+done
 
 step "Signature des APK"
 apksigner=$(ls -d "${ANDROID_HOME:-$HOME/Android/Sdk}"/build-tools/*/apksigner |
@@ -150,6 +154,8 @@ Les fichiers arrivent dans les dossiers **Music/Ka7** et **Movies/Ka7**, visible
   \`\`\`
 
 Au premier lancement, Ka7 télécharge quelques compléments (environ 180 Mo, une seule fois).
+
+Ka7 fournit sa propre bibliothèque de lecture (libmpv et FFmpeg, sous licence LGPL) ; leur code source est dans \`Ka7-$version-linux-player-sources.tar.xz\`.
 
 ## Empreintes SHA-256
 
