@@ -11,10 +11,15 @@
 # 2. Same, with the system's own (GPL) libmpv installed: still Ka7's.
 # 3. .deb: installs, loads its own libmpv; `ka7 --help` answers.
 set -euo pipefail
+# The files first, as given (release.sh passes dist/… from the project
+# root), then into this folder for play_check.py and media/.
+appimage=$(readlink -e "$1") || { echo "no such file: $1" >&2; exit 2; }
+deb=
+if [[ -n ${2:-} ]]; then
+  deb=$(readlink -e "$2") || { echo "no such file: $2" >&2; exit 2; }
+fi
 cd "$(dirname "$0")"
 base=${KA7_OLD_LINUX:-ubuntu:22.04}
-appimage=$(readlink -f "$1")
-deb=${2:+$(readlink -f "$2")}
 
 docker run --rm -i \
   -v "$appimage:/ka7.AppImage:ro" \
