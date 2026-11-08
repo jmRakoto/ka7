@@ -158,12 +158,53 @@ void main() {
       expect(state().updatePosition, const Duration(minutes: 2));
     });
 
-    test('stop closes the player', () async {
+    test('stop goes back to the start, the track kept', () async {
       await player.playAll([_a]);
+      backend.at(const Duration(minutes: 1));
 
       await session.stop();
 
-      expect(player.current, isNull);
+      expect(player.current, _a);
+      expect(backend.isPlaying, isFalse);
+      expect(player.position, Duration.zero);
+    });
+
+    test('stop shows the start on the lock screen', () async {
+      await player.playAll([_a]);
+      backend.at(const Duration(minutes: 1));
+
+      await session.stop();
+
+      expect(state().playing, isFalse);
+      expect(state().updatePosition, Duration.zero);
+    });
+
+    test('the app\'s own stop shows the start too', () async {
+      await player.playAll([_a]);
+      backend.at(const Duration(minutes: 1));
+
+      await player.stop();
+
+      expect(state().updatePosition, Duration.zero);
+    });
+
+    test('a jump made in the app shows where it lands', () async {
+      await player.playAll([_a]);
+      backend.lasts(const Duration(minutes: 4));
+
+      await player.seek(const Duration(minutes: 3));
+
+      expect(state().updatePosition, const Duration(minutes: 3));
+    });
+
+    test('play after stop plays again (lock screen)', () async {
+      await player.playAll([_a]);
+      await session.stop();
+
+      await session.play();
+
+      expect(backend.isPlaying, isTrue);
+      expect(state().playing, isTrue);
     });
   });
 }

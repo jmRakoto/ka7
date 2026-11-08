@@ -222,7 +222,7 @@ void main() {
       await party();
       final missing = PlayerController(
         backend: backend,
-        fileExists: (track) async => track.path != '/m/a.mp3',
+        locate: (track) async => track.path == '/m/a.mp3' ? null : track.path,
       );
       await missing.playAll([]);
       await pumpPlaylists(tester, other: missing);

@@ -28,6 +28,22 @@ class PlayerSession extends BaseAudioHandler with SeekHandler {
   /// system runs the clock itself between two).
   Object? _shown;
 
+  /// The position last told to the system, and when: it counts on from
+  /// there while playing.
+  var _toldAt = Duration.zero;
+  var _toldWhen = DateTime.now();
+
+  /// Further apart than this from what the system works out, the position
+  /// jumped (stop, a drag in the app): told again. Below, the usual drift.
+  static const _drift = Duration(seconds: 2);
+
+  bool get _jumped {
+    final expected =
+        _toldAt +
+        (player.playing ? DateTime.now().difference(_toldWhen) : Duration.zero);
+    return (player.position - expected).abs() > _drift;
+  }
+
   /// [at]: where a jump lands (the real player says so only a moment later).
   void _mirror({Duration? at}) {
     final track = player.current;
@@ -39,7 +55,7 @@ class PlayerSession extends BaseAudioHandler with SeekHandler {
       player.error,
       player.duration,
     );
-    if (shown == _shown && at == null) return;
+    if (shown == _shown && at == null && !_jumped) return;
     _shown = shown;
     if (track == null) {
       mediaItem.add(null);
@@ -80,10 +96,16 @@ class PlayerSession extends BaseAudioHandler with SeekHandler {
           _ => null,
         },
         playing: player.playing,
-        updatePosition: at ?? player.position,
+        updatePosition: _tell(at ?? player.position),
         queueIndex: player.index,
       ),
     );
+  }
+
+  Duration _tell(Duration position) {
+    _toldAt = position;
+    _toldWhen = DateTime.now();
+    return position;
   }
 
   @override
@@ -125,9 +147,11 @@ class PlayerSession extends BaseAudioHandler with SeekHandler {
     return seek(to);
   }
 
-  /// From the notification: the player goes away, and the notification.
+  /// From the notification and the lock screen: as the app's own « Stop »,
+  /// back to the start of the track, kept, so « play » plays it again.
+  /// (It used to close the player: « play » then had nothing to play.)
   @override
-  Future<void> stop() => player.close();
+  Future<void> stop() => player.stop();
 
   /// Stops mirroring.
   void dispose() => player.removeListener(_mirror);

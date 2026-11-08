@@ -109,6 +109,14 @@ void main() {
         if (call.method == 'exists') {
           return (call.arguments as Map)['name'] == 'Hafatra.m4a';
         }
+        if (call.method == 'locate') {
+          return (call.arguments as Map)['name'] == 'Hafatra.m4a'
+              ? 'content://media/external/audio/media/28681'
+              : null;
+        }
+        if (call.method == 'locateTree') {
+          return 'content://com.android.externalstorage.documents/tree/x/document/y';
+        }
         return null;
       });
     });
@@ -178,6 +186,57 @@ void main() {
         },
       ]);
     });
+
+    test(
+      'says where to play a file from: the library, or where it was made',
+      () async {
+        final locate = AndroidMediaStore().locateFor(
+          (format) => '/app/Music',
+          stillLocal: (path) async => path == '/app/Music/Kept here.mp3',
+        );
+
+        // Moved to Music/Ka7: its address in the library, which the player reads.
+        expect(
+          await locate('/app/Music/Hafatra.m4a', MediaFormat.m4a),
+          'content://media/external/audio/media/28681',
+        );
+        expect(calls.last.method, 'locate');
+        expect(calls.last.arguments, {
+          'folder': 'Music/Ka7',
+          'name': 'Hafatra.m4a',
+          'mime': 'audio/mp4',
+        });
+        // Never moved: where it was made.
+        expect(
+          await locate('/app/Music/Kept here.mp3', MediaFormat.mp3),
+          '/app/Music/Kept here.mp3',
+        );
+        // Deleted by hand: nowhere.
+        expect(await locate('/app/Music/Gone.mp3', MediaFormat.mp3), isNull);
+      },
+    );
+
+    test(
+      'says where to play a file from, in the folder the user chose',
+      () async {
+        final locate = AndroidMediaStore().locateFor(
+          (format) => '/app/Music',
+          stillLocal: (_) async => false,
+          tree: (format) => 'content://tree/primary%3AMozika',
+        );
+
+        expect(
+          await locate('/app/Music/Mahaleo/Hafatra.m4a', MediaFormat.m4a),
+          'content://com.android.externalstorage.documents/tree/x/document/y',
+        );
+        expect(calls.single.method, 'locateTree');
+        expect(calls.single.arguments, {
+          'tree': 'content://tree/primary%3AMozika',
+          'folder': 'Mahaleo',
+          'name': 'Hafatra.m4a',
+        });
+      },
+    );
 
     test('files in the folder the user chose, keeping subfolders', () async {
       await AndroidMediaStore().publish(

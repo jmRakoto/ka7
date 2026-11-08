@@ -216,6 +216,13 @@ Future<Ka7App> _mobile(Ka7Store store) async {
         tree: (format) => destinations?.destinationFor(format)?.uri,
       ),
       pickDestination: pickAndroidFolder,
+      // Moved to Music/Ka7 (or the folder chosen) after downloading: played
+      // from there, not from where it was made.
+      locateFile: mediaStore.locateFor(
+        folderOf,
+        stillLocal: (path) => File(path).exists(),
+        tree: (format) => destinations?.destinationFor(format)?.uri,
+      ),
       // Music goes on with the screen off; controls in the notification
       // and on the lock screen.
       onPlayer: (player, l10n) => unawaited(_mediaSession(player, l10n)),

@@ -2,6 +2,7 @@ package mg.rakoto.ka7
 
 import android.Manifest
 import android.content.ContentValues
+import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
@@ -55,6 +56,24 @@ class MediaStoreChannel(private val context: Context, messenger: BinaryMessenger
                 }
                 return@setMethodCallHandler
             }
+            // Where to play a filed file from: its content:// address (the
+            // player reads those), or null when it is not there.
+            if (call.method == "locate" || call.method == "locateTree") {
+                val folder = call.argument<String>("folder")!!
+                val name = call.argument<String>("name")!!
+                val tree = call.argument<String>("tree")
+                val mime = call.argument<String>("mime")
+                worker.execute {
+                    val found = try {
+                        if (tree != null) locateInTree(Uri.parse(tree), folder, name)
+                        else locate(folder, name, mime!!)
+                    } catch (_: Exception) {
+                        null
+                    }
+                    main.post { result.success(found) }
+                }
+                return@setMethodCallHandler
+            }
             if (call.method == "exists") {
                 val folder = call.argument<String>("folder")!!
                 val name = call.argument<String>("name")!!
@@ -102,6 +121,34 @@ class MediaStoreChannel(private val context: Context, messenger: BinaryMessenger
         }
         @Suppress("DEPRECATION")
         return File(Environment.getExternalStorageDirectory(), "$folder/$name").exists()
+    }
+
+    /** `folder/name` in the shared library, as an address to play it from. */
+    private fun locate(folder: String, name: String, mime: String): String? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val collection = collectionOf(mime)
+            context.contentResolver.query(
+                collection,
+                arrayOf(MediaStore.MediaColumns._ID),
+                "${MediaStore.MediaColumns.RELATIVE_PATH} = ? AND ${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
+                arrayOf("$folder/", name),
+                null,
+            ).use { cursor ->
+                if (cursor == null || !cursor.moveToFirst()) return null
+                return ContentUris.withAppendedId(collection, cursor.getLong(0)).toString()
+            }
+        }
+        @Suppress("DEPRECATION")
+        val file = File(Environment.getExternalStorageDirectory(), "$folder/$name")
+        return if (file.exists()) file.path else null
+    }
+
+    private fun locateInTree(tree: Uri, folder: String, name: String): String? {
+        var dir = DocumentFile.fromTreeUri(context, tree) ?: return null
+        for (part in folder.split('/').filter { it.isNotEmpty() }) {
+            dir = dir.findFile(part)?.takeIf { it.isDirectory } ?: return null
+        }
+        return dir.findFile(name)?.takeIf { it.exists() }?.uri?.toString()
     }
 
     private fun collectionOf(mime: String) = if (mime.startsWith("video/")) {

@@ -22,7 +22,12 @@ void main() {
     online = true;
     player = PlayerController(
       backend: backend,
-      fileExists: (track) async => !gone.contains(track.path),
+      // Gone, or moved since (Android files them in Music/Ka7 afterwards).
+      locate: (track) async => switch (track.path) {
+        final path? when gone.contains(path) => null,
+        '/m/moved.mp3' => 'content://media/external/audio/media/7',
+        final path => path,
+      },
       streamUrl: (videoId, {required video}) async {
         if (!online) {
           throw const ProbeFailure(FailureReason.network, 'offline');
@@ -39,6 +44,14 @@ void main() {
       expect(backend.opened, ['/m/b.mp3']);
       expect(player.current, _b);
       expect(player.playing, isTrue);
+    });
+
+    test('plays a file from where it really is now', () async {
+      await player.playAll([
+        const Track(title: 'Moved', videoId: 'm', path: '/m/moved.mp3'),
+      ]);
+
+      expect(backend.opened, ['content://media/external/audio/media/7']);
     });
 
     test('plays an online video from its stream address', () async {

@@ -50,6 +50,7 @@ class Ka7Shell extends StatefulWidget {
     this.thumbnail,
     this.picture,
     this.fileExists,
+    this.locateFile,
     this.pickDestination,
     this.mediaBackend,
     this.pickMediaFolder,
@@ -82,6 +83,11 @@ class Ka7Shell extends StatefulWidget {
 
   /// Whether a downloaded file is still there; null to trust the archive.
   final FileExists? fileExists;
+
+  /// Where a downloaded file is now, to play it (Android: moved to
+  /// Music/Ka7, a `content://` address); null where it stays where it was
+  /// made (desktop: [fileExists] decides).
+  final Future<String?> Function(String path, MediaFormat format)? locateFile;
 
   /// Makes the player's backend; null where nothing can be played.
   final MediaBackend Function()? mediaBackend;
@@ -156,14 +162,16 @@ class _Ka7ShellState extends State<Ka7Shell> {
     final backend? => PlayerController(
       backend: backend(),
       streamUrl: _streams?.streamUrl,
-      fileExists: switch (widget.fileExists) {
-        // A folder's own files (FLAC…) have no Ka7 format: there, as read
-        // when the list opened.
-        final exists? => (track) => switch (track.format) {
-          final format? => exists(track.path!, format),
-          null => Future.value(true),
-        },
-        null => null,
+      locate: (track) async {
+        final path = track.path!;
+        // A folder's own file (FLAC…): there, as read when its list opened.
+        final format = track.format;
+        if (format == null) return path;
+        if (widget.locateFile case final locate?) return locate(path, format);
+        if (widget.fileExists case final exists?) {
+          return await exists(path, format) ? path : null;
+        }
+        return path;
       },
     ),
     null => null,

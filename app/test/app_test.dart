@@ -96,6 +96,7 @@ void main() {
     Future<AppRelease?> Function()? latestRelease,
     void Function(String url)? openUrl,
     FileExists? fileExists,
+    Future<String?> Function(String path, MediaFormat format)? locateFile,
     Future<Destination?> Function()? pickDestination,
     MediaBackend Function()? mediaBackend,
     Extractor? extractor,
@@ -123,6 +124,7 @@ void main() {
         latestRelease: latestRelease,
         openUrl: openUrl,
         fileExists: fileExists,
+        locateFile: locateFile,
         pickDestination: pickDestination,
         mediaBackend: mediaBackend,
         pickMediaFolder: pickMediaFolder,
@@ -2342,6 +2344,22 @@ void main() {
       expect(backend.isPlaying, isTrue);
       // Nothing but the user's own pause and play reached the player.
       expect(backend.calls, [...played, 'pause', 'play']);
+    });
+
+    testWidgets('plays a download from where Android moved it', (tester) async {
+      await pumpKa7(
+        tester,
+        mediaBackend: () => backend,
+        locateFile: (path, format) async =>
+            'content://media/external/audio/media/28681',
+      );
+      await tester.tap(_nav('Lecteur'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Tsy Ferana'));
+      await tester.pumpAndSettle();
+
+      expect(backend.opened, ['content://media/external/audio/media/28681']);
     });
 
     testWidgets('no player, nothing handed to the system', (tester) async {

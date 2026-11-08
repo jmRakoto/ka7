@@ -70,6 +70,25 @@ class AndroidMediaStore {
     return await _channel.invokeMethod<bool>('exists', where) ?? false;
   };
 
+  /// Where to play a file made under [folders] from: still in the app's
+  /// folder, or its address in the shared library (`content://`, read by
+  /// the player); null when it is in neither.
+  Future<String?> Function(String path, MediaFormat format) locateFor(
+    String Function(MediaFormat format) folders, {
+    required Future<bool> Function(String path) stillLocal,
+    String? Function(MediaFormat format)? tree,
+  }) => (path, format) async {
+    if (await stillLocal(path)) return path;
+    final relative = _relative(folders(format), path);
+    if (tree?.call(format) case final tree?) {
+      return _channel.invokeMethod<String>('locateTree', {
+        'tree': tree,
+        ..._inFolder(relative),
+      });
+    }
+    return _channel.invokeMethod<String>('locate', _place(relative, format));
+  };
+
   Future<void> publish(
     String path,
     String relative,

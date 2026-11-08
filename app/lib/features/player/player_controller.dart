@@ -14,7 +14,7 @@ const _restartAfter = Duration(seconds: 3);
 
 /// The one player of the app: what plays, where in it, and the queue.
 class PlayerController extends ChangeNotifier {
-  PlayerController({required this.backend, this.streamUrl, this.fileExists}) {
+  PlayerController({required this.backend, this.streamUrl, this.locate}) {
     _subscriptions = [
       backend.position.listen((at) => _update(() => _position = at)),
       backend.duration.listen((length) => _update(() => _duration = length)),
@@ -29,8 +29,10 @@ class PlayerController extends ChangeNotifier {
   final Future<String> Function(String videoId, {required bool video})?
   streamUrl;
 
-  /// Whether a track's file is still there; null to trust it is.
-  final Future<bool> Function(Track track)? fileExists;
+  /// Where a track's file is now (a path, or a `content://` address on
+  /// Android, where files are moved to Music/Ka7 after downloading); null
+  /// when gone. Null to play the recorded path as it is.
+  final Future<String?> Function(Track track)? locate;
 
   late final List<StreamSubscription<Object?>> _subscriptions;
   PlayQueue<Track>? _queue;
@@ -212,7 +214,9 @@ class PlayerController extends ChangeNotifier {
   /// The file or stream address of [track]; null with [_error] set.
   Future<String?> _sourceOf(Track track) async {
     if (track.path case final path?) {
-      if (await fileExists?.call(track) ?? true) return path;
+      final ask = locate;
+      if (ask == null) return path;
+      if (await ask(track) case final found?) return found;
       _missing.add(path);
       _error = PlayerError.missingFile;
       return null;

@@ -42,6 +42,7 @@ class Ka7App extends StatefulWidget {
     this.latestRelease,
     this.openUrl,
     this.fileExists,
+    this.locateFile,
     this.pickDestination,
     this.mediaBackend,
     this.pickMediaFolder,
@@ -74,6 +75,11 @@ class Ka7App extends StatefulWidget {
 
   /// Whether a downloaded file is still there; null to trust the archive.
   final FileExists? fileExists;
+
+  /// Where a downloaded file is now, to play it (Android: moved to
+  /// Music/Ka7, a `content://` address); null where it stays where it was
+  /// made (desktop: [fileExists] decides).
+  final Future<String?> Function(String path, MediaFormat format)? locateFile;
 
   /// This build's version (`0.2.0`); null where unknown (tests, debug).
   final String? appVersion;
@@ -178,6 +184,7 @@ class _Ka7AppState extends State<Ka7App> {
       latestRelease: widget.latestRelease,
       openUrl: widget.openUrl,
       fileExists: widget.fileExists,
+      locateFile: widget.locateFile,
       pickDestination: widget.pickDestination,
       mediaBackend: widget.mediaBackend,
       pickMediaFolder: widget.pickMediaFolder,
