@@ -24,8 +24,9 @@ class MiniPlayer extends StatelessWidget {
       final scheme = theme.colorScheme;
       final total = player.duration.inMilliseconds;
       final status = statusText(l10n, player);
-      // Listened to from the preview, before downloading: everything here,
-      // nothing else to open.
+      // Listened to from the preview, before downloading: the controls it
+      // needs here (pause, ±10 s, close, position); the title opens the
+      // whole player, as for a video.
       if (track.isOnline && !track.video) {
         return Material(
           color: scheme.surfaceContainerLow,
@@ -36,33 +37,59 @@ class MiniPlayer extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.music_note_outlined, color: scheme.primary),
-                    const SizedBox(width: 12),
+                    // Icon and title: a tap opens the whole player, as for
+                    // a video; the buttons beside stay the bar's own.
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            track.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
+                      child: Semantics(
+                        button: true,
+                        label: l10n.playerOpen,
+                        excludeSemantics: true,
+                        child: InkWell(
+                          onTap: onOpen,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.music_note_outlined,
+                                  color: scheme.primary,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        track.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.bodyLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                      ),
+                                      if (status != null)
+                                        Text(
+                                          status,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: player.error == null
+                                                    ? scheme.onSurfaceVariant
+                                                    : scheme.error,
+                                              ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          if (status != null)
-                            Text(
-                              status,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: player.error == null
-                                    ? scheme.onSurfaceVariant
-                                    : scheme.error,
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
                     ),
                     IconButton(

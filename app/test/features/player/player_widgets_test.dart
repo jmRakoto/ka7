@@ -126,15 +126,26 @@ void main() {
         expect(find.byTooltip('Suivant'), findsNothing);
       });
 
-      testWidgets('does not open the whole player', (tester) async {
+      testWidgets('a tap on the title opens the whole player', (tester) async {
         var opened = false;
         await preview.playAll([online]);
         await pumpPreview(tester, onOpen: () => opened = true);
 
-        await tester.tap(find.text('Hafatra'));
+        await tester.tap(find.bySemanticsLabel('Ouvrir le lecteur'));
+
+        expect(opened, isTrue);
+      });
+
+      testWidgets('its own buttons do not open it', (tester) async {
+        var opened = false;
+        await preview.playAll([online]);
+        await pumpPreview(tester, onOpen: () => opened = true);
+
+        await tester.tap(find.byTooltip('Pause'));
+        await tester.tap(find.byTooltip('Avancer de 10 s'));
+        await tester.pump();
 
         expect(opened, isFalse);
-        expect(find.bySemanticsLabel('Ouvrir le lecteur'), findsNothing);
       });
 
       testWidgets('a bar to drag, with the times', (tester) async {
