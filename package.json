@@ -1,0 +1,8 @@
+{
+  "name": "ka7-tools",
+  "private": true,
+  "description": "Ka7's development tools (not the app): taskIO, PRD to tickets.",
+  "devDependencies": {
+    "@relax-tools/taskio": "0.3.0"
+  }
+}
