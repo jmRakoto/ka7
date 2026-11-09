@@ -30,17 +30,17 @@ Ka7 télécharge mais ne lit pas : pour écouter, il faut une autre app. Le docu
 ## Critères d'acceptation
 
 - [x] ▶ dans l'aperçu lit le titre en ligne en moins de 5 s sur une connexion correcte (Linux réel : 0,75 à 1,2 s avec l'adresse demandée d'avance, environ 6 s sans ; pas chronométré sur téléphone).
-- [x] Un fichier téléchargé se lit sans réseau (Linux réel et téléphone ; la lecture est dans la section Lecteur, pas la Bibliothèque ; jamais essayé en mode avion).
+- [x] Un fichier téléchargé se lit sans réseau (Linux réel et téléphone, en mode avion compris ; la lecture est dans la section Lecteur, pas la Bibliothèque).
 - [x] L'audio continue écran éteint ; pause/suivant marchent depuis la notification et l'écran de verrouillage (émulateur, `tool/android/check_background.sh`, puis téléphone Galaxy M36 : notification, écran verrouillé, boutons du casque, stop puis lecture).
 - [x] Lecture, pause, stop, suivant, précédent, ±10 s et seek marchent dans l'app, sur l'audio comme sur la vidéo (essais réels Linux sur l'audio, tests d'écran sur la vidéo, téléphone). Stop revient au début et garde le titre et la notification (à la demande, au lieu de fermer la notification) : « lecture » le relance.
 - [x] Je crée une liste, y ajoute des titres téléchargés, la réordonne, la lis hors ligne de bout en bout ; elle survit au redémarrage de l'app (parcours réel Linux `player_flow_test`, réordonnancement vérifié à la main).
 - [x] Répétition et aléatoire marchent sur une liste (tests unitaires et d'écran seulement).
 - [x] La vidéo se lit en plein écran, rotation comprise (bouton plein écran : paysage et sans barres ; téléphone tourné sur une vidéo : plein écran ; tests d'écran, rotation vérifiée sur téléphone).
-- [x] Un téléchargement en cours ne coupe pas la lecture, et l'inverse (test d'app ; pas encore essayé sur téléphone).
+- [x] Un téléchargement en cours ne coupe pas la lecture, et l'inverse (test d'app, puis essayé sur téléphone).
 
 ## Ajouté en cours de route
 
-- [x] Focus audio (Android) : pause pendant un appel puis reprise à la fin, pause pour une autre app (sans reprise), volume baissé sous un son de notification, pause quand on débranche le casque. Vérifié sur émulateur avec un appel simulé (`adb emu gsm call`) ; pas encore avec un vrai appel sur téléphone.
+- [x] Focus audio (Android) : pause pendant un appel puis reprise à la fin, pause pour une autre app (sans reprise), volume baissé sous un son de notification, pause quand on débranche le casque. Vérifié sur émulateur avec un appel simulé (`adb emu gsm call`), puis avec un vrai appel sur téléphone.
 - [x] Image du titre dans la notification et sur l'écran verrouillé (image YouTube ; aucune pour les fichiers d'un dossier).
 
 ## Risques
