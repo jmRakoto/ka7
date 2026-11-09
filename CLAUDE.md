@@ -115,4 +115,6 @@ Skill `tdd` (rouge, vert, refactor), dans `.agents/skills/tdd/`, lié dans `.cla
 
 ## Git
 
-- Ne jamais faire de commit ni de push : l'utilisateur les fait lui-même, manuellement.
+- Avant tout changement : `git switch main && git pull`, puis une nouvelle branche pour ce changement.
+- Commit et push **seulement quand l'utilisateur le demande**, jamais de sa propre initiative, même quand le travail est fini et vérifié : le laisser non commité et le dire.
+- Pull request vers `main` et fusion (`gh pr create`, `gh pr merge`) seulement quand l'utilisateur le demande, après sa validation. `main` garde un historique droit : fusion par `--rebase`.
