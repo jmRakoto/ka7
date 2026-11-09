@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.1",
+  "language": "fr",
+  "adapter": "fluent-tickets",
+  "defaultMethodology": null,
+  "enums": {
+    "status": [
+      "draft",
+      "todo"
+    ],
+    "priority": [
+      "urgent",
+      "high",
+      "medium",
+      "low"
+    ],
+    "labels": [
+      "infra",
+      "api",
+      "front",
+      "back",
+      "data"
+    ],
+    "methodology": [
+      "tdd",
+      "bdd",
+      "spec-driven",
+      "tests-after",
+      "prototype-first",
+      "other"
+    ]
+  },
+  "horsPerimetre": "Rien au-delà du périmètre listé ; toute extension devient un nouveau ticket.",
+  "granularity": {
+    "minTicketDays": 0.5,
+    "maxInfraTickets": 2,
+    "maxDependencyChain": 4
+  },
+  "validateMaxAttempts": 3,
+  "fluentTickets": {
+    "enabled": true,
+    "url": "https://fluent-tickets.cinco-mg.ai/mcp",
+    "organization": "rakoto-s-org",
+    "team": "KA",
+    "epic": null,
+    "state": "Todo"
+  }
+}
