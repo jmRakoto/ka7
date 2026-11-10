@@ -1,6 +1,6 @@
 # 004 · Autres sources : SoundCloud, Vimeo, Facebook…
 
-- **État** : À faire
+- **État** : Abandonné — remplacé par KA-5 à KA-8 (Fluent Tickets, `.taskIO/prd/autres-plateformes.md`) : Vimeo demande maintenant un compte, lot réduit à TikTok, Instagram, Facebook
 - **Taille** : grosse
 - **Plateformes** : toutes celles qui ont yt-dlp (bureau, Android) ; pas iOS (youtube_explode ne lit que YouTube)
 

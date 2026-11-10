@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.1",
+  "organization": "rakoto-s-org",
+  "team": "KA",
+  "issues": {
+    "socle-sources": {
+      "key": "KA-5",
+      "hash": "c7384b3bdfe283ef97272ee13ffe84d4eac70d9b14618d05b0a935e6af697ee0",
+      "blockedBy": [],
+      "parent": null,
+      "attachments": {
+        "prd/autres-plateformes.md": {
+          "sha256": "cd23633f476181d9ae82cba4114d8e4cdfd93f8b88957326f5a35a6179927266",
+          "id": "att_01m73jkd3afk6aq8azebp93g55"
+        }
+      }
+    },
+    "source-tiktok": {
+      "key": "KA-6",
+      "hash": "ba426e4f932bf78db6dcef63aef9d5ed729977e217dc347c5b3d644c06278db6",
+      "blockedBy": [
+        "KA-5"
+      ],
+      "parent": "KA-5",
+      "attachments": {}
+    },
+    "source-facebook": {
+      "key": "KA-7",
+      "hash": "bdef6869e66c05022e12fec30ac67b7a2dca996d10ead05edc0da8692d8634dc",
+      "blockedBy": [
+        "KA-5"
+      ],
+      "parent": "KA-5",
+      "attachments": {}
+    },
+    "source-instagram": {
+      "key": "KA-8",
+      "hash": "441f84187399cedac0526d4f3db754abd88187cd7c4133f668078d283dbd6404",
+      "blockedBy": [
+        "KA-5"
+      ],
+      "parent": "KA-5",
+      "attachments": {}
+    }
+  },
+  "documents": {
+    "analyse-plateformes": {
+      "id": "doc_01m73jkdj8exwvfnes51zxqnqp",
+      "hash": "fdfeae9d83c85588ab29f29c8dafd825927ef3de959161d9485215fbf7efd3d3"
+    }
+  }
+}

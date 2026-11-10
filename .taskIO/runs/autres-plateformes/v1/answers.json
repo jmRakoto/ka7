@@ -1,0 +1,4 @@
+{"schemaVersion":"1.1","answers":[
+{"questionId":"scope","choice":"social","text":null},
+{"questionId":"split","choice":"socle-par-site","text":null},
+{"questionId":"methodology","choice":"tdd","text":null}],"validatedByHuman":true}

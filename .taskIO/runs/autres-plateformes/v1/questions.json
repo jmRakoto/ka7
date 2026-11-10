@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.1",
+  "questions": [
+    {
+      "id": "scope",
+      "question": "Quelles plateformes dans ce lot ?",
+      "why": "Fixe le nombre de tickets « site » et l'estimation.",
+      "choices": [
+        { "id": "lot1", "label": "Lot 1 complet (TikTok, Instagram, Facebook, SoundCloud, Bandcamp, Mixcloud, Dailymotion)", "pros": ["Couvre vidéo sociale et musique"], "cons": ["7 sites à tester et suivre"] },
+        { "id": "social", "label": "Réseaux sociaux seulement (TikTok, Instagram, Facebook)", "pros": ["Ce que l'utilisateur demande d'abord", "Plus petit"], "cons": ["Les sites musique (SoundCloud…) attendent"] },
+        { "id": "lot1-lot2", "label": "Lot 1 + lot 2 (X, Twitch, Bilibili, VK, Pinterest…)", "pros": ["Tout ce qui marche aujourd'hui"], "cons": ["Gros, beaucoup de sites qui cassent"] }
+      ]
+    },
+    {
+      "id": "split",
+      "question": "Découpage des tickets ?",
+      "why": "Un ticket socle puis un par site, ou un ticket socle + un ticket groupé.",
+      "choices": [
+        { "id": "socle-par-site", "label": "Socle générique, puis un sous-ticket par site", "pros": ["Livrable site par site", "Suivi clair sur le tableau"], "cons": ["Plus de tickets"] },
+        { "id": "socle-groupe", "label": "Socle générique + un ticket pour tous les sites", "pros": ["Moins de tickets"], "cons": ["Gros ticket difficile à clore"] }
+      ]
+    },
+    {
+      "id": "methodology",
+      "question": "Comment développer ?",
+      "why": "Adapte les « Étapes » de chaque ticket.",
+      "choices": [
+        { "id": "tdd", "label": "TDD", "pros": ["Règle du projet (CLAUDE.md)", "Refactor de videoId sûr"], "cons": ["Plus lent au démarrage"] },
+        { "id": "bdd", "label": "BDD", "pros": ["Scénarios partagés"], "cons": ["Outillage Gherkin absent"] },
+        { "id": "spec-driven", "label": "Spec driven", "pros": ["Contrat clair"], "cons": ["Spec à maintenir"] },
+        { "id": "tests-after", "label": "Tests après le code", "pros": ["Rapide"], "cons": ["Couverture moins fiable"] },
+        { "id": "prototype-first", "label": "Prototype d'abord", "pros": ["Validation rapide"], "cons": ["Code jetable"] }
+      ]
+    }
+  ]
+}

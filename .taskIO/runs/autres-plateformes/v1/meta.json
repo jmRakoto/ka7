@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.1",
+  "promptVersion": "1",
+  "source": "autres-plateformes.md",
+  "sources": [
+    "autres-plateformes.md"
+  ],
+  "prdSha256": "cd23633f476181d9ae82cba4114d8e4cdfd93f8b88957326f5a35a6179927266",
+  "assetsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "agent": "claude",
+  "model": "claude-opus-5-5",
+  "generatedKey": "f1fc8143395133a2b1b7fb3683bc9158240841e2a2916c72f47d769ad08dfb07"
+}

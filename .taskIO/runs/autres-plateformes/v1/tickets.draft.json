@@ -1,0 +1,194 @@
+{
+  "schemaVersion": "1.1",
+  "methodology": "tdd",
+  "estimate": {
+    "value": 6.5,
+    "justification": "Le socle (3 j) porte le gros du risque : remplacer le videoId de 11 caractères par extracteur:id dans le cœur, l'archive (migration de schéma) et les miniatures, sous tests de caractérisation. Chaque réseau social ensuite tient en 1 à 1,5 j : fixtures réelles, liens, cas propres au site, essai Linux et téléphone ; TikTok un peu plus à cause des profils et du blocage par IP."
+  },
+  "epic": null,
+  "milestones": [],
+  "tickets": [
+    {
+      "ref": "socle-sources",
+      "title": "Cœur générique pour les liens hors YouTube (socle)",
+      "origin": "PRD · Exigences (cœur générique, liste blanche, moteur, miniatures, erreurs, écran Ajouter, iOS)",
+      "contexte": "Ka7 refuse tout lien non YouTube (InvalidReason.notYouTube, link_entry.dart) et tout le cœur suppose un videoId de 11 caractères : archive « Déjà là », URL normalisées, miniatures i.ytimg.com. Avant d'ouvrir TikTok, Instagram et Facebook, il faut un cœur qui sait porter un lien d'un autre site. yt-dlp (bureau : binaire autonome avec curl_cffi ; Android : youtubedl-android sans curl_cffi) lit déjà ces sites.",
+      "perimetre": [
+        "ka7_core : WebEntry(url, site) pour un lien d'un site de la liste blanche ; enum Site (youtube, tiktok, instagram, facebook) et motifs d'hôte ; liste vide de sites ouverts tant que leur ticket n'est pas fait.",
+        "Identifiant d'archive extracteur:id (youtube:<id>, tiktok:<id>…) dans ka7_store ; migration de schéma (v9 → v10) qui préfixe les entrées existantes par youtube:, testée sur une vraie base schema_v9.sql.",
+        "parseProbeJson : lecture générique (extractor_key, id, title, uploader, thumbnail, duration, entries) ; ProbeItem porte son site et sa miniature.",
+        "Miniatures : thumbnail de yt-dlp quand le site n'est pas YouTube (aperçu, File, Bibliothèque, notification du lecteur).",
+        "Audio seul absent : extraire l'audio de la vidéo (MP3 / M4A) avec ffmpeg.",
+        "Erreurs traduites (FR / EN) : connexion requise ou contenu privé, IP bloquée par le site, extracteur à mettre à jour (propose la mise à jour de yt-dlp).",
+        "Écran Ajouter : pastille du site par lien ; recherche toujours YouTube seulement.",
+        "iOS : lien non YouTube refusé avec « pas encore sur iPhone » ; FallbackExtractor ne retombe pas sur youtube_explode pour un autre site.",
+        "Android : vérifier que le petit ffmpeg suffit (flux HLS par le téléchargeur interne de yt-dlp, sinon ajouter http/https/hls)."
+      ],
+      "etapes": [
+        "Tests de caractérisation d'abord sur VideoEntry.videoId, l'archive et les URL normalisées (aucun changement de comportement YouTube).",
+        "Tests rouges ka7_core : WebEntry, Site, refus hors liste, iOS ; puis implémenter.",
+        "Tests rouges ka7_store : migration youtube:<id> sur schema_v9.sql ; build_runner, schemaVersion, migration.",
+        "Tests rouges ka7_engine_ytdlp : sonde générique sur fixture réelle ; miniature thumbnail ; messages d'erreur classés.",
+        "Tests d'écran : pastille du site, messages d'erreur, miniature non YouTube.",
+        "tool/check.sh vert ; essai réel Linux : YouTube inchangé, archive gardée après migration ; CLAUDE.md mis à jour."
+      ],
+      "doneWhen": [],
+      "followUps": [],
+      "status": "todo",
+      "priority": "high",
+      "assignee": null,
+      "labels": [
+        "back",
+        "data"
+      ],
+      "project": null,
+      "estimate": {
+        "value": 3
+      },
+      "milestone": null,
+      "parent": null,
+      "links": [],
+      "attachments": [
+        {
+          "path": "prd/autres-plateformes.md",
+          "title": "PRD et analyse des plateformes"
+        }
+      ]
+    },
+    {
+      "ref": "source-tiktok",
+      "title": "TikTok : vidéos et profils",
+      "origin": "PRD · Analyse des plateformes (TikTok, lot réseaux sociaux)",
+      "contexte": "Sondage du 10/11/2026 sans compte : vidéo publique OK (8 formats dont audio seul, miniature), une vidéo « Your IP address is blocked from accessing this post », profil @nom OK (325 vidéos en liste), profil par id numérique KO (« Unable to extract secondary user ID »). Bureau avec curl_cffi ; Android sans.",
+      "perimetre": [
+        "Ouvrir tiktok.com (vidéo /@nom/video/<id>, liens courts vm.tiktok.com / vt.tiktok.com, profil /@nom) dans la liste blanche.",
+        "Profil → liste à cocher dans l'aperçu, rien coché d'office au-delà de la règle des chaînes YouTube (pickByHand).",
+        "Fichiers rangés et tagués (artiste = auteur TikTok), « Déjà là » par tiktok:<id>.",
+        "Message clair pour « IP bloquée » et pour un profil illisible.",
+        "Diaporamas photo (son seul) : audio téléchargé, vidéo refusée avec la raison."
+      ],
+      "etapes": [
+        "Fixtures réelles (vidéo, profil, lien court, erreur IP bloquée) dans ka7_engine_ytdlp/test/fixtures/.",
+        "Tests rouges : reconnaissance des liens, sonde, nommage, archive ; puis implémenter.",
+        "Essai réel Linux (integration_test) : une vidéo en MP3 et MP4, un profil en liste.",
+        "Essai sur le téléphone (Android, sans curl_cffi) ; si TikTok échoue seulement sur Android, le refuser sur Android avec la raison.",
+        "tool/check.sh vert."
+      ],
+      "doneWhen": [
+        "socle-sources"
+      ],
+      "followUps": [
+        {
+          "ref": "abonnement-tiktok",
+          "title": "Suivre un profil TikTok (abonnements)"
+        }
+      ],
+      "status": "todo",
+      "priority": "high",
+      "assignee": null,
+      "labels": [
+        "back"
+      ],
+      "project": null,
+      "estimate": {
+        "value": 1.5
+      },
+      "milestone": null,
+      "parent": "socle-sources",
+      "links": [],
+      "attachments": []
+    },
+    {
+      "ref": "source-instagram",
+      "title": "Instagram : posts et Reels publics",
+      "origin": "PRD · Analyse des plateformes (Instagram, lot réseaux sociaux)",
+      "contexte": "Sondage du 10/11/2026 sans compte : post /p/ et Reel /reel/ publics OK (vidéo, miniature, auteur), pas de format audio seul ; Stories et highlights : « You need to log in » ; limite de débit fréquente (« rate-limit reached or login required »).",
+      "perimetre": [
+        "Ouvrir instagram.com /p/<code>, /reel/<code>, /reels/<code>, /tv/<code> dans la liste blanche ; Stories et profils refusés avec la raison (connexion requise).",
+        "MP3 / M4A extraits de la vidéo (pas d'audio seul chez Instagram).",
+        "Post à plusieurs vidéos (carrousel) → liste à cocher ; photos ignorées.",
+        "Message clair « limite atteinte ou connexion requise, réessayer plus tard »."
+      ],
+      "etapes": [
+        "Fixtures réelles (Reel, post vidéo, carrousel, erreur de connexion) dans test/fixtures/.",
+        "Tests rouges : liens, refus des Stories, sonde, extraction audio, message de limite ; puis implémenter.",
+        "Essai réel Linux : un Reel en MP3 et MP4.",
+        "Essai sur le téléphone.",
+        "tool/check.sh vert."
+      ],
+      "doneWhen": [
+        "socle-sources"
+      ],
+      "followUps": [
+        {
+          "ref": "connexion-comptes",
+          "title": "Connexion aux comptes / cookies (Stories, contenus privés)"
+        }
+      ],
+      "status": "todo",
+      "priority": "medium",
+      "assignee": null,
+      "labels": [
+        "back"
+      ],
+      "project": null,
+      "estimate": {
+        "value": 1
+      },
+      "milestone": null,
+      "parent": "socle-sources",
+      "links": [],
+      "attachments": []
+    },
+    {
+      "ref": "source-facebook",
+      "title": "Facebook : Reels et vidéos publiques",
+      "origin": "PRD · Analyse des plateformes (Facebook, lot réseaux sociaux)",
+      "contexte": "Sondage du 10/11/2026 sans compte : Reel /reel/<id> OK (4 formats, miniature, auteur), pas d'audio seul ; anciens liens /<page>/videos/<id> et video.php?v= : « Cannot parse data » (extracteur cassé pour ces formats à cette date).",
+      "perimetre": [
+        "Ouvrir facebook.com /reel/<id>, /watch?v=, /<page>/videos/<id>, video.php?v=, fb.watch dans la liste blanche.",
+        "Revérifier les liens /videos/ avec le yt-dlp du moment ; s'ils restent cassés, les accepter quand même avec le message « extracteur à mettre à jour ».",
+        "MP3 / M4A extraits de la vidéo.",
+        "Vidéos de groupes privés et contenus derrière connexion refusés avec la raison."
+      ],
+      "etapes": [
+        "Fixtures réelles (Reel, vidéo de page, erreur « Cannot parse data ») dans test/fixtures/.",
+        "Tests rouges : liens (dont fb.watch), sonde, extraction audio, message d'extracteur cassé ; puis implémenter.",
+        "Essai réel Linux : un Reel en MP3 et MP4.",
+        "Essai sur le téléphone.",
+        "tool/check.sh vert."
+      ],
+      "doneWhen": [
+        "socle-sources"
+      ],
+      "followUps": [
+        {
+          "ref": "sources-musique",
+          "title": "Sites musique : SoundCloud, Bandcamp, Mixcloud, Dailymotion"
+        }
+      ],
+      "status": "todo",
+      "priority": "medium",
+      "assignee": null,
+      "labels": [
+        "back"
+      ],
+      "project": null,
+      "estimate": {
+        "value": 1
+      },
+      "milestone": null,
+      "parent": "socle-sources",
+      "links": [],
+      "attachments": []
+    }
+  ],
+  "documents": [
+    {
+      "ref": "analyse-plateformes",
+      "title": "Analyse des plateformes (yt-dlp, 10/11/2026)",
+      "content": "# Analyse des plateformes\n\nSondage `yt-dlp -J --flat-playlist --skip-download` sur les URL de test des\nextracteurs, sans compte ni cookies, depuis une connexion résidentielle.\n\n| Plateforme | Résultat sans compte | Audio seul | Listes | Verdict |\n|---|---|---|---|---|\n| **TikTok** | Vidéo publique OK (8 formats, miniature) ; une vidéo « IP bloquée » ; profil `@nom` OK (325 vidéos), profil par id numérique KO | oui | profil | **Lot 1** |\n| **Instagram** | Post et Reel publics OK (miniature, auteur) ; Stories et highlights : connexion exigée ; limite de débit fréquente | non (extraire de la vidéo) | non | **Lot 1** (public seulement) |\n| **Facebook** | Reel public OK ; ancien format `/videos/` et `video.php` : « Cannot parse data » | non | non | **Lot 1** (Reels ; vidéos à revérifier) |\n| **SoundCloud** | Titre OK, titre privé par lien secret OK, playlist (set) OK | oui | sets, profil | **Lot 1** |\n| **Bandcamp** | Titre et album OK (titres en écoute libre) | oui | albums | **Lot 1** |\n| **Mixcloud** | Mix OK (1 h, audio) ; un mix supprimé | oui | profil | **Lot 1** |\n| **Dailymotion** | OK (2 sur 2) | non | playlists | **Lot 1** |\n| **Twitch** | Clips OK, VOD OK (4 h 46) ; VOD expirées | oui (VOD) | non | Lot 2 |\n| **X / Twitter** | Tweets de test sans vidéo (supprimés) : à revérifier sur un tweet récent | non | non | Lot 2 (à vérifier) |\n| **Bilibili** | OK (2 sur 2) | oui | oui | Lot 2 |\n| **VK** | OK (2 sur 2) | oui | oui | Lot 2 |\n| **Pinterest** | OK (2 sur 2) | non | non | Lot 2 |\n| **LinkedIn** | Posts publics OK | non | non | Lot 2 |\n| **Bluesky** | 1 sur 2 OK (l'autre HTTP 400) | non | non | Lot 2 |\n| **Streamable** | OK (2 sur 2) | non | non | Lot 2 |\n| **Odysee (LBRY)** | OK (2 sur 2) | oui | oui | Lot 2 |\n| **Vimeo** | « web client only works when logged-in » ; lecteur intégré : 403 | — | — | Écarté (compte requis) |\n| **Reddit** | « Account authentication is required » | — | — | Écarté (compte requis) |\n| **Tumblr** | HTTP 403 | — | — | Écarté |\n| **Rumble** | HTTP 403 | — | — | Écarté |\n| **Snapchat Spotlight** | « Unable to extract next.js data » (extracteur cassé) | — | — | Écarté |\n| **Audiomack** | « Failed to parse JSON » (extracteur cassé) | — | — | Écarté |\n| **Kick** | Non testé (DNS refusé ici) | — | — | À revérifier |\n| **Threads** | Aucun extracteur yt-dlp | — | — | Impossible |\n| **Spotify, Deezer, Apple Music, Netflix…** | DRM : yt-dlp ne les lit pas | — | — | Hors périmètre, définitif |\n\nLes sites sociaux (TikTok, Instagram, Facebook, X) cassent souvent : yt-dlp\npublie un correctif en quelques jours, et Ka7 met déjà son yt-dlp à jour\n(bureau : dernière version ; Android : `updateYoutubeDL`).",
+      "attachTo": "ticket:socle-sources"
+    }
+  ]
+}
