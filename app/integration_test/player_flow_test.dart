@@ -7,6 +7,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:ka7/app.dart';
 import 'package:ka7/features/player/media_kit_backend.dart';
 import 'package:ka7/platform/folder_media.dart';
+import 'package:ka7/widgets/ka7_logo.dart';
 import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_engine_ytdlp/ka7_engine_ytdlp.dart';
 import 'package:ka7_store/ka7_store.dart';
@@ -272,6 +273,13 @@ void main() {
     await tester.tap(_inCard(find.byTooltip('Précédent')));
     await _waitCard(tester, 'Ton A', within: 3);
     expect(find.text('File de lecture'), findsNothing);
+
+    // KA-2: a song shows the cassette with an « open » sign; touching it
+    // opens the whole player.
+    expect(_inCard(find.byType(Ka7Logo)), findsOneWidget);
+    expect(_inCard(find.byIcon(Icons.open_in_full)), findsOneWidget);
+    await tester.tap(_inCard(find.byType(Ka7Logo)));
+    await _waitFor(tester, find.text('File de lecture'), timeout: 5);
   });
 }
 

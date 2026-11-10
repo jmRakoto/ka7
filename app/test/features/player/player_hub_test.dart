@@ -1,7 +1,11 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ka7/features/player/player_controller.dart';
 import 'package:ka7/features/player/player_hub_screen.dart';
+import 'package:ka7/features/player/track.dart';
+import 'package:ka7/widgets/ka7_logo.dart';
+import 'package:ka7/widgets/video_thumbnail.dart';
 import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_store/ka7_store.dart';
 
@@ -52,6 +56,7 @@ void main() {
   Future<void> pumpHub(
     WidgetTester tester, {
     Size size = const Size(900, 1200),
+    ImageProvider Function(String videoId)? thumbnail,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -63,6 +68,7 @@ void main() {
         player: player,
         changes: changes,
         onOpenPlayer: () => opened++,
+        thumbnail: thumbnail,
       ),
     );
     await tester.pumpAndSettle();
@@ -351,6 +357,120 @@ void main() {
       expect(find.byTooltip('Pause'), findsOneWidget);
       expect(find.byTooltip('Suivant'), findsOneWidget);
       expect(find.text('Somambisamby'), findsWidgets);
+    });
+
+    group('a picture that says it opens the player', () {
+      // A 1×1 PNG: no network in tests.
+      final picture = MemoryImage(
+        Uint8List.fromList(const [
+          0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, //
+          0x0D, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+          0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89,
+          0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63,
+          0x00, 0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4,
+          0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60,
+          0x82,
+        ]),
+      );
+      Finder inCard(Finder finder) => find.descendant(
+        of: find.ancestor(
+          of: find.text('En cours de lecture'),
+          matching: find.byType(Card),
+        ),
+        matching: finder,
+      );
+      const clip = Track(
+        title: 'Hafatra',
+        videoId: 'Qm7tR2vLx9A',
+        path: '/v/Hafatra.mp4',
+        format: MediaFormat.mp4,
+        video: true,
+      );
+
+      testWidgets('a video shows its thumbnail', (tester) async {
+        await player.playAll([clip]);
+        await pumpHub(tester, thumbnail: (_) => picture);
+
+        expect(inCard(find.byType(VideoThumbnail)), findsOneWidget);
+        expect(inCard(find.byIcon(Icons.open_in_full)), findsOneWidget);
+      });
+
+      testWidgets('a song shows the cassette', (tester) async {
+        await pumpHub(tester, thumbnail: (_) => picture);
+        await tester.tap(find.text('Somambisamby'));
+        await tester.pumpAndSettle();
+
+        expect(inCard(find.byType(Ka7Logo)), findsOneWidget);
+        expect(inCard(find.byType(VideoThumbnail)), findsNothing);
+        expect(inCard(find.byIcon(Icons.open_in_full)), findsOneWidget);
+      });
+
+      testWidgets('a video without a picture shows the neutral tile', (
+        tester,
+      ) async {
+        await player.playAll([clip]);
+        await pumpHub(tester);
+
+        expect(inCard(find.byType(VideoThumbnail)), findsNothing);
+        expect(inCard(find.byIcon(Icons.movie_outlined)), findsOneWidget);
+        expect(inCard(find.byIcon(Icons.open_in_full)), findsOneWidget);
+      });
+
+      testWidgets('a folder\'s own video has no YouTube picture to ask for', (
+        tester,
+      ) async {
+        await player.playAll([
+          Track.ofFile(
+            const MediaFile(path: '/home/me/Clips/Live.mkv', name: 'Live.mkv'),
+          ),
+        ]);
+        var asked = 0;
+        await pumpHub(
+          tester,
+          // The Titres list below asks for its own rows' pictures.
+          thumbnail: (id) {
+            if (id == '/home/me/Clips/Live.mkv') asked++;
+            return picture;
+          },
+        );
+
+        expect(inCard(find.byType(VideoThumbnail)), findsNothing);
+        expect(inCard(find.byIcon(Icons.movie_outlined)), findsOneWidget);
+        expect(asked, 0);
+      });
+
+      testWidgets('screen readers hear « Ouvrir le lecteur » and the title', (
+        tester,
+      ) async {
+        await pumpHub(tester);
+        await tester.tap(find.text('Somambisamby'));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.bySemanticsLabel(RegExp('Ouvrir le lecteur.*Somambisamby')),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('on desktop, a bubble says « Ouvrir le lecteur »', (
+        tester,
+      ) async {
+        await pumpHub(tester);
+        await tester.tap(find.text('Somambisamby'));
+        await tester.pumpAndSettle();
+
+        expect(inCard(find.byTooltip('Ouvrir le lecteur')), findsOneWidget);
+      });
+
+      testWidgets('a tap on the picture opens the player', (tester) async {
+        await pumpHub(tester);
+        await tester.tap(find.text('Somambisamby'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(inCard(find.byType(Ka7Logo)));
+
+        expect(opened, 1);
+      });
     });
   });
 }
