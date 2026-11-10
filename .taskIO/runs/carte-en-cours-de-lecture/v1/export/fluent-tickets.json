@@ -1,0 +1,88 @@
+{
+  "adapter": "fluent-tickets",
+  "schemaVersion": "1.1",
+  "target": {
+    "url": "https://fluent-tickets.cinco-mg.ai/mcp",
+    "organization": "rakoto-s-org",
+    "team": "KA"
+  },
+  "preflight": {
+    "state": "Todo",
+    "labels": [
+      "front"
+    ],
+    "epics": [
+      "E01 — Lecteur"
+    ]
+  },
+  "summary": {
+    "create": 2,
+    "update": 0,
+    "unchanged": 0,
+    "attachments": 0,
+    "documents": 0
+  },
+  "epic": {
+    "name": "E01 — Lecteur",
+    "summary": "Améliorations du lecteur de Ka7 : section Lecteur, carte « En cours de lecture », lecture et commandes.",
+    "description": "# E01 — Lecteur\n\nRegroupe les améliorations du lecteur de Ka7 après le ticket 003 (lecteur livré en 0.4.0).\n\n## Périmètre\n\n- La section Lecteur et sa carte « En cours de lecture ».\n- Les commandes et la lecture (mini-lecteur, page du lecteur).\n\n## Hors périmètre\n\n- Téléchargement et paquets (voir les tickets sans epic, comme KA-1).\n"
+  },
+  "milestones": [],
+  "estimate": {
+    "unit": "days",
+    "value": 1,
+    "justification": "Deux petits changements d'interface sur une seule carte, avec des briques existantes (commandes du lecteur, PlayPauseButton, textes l10n) : 0,5 j chacun, tests d'écran et captures compris."
+  },
+  "calls": [
+    {
+      "ticket": "carte-indicateur-ouverture",
+      "hash": "f09152710f0195cd27f461692328fb74326875083303555c4816417f4398b8a6",
+      "args": {
+        "title": "Carte « En cours de lecture » : miniature ou cassette qui montre qu'elle ouvre le lecteur",
+        "description": "> Origine : Demande : montrer que la carte « En cours de lecture » se touche pour voir la vidéo ou le son avec la file de lecture. Choix du dev : une miniature pour une vidéo ; pour un son, un autre signe qui dit aussi que la carte s'ouvre.\n\n## Contexte\nToucher la carte « En cours de lecture » (_NowPlaying, app/lib/features/player/player_hub_screen.dart) ouvre déjà la page du lecteur (PlayerScreen : vidéo ou cassette, commandes, file de lecture), mais rien ne le montre : seule l'ondulation au toucher le révèle, et la carte n'a qu'une petite icône (son ou vidéo) à gauche. La miniature YouTube d'un titre est déjà disponible dans cet écran (PlayerHubScreen.thumbnail, Ka7App.thumbnail : i.ytimg.com/vi/<id>/mqdefault.jpg) et affichée par VideoThumbnail (widgets/video_thumbnail.dart) dans la liste Titres. Le mini-lecteur a un nom d'accessibilité « Ouvrir le lecteur » (playerOpen), la carte non.\n\n## Périmètre\n- Vidéo : remplacer l'icône de gauche de la carte par la miniature du titre en cours (VideoThumbnail, image de PlayerHubScreen.thumbnail).\n- Son : à la place de l'icône, une petite cassette du lecteur (Ka7Logo, bobines qui suivent la position, comme sur la page du lecteur) : elle annonce la page qui s'ouvre. Si elle ne suffit pas sur les captures, ajouter une courte mention « Ouvrir le lecteur » sous le titre.\n- Dans les deux cas, un petit signe d'ouverture (par exemple icône « agrandir ») sur la miniature ou la cassette, lisible sur toute image, choisi d'après DESIGN.md et validé sur captures.\n- Vidéo sans miniature (image qui ne charge pas, hors ligne sans cache) : la tuile neutre habituelle avec l'icône vidéo et le même signe d'ouverture, de même taille.\n- La carte entière garde son appui ; nom pour les lecteurs d'écran « Ouvrir le lecteur » (playerOpen), avec le titre en cours ; au survol sur bureau, curseur main et bulle « Ouvrir le lecteur ».\n- Pas d'animation en boucle hors lecture : bobines arrêtées en pause, coupées si le système le demande (MediaQuery.disableAnimations). La carte tient sur un téléphone de 360 px de large sans couper le titre plus qu'aujourd'hui ; contraste conforme (4,5:1) en clair et en sombre.\n\n## Hors périmètre\nRien au-delà du périmètre listé ; toute extension devient un nouveau ticket.\n\n## Étapes\n- [ ] Tests rouges (test/features/player/player_hub_test.dart) : miniature pour une vidéo, cassette pour un son, tuile neutre pour une vidéo sans miniature, signe d'ouverture dans chaque cas, carte nommée « Ouvrir le lecteur », l'appui (y compris sur la miniature ou la cassette) ouvre le lecteur.\n- [ ] Passer la miniature à _NowPlaying ; remplacer l'icône par miniature, cassette ou tuile ; ajouter le signe d'ouverture et la sémantique.\n- [ ] Tests verts, puis tool/check.sh.\n- [ ] Captures 8b (bureau et téléphone, clair et sombre), vérifiées à l'œil : vidéo avec et sans miniature, son.\n\n## DONE WHEN…\nAucun prérequis.\n\n## Ensuite\nAucun.\n\n## Follow-ups (brouillons)\nAucun.\n",
+        "team": "KA",
+        "project": "E01 — Lecteur",
+        "milestone": null,
+        "state": "Todo",
+        "priority": 3,
+        "assignee": null,
+        "labels": [
+          "front"
+        ],
+        "estimate": 1,
+        "blockedBy": [],
+        "parentId": null,
+        "links": []
+      }
+    },
+    {
+      "ticket": "carte-suivant-precedent",
+      "hash": "87a745d29d764b57bf86d920e3327aa767066d1740e0d66969bcb23579d93437",
+      "args": {
+        "title": "Carte « En cours de lecture » : boutons précédent et suivant",
+        "description": "> Origine : Demande : passer au titre suivant ou revenir au précédent depuis la carte « En cours de lecture », sans ouvrir la page du lecteur.\n\n## Contexte\nLa carte « En cours de lecture » (_NowPlaying, app/lib/features/player/player_hub_screen.dart) n'a qu'un bouton, lecture / pause (PlayPauseButton, grand). Le mini-lecteur et la page du lecteur ont déjà suivant et précédent, appuyés sur PlayerController.next() et previous() (au-delà de 3 s, previous revient au début du titre).\n\n## Périmètre\n- Boutons « Précédent » et « Suivant » de part et d'autre de lecture / pause dans la carte, icônes skip_previous et skip_next, appelant PlayerController.previous() et next().\n- Mêmes règles que les autres commandes : précédent revient au début après 3 s ; en fin de file sans répétition, suivant ne fait rien.\n- Un appui sur ces boutons n'ouvre pas la page du lecteur (seul le reste de la carte l'ouvre).\n- Bulles et noms pour les lecteurs d'écran : textes l10n existants playerPrevious et playerNext (FR et EN).\n- Cibles tactiles de 48 px ; la carte tient sur un téléphone de 360 px de large sans couper le titre plus qu'aujourd'hui.\n\n## Hors périmètre\nRien au-delà du périmètre listé ; toute extension devient un nouveau ticket.\n\n## Étapes\n- [ ] Tests rouges (test/features/player/player_hub_test.dart) : les deux boutons existent, appellent previous() / next(), n'ouvrent pas le lecteur.\n- [ ] Ajouter les boutons dans _NowPlaying, de part et d'autre de PlayPauseButton.\n- [ ] Tests verts, puis tool/check.sh.\n- [ ] Captures 8b (bureau et téléphone, clair et sombre) via tool/screenshots, vérifiées à l'œil.\n\n## DONE WHEN…\nAucun prérequis.\n\n## Ensuite\nAucun.\n\n## Follow-ups (brouillons)\nAucun.\n",
+        "team": "KA",
+        "project": "E01 — Lecteur",
+        "milestone": null,
+        "state": "Todo",
+        "priority": 3,
+        "assignee": null,
+        "labels": [
+          "front"
+        ],
+        "estimate": 1,
+        "blockedBy": [],
+        "parentId": null,
+        "links": []
+      }
+    }
+  ],
+  "attachments": [],
+  "documents": [],
+  "orphans": [],
+  "unlinkedBlockers": [],
+  "unlinkedParents": [],
+  "skippedDrafts": [],
+  "warnings": [],
+  "ticketsSha": "09768b75ef32044c5e207fe10bcd01e7f65e294ff61fa783f88c0fd1db495afe"
+}

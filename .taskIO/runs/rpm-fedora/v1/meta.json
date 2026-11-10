@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.1",
+  "promptVersion": "1",
+  "source": "rpm-fedora.md",
+  "sources": [
+    "rpm-fedora.md"
+  ],
+  "prdSha256": "411bbe345562ba24b829347f59b8bbad686a26e3bb454938aff9b4600a21cb89",
+  "assetsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "agent": null,
+  "model": null,
+  "generatedKey": "669364d1119ecac799405adb8e63e0e4f688af70871d4cf5ca6710c7d8c62ef7"
+}

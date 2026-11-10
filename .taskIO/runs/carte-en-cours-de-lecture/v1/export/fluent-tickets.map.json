@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.1",
+  "organization": "rakoto-s-org",
+  "team": "KA",
+  "issues": {
+    "carte-indicateur-ouverture": {
+      "key": "KA-2",
+      "hash": "f09152710f0195cd27f461692328fb74326875083303555c4816417f4398b8a6",
+      "blockedBy": [],
+      "parent": null,
+      "attachments": {}
+    },
+    "carte-suivant-precedent": {
+      "key": "KA-3",
+      "hash": "87a745d29d764b57bf86d920e3327aa767066d1740e0d66969bcb23579d93437",
+      "blockedBy": [],
+      "parent": null,
+      "attachments": {}
+    }
+  },
+  "documents": {}
+}

@@ -16,3 +16,5 @@ app/android/app/src/main/jniLibs/
 app/linux/libmpv/
 __pycache__/
 node_modules/
+# taskIO: counter of failed checks while writing tickets, temporary.
+.taskIO/runs/**/.validate-attempts.json
