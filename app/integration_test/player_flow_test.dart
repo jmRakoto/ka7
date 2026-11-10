@@ -215,6 +215,64 @@ void main() {
     await _waitPlaying(tester);
     expect(find.text('1 Ny Fitiavana'), findsWidgets);
   });
+
+  testWidgets('the « now playing » card: next and previous, for real', (
+    tester,
+  ) async {
+    final folder = Directory.systemTemp.createTempSync('ka7_card_e2e_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    final store = Ka7Store.open(File('${folder.path}/ka7.sqlite'));
+    addTearDown(store.close);
+    await store.setSetting('language', 'fr');
+    await store.setSetting('onboarding.done', '1');
+    // Three downloaded songs, 60 s of a tone each (none ends during the
+    // test: a song that ends moves on by itself); newest first on screen.
+    const titles = ['Ton A', 'Ton B', 'Ton C'];
+    for (final (i, title) in titles.reversed.indexed) {
+      final path = '${folder.path}/$title.mp3';
+      final made = await Process.run('ffmpeg', [
+        '-loglevel',
+        'error',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=frequency=${400 + 100 * i}:duration=60',
+        path,
+      ]);
+      expect(made.exitCode, 0, reason: '${made.stderr}');
+      final item = ProbeItem(videoId: 'tone$i', title: title);
+      await store.record(
+        JobSucceeded(
+          PlannedDownload(
+            source: Probe(title: 'Tons', items: [item]),
+            item: item,
+            index: 1,
+          ),
+          path,
+        ),
+        MediaFormat.mp3,
+        DateTime(2026, 11, 10, 9, i),
+      );
+    }
+    await tester.pumpWidget(_realApp(store, folder.path));
+    await _waitFor(tester, find.byType(TextField));
+    await tester.tap(_nav('Lecteur'));
+    await _waitFor(tester, find.text('Ton A'));
+    await tester.pump(const Duration(milliseconds: 600));
+
+    await tester.tap(find.text('Ton A'));
+    await _waitCard(tester, 'Ton A');
+
+    // Next, on the card: the next song plays, the player page stays shut.
+    await tester.tap(_inCard(find.byTooltip('Suivant')));
+    await _waitCard(tester, 'Ton B', within: 3);
+    expect(find.text('File de lecture'), findsNothing);
+
+    // Previous, within its first seconds: back to the song before.
+    await tester.tap(_inCard(find.byTooltip('Précédent')));
+    await _waitCard(tester, 'Ton A', within: 3);
+    expect(find.text('File de lecture'), findsNothing);
+  });
 }
 
 Ka7App _realApp(
@@ -284,6 +342,33 @@ double _at(WidgetTester tester) =>
 /// The real player moves: the slider leaves the start by itself.
 Future<void> _waitPlaying(WidgetTester tester) =>
     _waitUntil(tester, () => _at(tester) > 1000, 'playing', timeout: 60);
+
+/// Inside the « En cours de lecture » card, not the mini player.
+Finder _inCard(Finder finder) => find.descendant(
+  of: find.ancestor(
+    of: find.text('En cours de lecture'),
+    matching: find.byType(Card),
+  ),
+  matching: finder,
+);
+
+/// The card shows [title] (within [within] seconds: a button's doing, not
+/// the song ending), and its clock moves: really playing.
+Future<void> _waitCard(
+  WidgetTester tester,
+  String title, {
+  int within = 60,
+}) async {
+  await _waitFor(tester, _inCard(find.text(title)), timeout: within);
+  final clock = _inCard(find.textContaining(' / '));
+  String now() => tester.widget<Text>(clock.first).data ?? '';
+  await _waitUntil(
+    tester,
+    () => clock.evaluate().isNotEmpty && !now().startsWith('0:00 /'),
+    '$title playing',
+    timeout: 30,
+  );
+}
 
 Future<void> _waitUntil(
   WidgetTester tester,

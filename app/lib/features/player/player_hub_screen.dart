@@ -423,7 +423,30 @@ class _NowPlaying extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  // Their own taps: they do not open the player.
+                  IconButton(
+                    tooltip: l10n.playerPrevious,
+                    // DESIGN.md: 48 px touch targets.
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
+                    onPressed: player.previous,
+                    color: scheme.onPrimaryContainer,
+                    icon: const Icon(Icons.skip_previous),
+                  ),
                   PlayPauseButton(player: player, big: true),
+                  IconButton(
+                    tooltip: l10n.playerNext,
+                    // DESIGN.md: 48 px touch targets.
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
+                    onPressed: player.next,
+                    color: scheme.onPrimaryContainer,
+                    icon: const Icon(Icons.skip_next),
+                  ),
                 ],
               ),
             ),
