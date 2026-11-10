@@ -49,8 +49,11 @@ void main() {
   });
   tearDown(() => store.close());
 
-  Future<void> pumpHub(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(900, 1200);
+  Future<void> pumpHub(
+    WidgetTester tester, {
+    Size size = const Size(900, 1200),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await pumpApp(
@@ -292,6 +295,62 @@ void main() {
       await tester.tap(find.text('En cours de lecture'));
 
       expect(opened, 1);
+    });
+
+    /// Plays Somambisamby, then Tanalahy ny foko: two tracks in the queue.
+    Future<void> playTwo(WidgetTester tester) async {
+      await tester.tap(find.text('Somambisamby'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('next plays the next track, without opening the player', (
+      tester,
+    ) async {
+      await pumpHub(tester);
+      await playTwo(tester);
+
+      await tester.tap(find.byTooltip('Suivant'));
+      await tester.pumpAndSettle();
+
+      expect(backend.opened.last, '/m/a.mp3');
+      expect(opened, 0);
+    });
+
+    testWidgets('previous goes back, without opening the player', (
+      tester,
+    ) async {
+      await pumpHub(tester);
+      await playTwo(tester);
+      await tester.tap(find.byTooltip('Suivant'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Précédent'));
+      await tester.pumpAndSettle();
+
+      expect(backend.opened.last, '/m/b.mp3');
+      expect(opened, 0);
+    });
+
+    testWidgets('previous and next are easy to touch (48 px)', (tester) async {
+      await pumpHub(tester);
+      await playTwo(tester);
+
+      for (final label in ['Précédent', 'Suivant']) {
+        final size = tester.getSize(find.byTooltip(label));
+        expect(size.width, greaterThanOrEqualTo(48), reason: label);
+        expect(size.height, greaterThanOrEqualTo(48), reason: label);
+      }
+    });
+
+    testWidgets('fits a narrow phone with its three buttons', (tester) async {
+      await pumpHub(tester, size: const Size(360, 780));
+      await playTwo(tester);
+
+      // An overflow would fail the test on its own.
+      expect(find.byTooltip('Précédent'), findsOneWidget);
+      expect(find.byTooltip('Pause'), findsOneWidget);
+      expect(find.byTooltip('Suivant'), findsOneWidget);
+      expect(find.text('Somambisamby'), findsWidgets);
     });
   });
 }
