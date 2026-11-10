@@ -470,6 +470,18 @@ void main() {
         await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
         await tester.pumpAndSettle();
         await shot('8b-player-hub-playing');
+        // Real fonts here (unit tests draw every letter as a square): the
+        // card's « En cours de lecture » fits whole on one line (KA-2).
+        final label = tester.renderObject<RenderParagraph>(
+          find.text('En cours de lecture'),
+        );
+        expect(label.didExceedMaxLines, isFalse, reason: 'cut with « … »');
+        expect(
+          label.size.height,
+          // Its height on one endless line.
+          label.getMaxIntrinsicHeight(double.infinity),
+          reason: 'wrapped',
+        );
         await tester.tap(find.textContaining('Listes ·'));
         await shot('8d-playlists');
         await tester.tap(find.text('Mahaleo'));

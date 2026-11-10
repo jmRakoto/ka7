@@ -4,6 +4,7 @@ import 'package:ka7_store/ka7_store.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/ka7_logo.dart';
 import '../../widgets/ka7_page.dart';
 import '../../widgets/video_thumbnail.dart';
 import '../playlists/add_to_playlist.dart';
@@ -187,7 +188,11 @@ class _PlayerHubScreenState extends State<PlayerHubScreen> {
           body: Ka7Page(
             title: l10n.navPlayer,
             children: [
-              _NowPlaying(player: widget.player, onOpen: widget.onOpenPlayer),
+              _NowPlaying(
+                player: widget.player,
+                onOpen: widget.onOpenPlayer,
+                thumbnail: widget.thumbnail,
+              ),
               Align(
                 alignment: Alignment.centerLeft,
                 child: SegmentedButton<bool>(
@@ -351,10 +356,15 @@ class _PlayerHubScreenState extends State<PlayerHubScreen> {
 
 /// What plays now, at the top; a tap opens the whole player.
 class _NowPlaying extends StatelessWidget {
-  const _NowPlaying({required this.player, required this.onOpen});
+  const _NowPlaying({
+    required this.player,
+    required this.onOpen,
+    required this.thumbnail,
+  });
 
   final PlayerController player;
   final VoidCallback onOpen;
+  final ImageProvider Function(String videoId)? thumbnail;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -371,83 +381,91 @@ class _NowPlaying extends StatelessWidget {
         child: Card(
           color: scheme.primaryContainer,
           margin: EdgeInsets.zero,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: onOpen,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-              child: Row(
-                children: [
-                  Icon(
-                    track.video ? Icons.movie_outlined : Icons.graphic_eq,
-                    color: scheme.onPrimaryContainer,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.playerNowPlaying,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: scheme.onPrimaryContainer,
-                          ),
+          // Says what a tap does: the picture shows it, the name tells it.
+          child: Semantics(
+            button: true,
+            label: '${l10n.playerOpen}, ${track.title}',
+            child: Tooltip(
+              message: l10n.playerOpen,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: onOpen,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                  child: Row(
+                    children: [
+                      _Picture(player: player, thumbnail: thumbnail),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.playerNowPlaying,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: scheme.onPrimaryContainer,
+                              ),
+                            ),
+                            Text(
+                              track.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: scheme.onPrimaryContainer,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            LinearProgressIndicator(
+                              backgroundColor: scheme.onPrimaryContainer
+                                  .withValues(alpha: 0.18),
+                              value: total == 0
+                                  ? 0
+                                  : player.position.inMilliseconds / total,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              statusText(l10n, player) ??
+                                  '${clock(player.position)} / ${clock(player.duration)}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onPrimaryContainer,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          track.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: scheme.onPrimaryContainer,
-                          ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Their own taps: they do not open the player.
+                      IconButton(
+                        tooltip: l10n.playerPrevious,
+                        // DESIGN.md: 48 px touch targets.
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
                         ),
-                        const SizedBox(height: 6),
-                        LinearProgressIndicator(
-                          backgroundColor: scheme.onPrimaryContainer.withValues(
-                            alpha: 0.18,
-                          ),
-                          value: total == 0
-                              ? 0
-                              : player.position.inMilliseconds / total,
+                        onPressed: player.previous,
+                        color: scheme.onPrimaryContainer,
+                        icon: const Icon(Icons.skip_previous),
+                      ),
+                      PlayPauseButton(player: player, big: true),
+                      IconButton(
+                        tooltip: l10n.playerNext,
+                        // DESIGN.md: 48 px touch targets.
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          statusText(l10n, player) ??
-                              '${clock(player.position)} / ${clock(player.duration)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: scheme.onPrimaryContainer,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                      ],
-                    ),
+                        onPressed: player.next,
+                        color: scheme.onPrimaryContainer,
+                        icon: const Icon(Icons.skip_next),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  // Their own taps: they do not open the player.
-                  IconButton(
-                    tooltip: l10n.playerPrevious,
-                    // DESIGN.md: 48 px touch targets.
-                    constraints: const BoxConstraints(
-                      minWidth: 48,
-                      minHeight: 48,
-                    ),
-                    onPressed: player.previous,
-                    color: scheme.onPrimaryContainer,
-                    icon: const Icon(Icons.skip_previous),
-                  ),
-                  PlayPauseButton(player: player, big: true),
-                  IconButton(
-                    tooltip: l10n.playerNext,
-                    // DESIGN.md: 48 px touch targets.
-                    constraints: const BoxConstraints(
-                      minWidth: 48,
-                      minHeight: 48,
-                    ),
-                    onPressed: player.next,
-                    color: scheme.onPrimaryContainer,
-                    icon: const Icon(Icons.skip_next),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -455,6 +473,67 @@ class _NowPlaying extends StatelessWidget {
       );
     },
   );
+}
+
+/// What plays, as a picture that asks to be touched: a video's thumbnail,
+/// or for a song the cassette of the player page; an « open » sign on it.
+class _Picture extends StatelessWidget {
+  const _Picture({required this.player, required this.thumbnail});
+
+  final PlayerController player;
+  final ImageProvider Function(String videoId)? thumbnail;
+
+  /// Smaller on a phone: « En cours de lecture » keeps one line beside it.
+  static double _widthFor(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < compactWidth ? 40 : 64;
+
+  /// YouTube's ids only: a folder's own file has no picture to ask for.
+  static final _youTubeId = RegExp(r'^[A-Za-z0-9_-]{11}$');
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final track = player.current!;
+    final width = _widthFor(context);
+    final picture = switch ((track.video, thumbnail)) {
+      (true, final thumbnail?) when _youTubeId.hasMatch(track.videoId) =>
+        VideoThumbnail(image: thumbnail(track.videoId), width: width),
+      (true, _) => Container(
+        width: width,
+        height: width * 9 / 16,
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Icon(Icons.movie_outlined, color: scheme.onSurfaceVariant),
+      ),
+      // One turn every 4 seconds, as on the player page: still on pause.
+      (false, _) => Ka7Logo(
+        width: width,
+        reelTurns: player.position.inMilliseconds / 4000,
+      ),
+    };
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        picture,
+        // Readable on any picture: accent disc, light icon.
+        Positioned(
+          right: -4,
+          bottom: -4,
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              shape: BoxShape.circle,
+              border: Border.all(color: scheme.primaryContainer, width: 2),
+            ),
+            child: Icon(Icons.open_in_full, size: 12, color: scheme.onPrimary),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 enum _Action { playNext, enqueue, addToPlaylist }
