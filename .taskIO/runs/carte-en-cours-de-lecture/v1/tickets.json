@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "1.1",
+  "methodology": "tdd",
+  "estimate": {
+    "unit": "days",
+    "value": 1,
+    "validatedByHuman": true,
+    "justification": "Deux petits changements d'interface sur une seule carte, avec des briques existantes (commandes du lecteur, PlayPauseButton, textes l10n) : 0,5 j chacun, tests d'écran et captures compris."
+  },
+  "epic": {
+    "name": "E01 — Lecteur",
+    "summary": "Améliorations du lecteur de Ka7 : section Lecteur, carte « En cours de lecture », lecture et commandes.",
+    "description": "# E01 — Lecteur\n\nRegroupe les améliorations du lecteur de Ka7 après le ticket 003 (lecteur livré en 0.4.0).\n\n## Périmètre\n\n- La section Lecteur et sa carte « En cours de lecture ».\n- Les commandes et la lecture (mini-lecteur, page du lecteur).\n\n## Hors périmètre\n\n- Téléchargement et paquets (voir les tickets sans epic, comme KA-1).\n"
+  },
+  "milestones": [],
+  "tickets": [
+    {
+      "id": "carte-indicateur-ouverture",
+      "title": "Carte « En cours de lecture » : miniature ou cassette qui montre qu'elle ouvre le lecteur",
+      "description": {
+        "origin": "Demande : montrer que la carte « En cours de lecture » se touche pour voir la vidéo ou le son avec la file de lecture. Choix du dev : une miniature pour une vidéo ; pour un son, un autre signe qui dit aussi que la carte s'ouvre.",
+        "contexte": "Toucher la carte « En cours de lecture » (_NowPlaying, app/lib/features/player/player_hub_screen.dart) ouvre déjà la page du lecteur (PlayerScreen : vidéo ou cassette, commandes, file de lecture), mais rien ne le montre : seule l'ondulation au toucher le révèle, et la carte n'a qu'une petite icône (son ou vidéo) à gauche. La miniature YouTube d'un titre est déjà disponible dans cet écran (PlayerHubScreen.thumbnail, Ka7App.thumbnail : i.ytimg.com/vi/<id>/mqdefault.jpg) et affichée par VideoThumbnail (widgets/video_thumbnail.dart) dans la liste Titres. Le mini-lecteur a un nom d'accessibilité « Ouvrir le lecteur » (playerOpen), la carte non.",
+        "perimetre": [
+          "Vidéo : remplacer l'icône de gauche de la carte par la miniature du titre en cours (VideoThumbnail, image de PlayerHubScreen.thumbnail).",
+          "Son : à la place de l'icône, une petite cassette du lecteur (Ka7Logo, bobines qui suivent la position, comme sur la page du lecteur) : elle annonce la page qui s'ouvre. Si elle ne suffit pas sur les captures, ajouter une courte mention « Ouvrir le lecteur » sous le titre.",
+          "Dans les deux cas, un petit signe d'ouverture (par exemple icône « agrandir ») sur la miniature ou la cassette, lisible sur toute image, choisi d'après DESIGN.md et validé sur captures.",
+          "Vidéo sans miniature (image qui ne charge pas, hors ligne sans cache) : la tuile neutre habituelle avec l'icône vidéo et le même signe d'ouverture, de même taille.",
+          "La carte entière garde son appui ; nom pour les lecteurs d'écran « Ouvrir le lecteur » (playerOpen), avec le titre en cours ; au survol sur bureau, curseur main et bulle « Ouvrir le lecteur ».",
+          "Pas d'animation en boucle hors lecture : bobines arrêtées en pause, coupées si le système le demande (MediaQuery.disableAnimations). La carte tient sur un téléphone de 360 px de large sans couper le titre plus qu'aujourd'hui ; contraste conforme (4,5:1) en clair et en sombre."
+        ],
+        "horsPerimetre": "Rien au-delà du périmètre listé ; toute extension devient un nouveau ticket.",
+        "etapes": [
+          "Tests rouges (test/features/player/player_hub_test.dart) : miniature pour une vidéo, cassette pour un son, tuile neutre pour une vidéo sans miniature, signe d'ouverture dans chaque cas, carte nommée « Ouvrir le lecteur », l'appui (y compris sur la miniature ou la cassette) ouvre le lecteur.",
+          "Passer la miniature à _NowPlaying ; remplacer l'icône par miniature, cassette ou tuile ; ajouter le signe d'ouverture et la sémantique.",
+          "Tests verts, puis tool/check.sh.",
+          "Captures 8b (bureau et téléphone, clair et sombre), vérifiées à l'œil : vidéo avec et sans miniature, son."
+        ],
+        "doneWhen": [],
+        "next": [],
+        "followUps": []
+      },
+      "status": "todo",
+      "priority": "medium",
+      "assignee": null,
+      "labels": [
+        "front"
+      ],
+      "project": null,
+      "estimate": {
+        "unit": "days",
+        "value": 0.5,
+        "validatedByHuman": true
+      },
+      "parent": null,
+      "links": [],
+      "attachments": [],
+      "milestone": null
+    },
+    {
+      "id": "carte-suivant-precedent",
+      "title": "Carte « En cours de lecture » : boutons précédent et suivant",
+      "description": {
+        "origin": "Demande : passer au titre suivant ou revenir au précédent depuis la carte « En cours de lecture », sans ouvrir la page du lecteur.",
+        "contexte": "La carte « En cours de lecture » (_NowPlaying, app/lib/features/player/player_hub_screen.dart) n'a qu'un bouton, lecture / pause (PlayPauseButton, grand). Le mini-lecteur et la page du lecteur ont déjà suivant et précédent, appuyés sur PlayerController.next() et previous() (au-delà de 3 s, previous revient au début du titre).",
+        "perimetre": [
+          "Boutons « Précédent » et « Suivant » de part et d'autre de lecture / pause dans la carte, icônes skip_previous et skip_next, appelant PlayerController.previous() et next().",
+          "Mêmes règles que les autres commandes : précédent revient au début après 3 s ; en fin de file sans répétition, suivant ne fait rien.",
+          "Un appui sur ces boutons n'ouvre pas la page du lecteur (seul le reste de la carte l'ouvre).",
+          "Bulles et noms pour les lecteurs d'écran : textes l10n existants playerPrevious et playerNext (FR et EN).",
+          "Cibles tactiles de 48 px ; la carte tient sur un téléphone de 360 px de large sans couper le titre plus qu'aujourd'hui."
+        ],
+        "horsPerimetre": "Rien au-delà du périmètre listé ; toute extension devient un nouveau ticket.",
+        "etapes": [
+          "Tests rouges (test/features/player/player_hub_test.dart) : les deux boutons existent, appellent previous() / next(), n'ouvrent pas le lecteur.",
+          "Ajouter les boutons dans _NowPlaying, de part et d'autre de PlayPauseButton.",
+          "Tests verts, puis tool/check.sh.",
+          "Captures 8b (bureau et téléphone, clair et sombre) via tool/screenshots, vérifiées à l'œil."
+        ],
+        "doneWhen": [],
+        "next": [],
+        "followUps": []
+      },
+      "status": "todo",
+      "priority": "medium",
+      "assignee": null,
+      "labels": [
+        "front"
+      ],
+      "project": null,
+      "estimate": {
+        "unit": "days",
+        "value": 0.5,
+        "validatedByHuman": true
+      },
+      "parent": null,
+      "links": [],
+      "attachments": [],
+      "milestone": null
+    }
+  ],
+  "documents": []
+}

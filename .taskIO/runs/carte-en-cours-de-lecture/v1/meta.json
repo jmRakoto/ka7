@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.1",
+  "promptVersion": "1",
+  "source": "carte-en-cours-de-lecture.md",
+  "sources": [
+    "carte-en-cours-de-lecture.md"
+  ],
+  "prdSha256": "8eaa660cedd1afa6cb339000f125e01bbf877cf5bd0fee01fe71d5a74725c17c",
+  "assetsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "agent": null,
+  "model": null,
+  "generatedKey": "75f66b238c4f2ac5d9972d1e844581fc76c5f20ac3019eee263508e6a4cc4e9c"
+}

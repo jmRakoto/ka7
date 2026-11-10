@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.1",
+  "methodology": "tests-after",
+  "estimate": {
+    "unit": "days",
+    "value": 1,
+    "validatedByHuman": true,
+    "justification": "Un seul ticket : la structure du .deb existe déjà (mêmes fichiers, mêmes liens) ; il reste la spec RPM, les noms de dépendances Fedora, rpmbuild dans le conteneur, la vérification dans un conteneur Fedora et la release. Estimation fixée à 1 j par le dev."
+  },
+  "epic": null,
+  "milestones": [],
+  "tickets": [
+    {
+      "id": "rpm-fedora",
+      "title": "Paquet .rpm pour Fedora, comme le .deb",
+      "description": {
+        "origin": "Demande : les utilisateurs Fedora ne peuvent pas installer le .deb et n'ont que l'AppImage.",
+        "contexte": "tool/package_linux.sh produit le .deb et l'AppImage dans un conteneur Ubuntu 22.04. Le .deb installe l'app dans /opt/ka7/app (avec la libmpv LGPL de Ka7), la commande dans /opt/ka7/cli, des liens /usr/bin/ka7-app et /usr/bin/ka7, le .desktop et les icônes. Fedora (et RHEL, AlmaLinux, Rocky, openSUSE) n'installe pas de .deb : sans .rpm, pas d'entrée de menu, pas de commande ka7, pas de mise à jour par dnf.",
+        "perimetre": [
+          "Produire dist/ka7-<version>-1.x86_64.rpm dans tool/package_linux.sh, à partir des mêmes fichiers que le .deb.",
+          "Dépendances aux noms Fedora : gtk3, pulseaudio-libs, alsa-lib, gnutls, xz, xdg-utils, (zenity or kdialog).",
+          "rpmbuild dans l'image tool/linux/Dockerfile, paquet reproductible (SOURCE_DATE_EPOCH).",
+          "Vérifier dans un conteneur Fedora propre (tool/linux/check_old_linux.sh ou un script frère) : dnf install, app debout 15 s, libmpv de Ka7 chargée, ka7 --help.",
+          "tool/release.sh : publier le .rpm, ajouter son empreinte SHA-256 et une ligne Fedora au guide d'installation des notes.",
+          "README et CLAUDE.md : le .rpm dans la partie Linux."
+        ],
+        "horsPerimetre": "Rien au-delà du périmètre listé ; toute extension devient un nouveau ticket.",
+        "etapes": [
+          "Ajouter rpm (rpmbuild) à tool/linux/Dockerfile.",
+          "Écrire la spec RPM générée par tool/package_linux.sh : fichiers sous /opt/ka7, liens /usr/bin, .desktop et icônes, Requires Fedora.",
+          "Construire le .rpm avec les dates ramenées à SOURCE_DATE_EPOCH ; deux constructions du même commit donnent le même fichier.",
+          "Vérifier dans fedora:latest et la plus ancienne Fedora encore suivie : installation par dnf, démarrage, libmpv de Ka7 dans /proc/<pid>/maps, ka7 --help.",
+          "Ajouter le .rpm à tool/release.sh (fichiers publiés, vérification Fedora, guide, empreintes).",
+          "Mettre à jour README et CLAUDE.md."
+        ],
+        "doneWhen": [],
+        "next": [],
+        "followUps": [
+          {
+            "id": "rpm-copr",
+            "title": "Dépôt COPR pour les mises à jour par dnf",
+            "status": "draft"
+          }
+        ]
+      },
+      "status": "todo",
+      "priority": "medium",
+      "assignee": null,
+      "labels": [
+        "infra"
+      ],
+      "project": null,
+      "estimate": {
+        "unit": "days",
+        "value": 1,
+        "validatedByHuman": true
+      },
+      "parent": null,
+      "links": [],
+      "attachments": [],
+      "milestone": null
+    }
+  ],
+  "documents": []
+}

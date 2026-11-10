@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.1",
+  "organization": "rakoto-s-org",
+  "team": "KA",
+  "issues": {
+    "rpm-fedora": {
+      "key": "KA-1",
+      "hash": "3d21d6d27c7e1a91b76d02f6e66fc018ef6fd8e6e9b73ec06d91b8758d46d380",
+      "blockedBy": [],
+      "parent": null,
+      "attachments": {}
+    }
+  },
+  "documents": {}
+}
