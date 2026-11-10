@@ -92,6 +92,7 @@ files=(
   "dist/Ka7-$version-x86_64.AppImage"
   # Source of the player libraries shipped on Linux (LGPL).
   "dist/Ka7-$version-linux-player-sources.tar.xz"
+  "dist/ka7-$version-1.x86_64.rpm"
 )
 for file in "${files[@]}"; do
   [[ -f $file ]] || fail "$file n'a pas été produit"
@@ -102,6 +103,12 @@ for system in ubuntu:22.04 ubuntu:24.04; do
   step "Paquets Linux sur $system"
   KA7_OLD_LINUX=$system tool/linux/check_old_linux.sh "${files[3]}" "${files[2]}" ||
     fail "les paquets Linux ne démarrent pas sur $system"
+done
+# The oldest Fedora still supported (43: until 2026-12-02), and the newest.
+for system in fedora:43 fedora:latest; do
+  step "Paquet .rpm sur $system"
+  KA7_FEDORA=$system tool/linux/check_fedora.sh "${files[5]}" ||
+    fail "le .rpm ne s'installe pas ou ne démarre pas sur $system"
 done
 
 step "Signature des APK"
@@ -140,13 +147,18 @@ Tu avais une version précédente ? Installe simplement par-dessus : ton histori
 
 Les fichiers arrivent dans les dossiers **Music/Ka7** et **Movies/Ka7**, visibles par toutes les apps de musique.
 
-### Linux (64 bits ; Ubuntu 22.04, Debian 12 ou plus récent)
+### Linux (64 bits ; Ubuntu 22.04, Debian 12, Fedora 43 ou plus récent)
 
 - **Ubuntu, Debian** : télécharge \`ka7_${version}_amd64.deb\`, puis
   \`\`\`bash
   sudo apt install ./ka7_${version}_amd64.deb
   \`\`\`
   Tu as l'app (« Ka7 » dans le menu) et la commande \`ka7\`.
+- **Fedora** : télécharge \`ka7-$version-1.x86_64.rpm\`, puis
+  \`\`\`bash
+  sudo dnf install ./ka7-$version-1.x86_64.rpm
+  \`\`\`
+  Même chose : l'app dans le menu et la commande \`ka7\`.
 - **Autre distribution** : télécharge \`Ka7-$version-x86_64.AppImage\`, puis
   \`\`\`bash
   chmod +x Ka7-$version-x86_64.AppImage

@@ -7,10 +7,11 @@
 # make, gcc: media_kit builds mimalloc with CMake's default generator.
 # nasm, meson ≥ 1.3, the -dev libraries: Ka7's own libmpv
 # (tool/linux/build_libmpv.sh); Ubuntu's libmpv-dev is GPL, not used.
+# rpm: rpmbuild, for the Fedora package.
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates curl git unzip xz-utils zip file fakeroot python3 \
+      ca-certificates curl git unzip xz-utils zip file fakeroot python3 rpm \
       binutils clang cmake ninja-build pkg-config \
       make gcc g++ nasm python3-pip patchelf \
       libgtk-3-dev liblzma-dev libstdc++-12-dev libepoxy-dev \

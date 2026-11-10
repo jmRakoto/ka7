@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Builds Ka7 for Linux and packs it into dist/:
 #   ka7_<version>_amd64.deb  app (menu entry, `ka7-app`) and CLI (`ka7`)
+#   ka7-<version>-1.x86_64.rpm  the same files, for Fedora and its family
 #   Ka7-<version>-x86_64.AppImage  app only, runs without installing
 # yt-dlp and ffmpeg are not bundled: the app installs them on first launch.
 # The player library is Ka7's own: libmpv + FFmpeg built LGPL by
@@ -9,7 +10,8 @@
 # Built in an Ubuntu 22.04 container (tool/linux/Dockerfile), so the packages
 # run on 22.04 and newer; KA7_NATIVE_BUILD=1 builds on this machine instead
 # (the packages then need a Linux as recent as this one).
-# Check on an old Linux: tool/linux/check_old_linux.sh <AppImage> [<deb>].
+# Check on an old Linux: tool/linux/check_old_linux.sh <AppImage> [<deb>];
+# on Fedora: tool/linux/check_fedora.sh <rpm>.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 root=$PWD
@@ -128,6 +130,62 @@ deb_file=$dist/ka7_${version}_amd64.deb
 same_dates "$deb"
 fakeroot dpkg-deb --build --root-owner-group "$deb" "$deb_file" >/dev/null
 echo "   $deb_file"
+
+echo "== .rpm"
+# The .deb's files as they are: rpmbuild only packs them. No stripping, no
+# debug package, no dependencies guessed from the libraries (the bundled
+# ones would be asked of the system): Fedora's names, written here.
+rpmroot=$stage/rpmroot
+cp -a "$deb" "$rpmroot"
+rm -rf "$rpmroot/DEBIAN"
+rpm_spec=$stage/ka7.spec
+cat > "$rpm_spec" <<EOF
+Name: ka7
+Version: $version
+Release: 1
+Summary: YouTube links to clean, tagged MP3 or MP4 files
+License: Proprietary and LGPL-2.1-or-later
+URL: https://rakoto.mg
+Packager: $maintainer
+BuildArch: x86_64
+AutoReqProv: no
+Requires: gtk3, pulseaudio-libs, alsa-lib, gnutls, xz, xdg-utils
+# Flutter draws with OpenGL ES: without it, Ka7 aborts at start.
+Requires: libglvnd-gles
+Requires: (zenity or kdialog)
+
+%description
+Paste links, IDs or whole playlists, preview them, then download them as
+tagged MP3 or MP4 files, tidied in one folder per playlist. Downloads and
+updates the official yt-dlp and ffmpeg (LGPL build) on first launch.
+
+%install
+cp -a "$rpmroot/." "%{buildroot}/"
+
+%files
+/opt/ka7
+/usr/bin/ka7
+/usr/bin/ka7-app
+/usr/share/applications/$id.desktop
+/usr/share/icons/hicolor/*/apps/$id.*
+EOF
+same_dates "$rpmroot"
+rpm_file=$dist/ka7-$version-1.x86_64.rpm
+# Reproducible: build time and file dates from the commit, a fixed host name,
+# single-threaded xz.
+rpmbuild -bb --quiet \
+  --define "_topdir $stage/rpmbuild" \
+  --define "_rpmdir $stage/rpms" \
+  --define '_build_id_links none' \
+  --define 'debug_package %{nil}' \
+  --define '__os_install_post %{nil}' \
+  --define '_buildhost ka7' \
+  --define 'use_source_date_epoch_as_buildtime 1' \
+  --define 'clamp_mtime_to_source_date_epoch 1' \
+  --define '_binary_payload w9.xzdio' \
+  "$rpm_spec" >/dev/null
+mv "$stage/rpms/x86_64/ka7-$version-1.x86_64.rpm" "$rpm_file"
+echo "   $rpm_file"
 
 echo "== .AppImage"
 appimagetool=$tools/appimagetool-x86_64.AppImage
