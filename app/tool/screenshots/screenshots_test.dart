@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ka7/app.dart';
+import 'package:ka7/widgets/ka7_page.dart';
 import 'package:ka7/features/preview/preview_screen.dart';
 import 'package:ka7/l10n/app_localizations.dart';
 import 'package:ka7/theme/ka7_theme.dart';
@@ -379,6 +380,8 @@ void main() {
   for (final (name, size) in [
     ('desktop', const Size(1280, 800)),
     ('phone', const Size(400, 860)),
+    // A phone held sideways: the sidebar, scrolling (KA-4).
+    ('phone-sideways', const Size(780, 360)),
   ]) {
     for (final brightness in Brightness.values) {
       testWidgets('player $name ${brightness.name}', (tester) async {
@@ -484,14 +487,48 @@ void main() {
         );
         await tester.tap(find.textContaining('Listes ·'));
         await shot('8d-playlists');
+        // A phone held sideways shows only the top of the page: go to its
+        // end without a drag, which could start on the card and open the
+        // player.
+        Future<void> toPageEnd() async {
+          final page = tester.state<ScrollableState>(
+            find
+                .descendant(
+                  of: find.byType(Ka7Page).last,
+                  matching: find.byType(Scrollable),
+                )
+                .first,
+          );
+          page.position.jumpTo(page.position.maxScrollExtent);
+          await tester.pumpAndSettle();
+        }
+
+        await toPageEnd();
         await tester.tap(find.text('Mahaleo'));
         await shot('8h-folder-list');
         await tester.tap(find.byType(BackButton).last);
         await tester.pumpAndSettle();
+        await toPageEnd();
         await tester.tap(find.text('Soirée'));
         await shot('8e-playlist');
         await tester.tap(find.byType(BackButton).last);
         await tester.pumpAndSettle();
+        // Sideways, the preview's bottom bar leaves no room for its list:
+        // nothing to tap there yet.
+        if (name == 'phone-sideways') {
+          // The sidebar scrolled to its end: Réglages in reach (KA-4).
+          final rail = tester.state<ScrollableState>(
+            find
+                .ancestor(
+                  of: find.byType(NavigationRail),
+                  matching: find.byType(Scrollable),
+                )
+                .first,
+          );
+          rail.position.jumpTo(rail.position.maxScrollExtent);
+          await shot('8i-menu-scrolled');
+          return;
+        }
         await tester.tap(find.text('Ajouter').last);
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextField), 'PLe7rK2mErickManana01');

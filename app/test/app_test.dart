@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ka7/features/settings/settings_screen.dart';
 import 'package:ka7/app.dart';
 import 'package:ka7/features/add_links/add_links_screen.dart';
 import 'package:ka7/features/player/media_backend.dart';
@@ -468,6 +469,67 @@ void main() {
 
       expect(find.byType(NavigationBar), findsOneWidget);
       expect(find.byType(NavigationRail), findsNothing);
+    });
+
+    group('phone held sideways (KA-4)', () {
+      // Galaxy M36 sideways: wide enough for the sidebar, not tall enough.
+      const sideways = Size(780, 360);
+
+      // With the player, as on a phone: five sections.
+      Future<void> pumpSideways(WidgetTester tester) => pumpKa7(
+        tester,
+        size: sideways,
+        mediaBackend: () => FakeMediaBackend(),
+      );
+
+      testWidgets('the sidebar fits without overflowing', (tester) async {
+        await pumpSideways(tester);
+
+        expect(find.byType(NavigationRail), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('Réglages is reached by scrolling the sidebar', (
+        tester,
+      ) async {
+        await pumpSideways(tester);
+
+        await tester.dragUntilVisible(
+          _nav('Réglages'),
+          find.byType(NavigationRail),
+          const Offset(0, -80),
+        );
+        await tester.tap(_nav('Réglages'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SettingsScreen), findsOneWidget);
+        expect(tester.getRect(_nav('Réglages')).bottom, lessThanOrEqualTo(360));
+      });
+
+      testWidgets('the sidebar leaves no empty strip at the bottom', (
+        tester,
+      ) async {
+        await pumpSideways(tester);
+
+        // Taller than the window when it scrolls, never shorter.
+        expect(
+          tester.getSize(find.byType(NavigationRail)).height,
+          greaterThanOrEqualTo(360),
+        );
+      });
+    });
+
+    testWidgets('on desktop the sidebar fills the window and does not move', (
+      tester,
+    ) async {
+      await pumpKa7(tester, mediaBackend: () => FakeMediaBackend());
+
+      expect(tester.getSize(find.byType(NavigationRail)).height, 900);
+      // Where it always was: logo on top, then the sections.
+      expect(tester.getRect(_nav('Ajouter')).top, 117);
+      await tester.drag(find.byType(NavigationRail), const Offset(0, -200));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(_nav('Ajouter')).top, 117);
     });
 
     testWidgets('says the queue is empty before any download', (tester) async {
@@ -1325,7 +1387,11 @@ void main() {
     testWidgets('tells which version of Ka7 runs', (tester) async {
       await pumpKa7(tester, appVersion: '0.3.0');
       await openSettings(tester);
-      await tester.scrollUntilVisible(find.text('Version 0.3.0'), 200);
+      await tester.scrollUntilVisible(
+        find.text('Version 0.3.0'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
 
       expect(find.text('À propos'), findsOneWidget);
       expect(find.text('Version 0.3.0'), findsOneWidget);
@@ -1401,6 +1467,7 @@ void main() {
       await tester.scrollUntilVisible(
         find.text('Version de développement'),
         200,
+        scrollable: find.byType(Scrollable).last,
       );
 
       expect(find.text('Version de développement'), findsOneWidget);
@@ -2100,6 +2167,31 @@ void main() {
       await tester.tap(_nav('Ajouter'));
       await tester.pumpAndSettle();
       expect(find.byTooltip('Fermer le lecteur'), findsOneWidget);
+    });
+
+    testWidgets('phone held sideways while playing: Réglages still reachable '
+        '(KA-4)', (tester) async {
+      await pumpKa7(
+        tester,
+        mediaBackend: () => backend,
+        size: const Size(780, 360),
+      );
+      await tester.tap(_nav('Lecteur'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tsy Ferana'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Fermer le lecteur'), findsOneWidget);
+
+      await tester.dragUntilVisible(
+        _nav('Réglages'),
+        find.byType(NavigationRail),
+        const Offset(0, -80),
+      );
+      await tester.tap(_nav('Réglages'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('the mini player opens the whole player', (tester) async {

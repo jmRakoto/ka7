@@ -865,21 +865,33 @@ class _Ka7ShellState extends State<Ka7Shell> {
         return Scaffold(
           body: Row(
             children: [
-              NavigationRail(
-                selectedIndex: selected,
-                onDestinationSelected: select,
-                labelType: NavigationRailLabelType.all,
-                leading: const Padding(
-                  padding: EdgeInsets.only(top: 12, bottom: 20),
-                  child: Ka7Logo(width: 44),
-                ),
-                destinations: [
-                  for (final (section, data, label) in sections)
-                    NavigationRailDestination(
-                      icon: icon(section, data),
-                      label: Text(label),
+              // Scrolls when it is taller than the window (a phone held
+              // sideways); as tall as the window otherwise, so it looks the
+              // same as before.
+              LayoutBuilder(
+                builder: (context, rail) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: rail.maxHeight),
+                    child: IntrinsicHeight(
+                      child: NavigationRail(
+                        selectedIndex: selected,
+                        onDestinationSelected: select,
+                        labelType: NavigationRailLabelType.all,
+                        leading: const Padding(
+                          padding: EdgeInsets.only(top: 12, bottom: 20),
+                          child: Ka7Logo(width: 44),
+                        ),
+                        destinations: [
+                          for (final (section, data, label) in sections)
+                            NavigationRailDestination(
+                              icon: icon(section, data),
+                              label: Text(label),
+                            ),
+                        ],
+                      ),
                     ),
-                ],
+                  ),
+                ),
               ),
               const VerticalDivider(width: 1),
               Expanded(child: body),
