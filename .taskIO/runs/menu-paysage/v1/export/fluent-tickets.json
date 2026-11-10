@@ -1,0 +1,61 @@
+{
+  "adapter": "fluent-tickets",
+  "schemaVersion": "1.1",
+  "target": {
+    "url": "https://fluent-tickets.cinco-mg.ai/mcp",
+    "organization": "rakoto-s-org",
+    "team": "KA"
+  },
+  "preflight": {
+    "state": "Todo",
+    "labels": [
+      "front"
+    ],
+    "epics": []
+  },
+  "summary": {
+    "create": 1,
+    "update": 0,
+    "unchanged": 0,
+    "attachments": 0,
+    "documents": 0
+  },
+  "epic": null,
+  "milestones": [],
+  "estimate": {
+    "unit": "days",
+    "value": 0.5,
+    "justification": "Un seul écran, cause connue et reproduite par un test d'écran (barre latérale trop haute à 780 × 360, débordement de 41 px) : rendre la barre défilante, tests et captures compris."
+  },
+  "calls": [
+    {
+      "ticket": "menu-paysage-defile",
+      "hash": "0d934949812a3f1ab7ad75790cf243188ce787b2d69f8ce294758cd938831e62",
+      "args": {
+        "title": "Téléphone en paysage : le menu latéral doit défiler",
+        "description": "> Origine : Constat : sur un téléphone tenu à l'horizontale, le menu ne défile pas et Réglages est hors de l'écran.\n\n## Contexte\nAu-delà de 720 px de large, Ka7Shell (app/lib/features/shell/ka7_shell.dart) remplace les onglets du bas par une barre latérale (NavigationRail, logo Ka7Logo en tête, cinq entrées avec libellés). Un téléphone en paysage (Galaxy M36 : environ 780 × 360 px logiques) passe ce seuil, mais la barre est plus haute que l'écran : reproduit par un test d'écran à 780 × 360, Réglages est à 373–389 px (hors écran), débordement de 41 px, rien ne défile. Le mini-lecteur (bottomNavigationBar, pendant une lecture) prend encore de la hauteur.\n\n## Périmètre\n- Barre latérale défilante quand elle ne tient pas en hauteur (logo et cinq entrées) ; sans défilement quand tout tient (bureau, tablette).\n- Plus aucun débordement à 780 × 360, avec et sans mini-lecteur.\n- Réglages et chaque entrée atteignables en faisant défiler ; l'entrée choisie et le badge de la File restent lisibles.\n- Cibles tactiles de 48 px ; rien ne change en portrait (onglets du bas) ni sur bureau.\n\n## Hors périmètre\nRien au-delà du périmètre listé ; toute extension devient un nouveau ticket.\n\n## Étapes\n- [ ] Tests rouges (test/app_test.dart) à 780 × 360 : aucun débordement, Réglages atteignable en faisant défiler puis ouvert d'un appui, idem pendant une lecture (mini-lecteur affiché).\n- [ ] Rendre la barre latérale défilante dans Ka7Shell, sans changer la mise en page quand elle tient.\n- [ ] Tests verts, puis tool/check.sh ; captures bureau et téléphone inchangées, plus une capture téléphone en paysage vérifiée à l'œil.\n- [ ] Essai sur le téléphone tenu à l'horizontale.\n\n## DONE WHEN…\nAucun prérequis.\n\n## Ensuite\nAucun.\n\n## Follow-ups (brouillons)\nAucun.\n",
+        "team": "KA",
+        "project": null,
+        "milestone": null,
+        "state": "Todo",
+        "priority": 3,
+        "assignee": null,
+        "labels": [
+          "front"
+        ],
+        "estimate": 1,
+        "blockedBy": [],
+        "parentId": null,
+        "links": []
+      }
+    }
+  ],
+  "attachments": [],
+  "documents": [],
+  "orphans": [],
+  "unlinkedBlockers": [],
+  "unlinkedParents": [],
+  "skippedDrafts": [],
+  "warnings": [],
+  "ticketsSha": "5be02586dc1ac82900a07a354a432c2de455a31127464517c2fc2c9ab04346cf"
+}

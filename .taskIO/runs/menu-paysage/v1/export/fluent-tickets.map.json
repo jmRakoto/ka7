@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.1",
+  "organization": "rakoto-s-org",
+  "team": "KA",
+  "issues": {
+    "menu-paysage-defile": {
+      "key": "KA-4",
+      "hash": "0d934949812a3f1ab7ad75790cf243188ce787b2d69f8ce294758cd938831e62",
+      "blockedBy": [],
+      "parent": null,
+      "attachments": {}
+    }
+  },
+  "documents": {}
+}

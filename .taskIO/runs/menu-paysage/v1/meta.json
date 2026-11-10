@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.1",
+  "promptVersion": "1",
+  "source": "menu-paysage.md",
+  "sources": [
+    "menu-paysage.md"
+  ],
+  "prdSha256": "24ec8caa10312689e732bc58d89e4b96ad081e74df23b240c6482aefee68a706",
+  "assetsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "agent": null,
+  "model": null,
+  "generatedKey": "b389de79b94d4db26af517318cf21a23d5863822006b1c81f368edf7919d74e1"
+}

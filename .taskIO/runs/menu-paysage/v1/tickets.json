@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.1",
+  "methodology": "tdd",
+  "estimate": {
+    "unit": "days",
+    "value": 0.5,
+    "validatedByHuman": true,
+    "justification": "Un seul écran, cause connue et reproduite par un test d'écran (barre latérale trop haute à 780 × 360, débordement de 41 px) : rendre la barre défilante, tests et captures compris."
+  },
+  "epic": null,
+  "milestones": [],
+  "tickets": [
+    {
+      "id": "menu-paysage-defile",
+      "title": "Téléphone en paysage : le menu latéral doit défiler",
+      "description": {
+        "origin": "Constat : sur un téléphone tenu à l'horizontale, le menu ne défile pas et Réglages est hors de l'écran.",
+        "contexte": "Au-delà de 720 px de large, Ka7Shell (app/lib/features/shell/ka7_shell.dart) remplace les onglets du bas par une barre latérale (NavigationRail, logo Ka7Logo en tête, cinq entrées avec libellés). Un téléphone en paysage (Galaxy M36 : environ 780 × 360 px logiques) passe ce seuil, mais la barre est plus haute que l'écran : reproduit par un test d'écran à 780 × 360, Réglages est à 373–389 px (hors écran), débordement de 41 px, rien ne défile. Le mini-lecteur (bottomNavigationBar, pendant une lecture) prend encore de la hauteur.",
+        "perimetre": [
+          "Barre latérale défilante quand elle ne tient pas en hauteur (logo et cinq entrées) ; sans défilement quand tout tient (bureau, tablette).",
+          "Plus aucun débordement à 780 × 360, avec et sans mini-lecteur.",
+          "Réglages et chaque entrée atteignables en faisant défiler ; l'entrée choisie et le badge de la File restent lisibles.",
+          "Cibles tactiles de 48 px ; rien ne change en portrait (onglets du bas) ni sur bureau."
+        ],
+        "horsPerimetre": "Rien au-delà du périmètre listé ; toute extension devient un nouveau ticket.",
+        "etapes": [
+          "Tests rouges (test/app_test.dart) à 780 × 360 : aucun débordement, Réglages atteignable en faisant défiler puis ouvert d'un appui, idem pendant une lecture (mini-lecteur affiché).",
+          "Rendre la barre latérale défilante dans Ka7Shell, sans changer la mise en page quand elle tient.",
+          "Tests verts, puis tool/check.sh ; captures bureau et téléphone inchangées, plus une capture téléphone en paysage vérifiée à l'œil.",
+          "Essai sur le téléphone tenu à l'horizontale."
+        ],
+        "doneWhen": [],
+        "next": [],
+        "followUps": []
+      },
+      "status": "todo",
+      "priority": "medium",
+      "assignee": null,
+      "labels": [
+        "front"
+      ],
+      "project": null,
+      "estimate": {
+        "unit": "days",
+        "value": 0.5,
+        "validatedByHuman": true
+      },
+      "parent": null,
+      "links": [],
+      "attachments": [],
+      "milestone": null
+    }
+  ],
+  "documents": []
+}
