@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_store/ka7_store.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -54,6 +55,209 @@ Future<void> addToPlaylist(
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(l10n.addedToPlaylist(name))));
+}
+
+/// Downloaded files, newest first, each title and format once.
+Future<List<PlaylistTrack>> libraryTracks(Ka7Store store) async {
+  final seen = <(String, MediaFormat)>{};
+  return [
+    for (final item in await store.history())
+      if (item.status == HistoryStatus.succeeded &&
+          item.path != null &&
+          seen.add((item.videoId, item.format)))
+        PlaylistTrack.of(item),
+  ];
+}
+
+/// A file of a folder, as a playlist keeps it: no YouTube id, its address
+/// stands for one.
+PlaylistTrack trackOfFile(MediaFile file) {
+  final extension = file.name.split('.').last.toLowerCase();
+  return PlaylistTrack(
+    videoId: file.path,
+    title: file.title,
+    format: file.isVideo
+        ? MediaFormat.mp4
+        : extension == 'm4a'
+        ? MediaFormat.m4a
+        : MediaFormat.mp3,
+    path: file.path,
+  );
+}
+
+/// Lets the user tick tracks to add, from the downloaded [library] or from
+/// a folder they pick; null when cancelled. Tracks whose path is in
+/// [present] are left out.
+Future<List<PlaylistTrack>?> pickTracks(
+  BuildContext context, {
+  required List<PlaylistTrack> library,
+  Set<String> present = const {},
+  Future<({String folder, String label})?> Function()? pickFolder,
+  Future<List<MediaFile>> Function(String folder)? listFolder,
+}) => showDialog<List<PlaylistTrack>>(
+  context: context,
+  builder: (context) => _TrackPicker(
+    library: [
+      for (final track in library)
+        if (!present.contains(track.path)) track,
+    ],
+    present: present,
+    pickFolder: listFolder == null ? null : pickFolder,
+    listFolder: listFolder,
+  ),
+);
+
+enum _Source { library, folder }
+
+class _TrackPicker extends StatefulWidget {
+  const _TrackPicker({
+    required this.library,
+    required this.present,
+    required this.pickFolder,
+    required this.listFolder,
+  });
+
+  final List<PlaylistTrack> library;
+  final Set<String> present;
+  final Future<({String folder, String label})?> Function()? pickFolder;
+  final Future<List<MediaFile>> Function(String folder)? listFolder;
+
+  @override
+  State<_TrackPicker> createState() => _TrackPickerState();
+}
+
+class _TrackPickerState extends State<_TrackPicker> {
+  var _source = _Source.library;
+  var _search = '';
+
+  /// In the order they were shown, whatever the source or the search.
+  final _ticked = <PlaylistTrack>{};
+
+  String? _folderLabel;
+  List<PlaylistTrack> _folderTracks = const [];
+
+  Future<void> _chooseFolder() async {
+    final picked = await widget.pickFolder!();
+    if (picked == null) return;
+    final files = await widget.listFolder!(picked.folder);
+    if (!mounted) return;
+    setState(() {
+      _folderLabel = picked.label;
+      _folderTracks = [
+        for (final file in files)
+          if (!widget.present.contains(file.path)) trackOfFile(file),
+      ];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final all = [...widget.library, ..._folderTracks];
+    final shown = [
+      for (final track in switch (_source) {
+        _Source.library => widget.library,
+        _Source.folder => _folderTracks,
+      })
+        if (holdsWords(track.title, _search)) track,
+    ];
+    return AlertDialog(
+      title: Text(l10n.addTracksTitle),
+      content: SizedBox(
+        width: 480,
+        height: 460,
+        child: Column(
+          children: [
+            if (widget.pickFolder != null) ...[
+              SegmentedButton<_Source>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: _Source.library,
+                    icon: const Icon(Icons.library_music_outlined),
+                    label: Text(l10n.addTracksLibrary),
+                  ),
+                  ButtonSegment(
+                    value: _Source.folder,
+                    icon: const Icon(Icons.folder_outlined),
+                    label: Text(l10n.addTracksFolder),
+                  ),
+                ],
+                selected: {_source},
+                onSelectionChanged: (value) =>
+                    setState(() => _source = value.single),
+              ),
+              const SizedBox(height: 12),
+            ],
+            TextField(
+              onChanged: (text) => setState(() => _search = text),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: l10n.playerSearch,
+              ),
+            ),
+            if (_source == _Source.folder) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: _chooseFolder,
+                  icon: const Icon(Icons.create_new_folder_outlined),
+                  label: Text(_folderLabel ?? l10n.addTracksChooseFolder),
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Expanded(
+              child: shown.isEmpty
+                  ? Center(
+                      child: Text(switch ((_source, _search.isEmpty)) {
+                        (_Source.folder, _) when _folderLabel == null => '',
+                        (_, false) => l10n.playerNoMatch,
+                        _ => l10n.addTracksNone,
+                      }, textAlign: TextAlign.center),
+                    )
+                  : ListView(
+                      children: [
+                        for (final track in shown)
+                          CheckboxListTile(
+                            key: ValueKey(('pick', track.path)),
+                            value: _ticked.contains(track),
+                            onChanged: (on) => setState(
+                              () => on == true
+                                  ? _ticked.add(track)
+                                  : _ticked.remove(track),
+                            ),
+                            title: Text(
+                              track.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Text(track.format.name.toUpperCase()),
+                          ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancelButton),
+        ),
+        FilledButton(
+          onPressed: _ticked.isEmpty
+              ? null
+              : () => Navigator.of(context).pop([
+                  for (final track in all)
+                    if (_ticked.contains(track)) track,
+                ]),
+          child: Text(l10n.addTracksButton(_ticked.length)),
+        ),
+      ],
+    );
+  }
 }
 
 const _newPlaylist = #newPlaylist;

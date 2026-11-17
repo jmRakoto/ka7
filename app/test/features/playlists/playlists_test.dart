@@ -6,6 +6,7 @@ import 'package:ka7_core/ka7_core.dart';
 import 'package:ka7_store/ka7_store.dart';
 
 import '../../helpers/fake_media_backend.dart';
+import '../../helpers/probes.dart';
 import '../../helpers/pump_app.dart';
 
 const _a = PlaylistTrack(
@@ -155,6 +156,150 @@ void main() {
 
       expect(backend.opened, ['/m/b.mp3']);
       expect(player.index, 1);
+    });
+
+    /// Hafatra, downloaded: in the library, not in any list.
+    Future<void> download() async {
+      await store.record(
+        JobSucceeded(
+          PlannedDownload(
+            source: hafatraVideo,
+            item: hafatraVideo.items.single,
+            index: 1,
+          ),
+          '/m/hafatra.mp3',
+        ),
+        MediaFormat.mp3,
+        DateTime(2026, 10, 30, 9),
+      );
+    }
+
+    testWidgets('adds library tracks from inside an empty list', (
+      tester,
+    ) async {
+      final id = await store.createPlaylist('Vide');
+      await download();
+      await pumpPlaylists(tester);
+      await tester.tap(find.text('Vide'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Ajouter des titres'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hafatra'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ajouter 1 titre'));
+      await tester.pumpAndSettle();
+
+      expect((await store.playlistTracks(id)).map((t) => t.path), [
+        '/m/hafatra.mp3',
+      ]);
+      expect(find.textContaining('Liste vide'), findsNothing);
+    });
+
+    testWidgets('offers only the tracks not already in the list', (
+      tester,
+    ) async {
+      final id = await party();
+      await store.addToPlaylist(
+        id,
+        const PlaylistTrack(
+          videoId: 'Qm7tR2vLx9A',
+          title: 'Hafatra',
+          format: MediaFormat.mp3,
+          path: '/m/hafatra.mp3',
+        ),
+      );
+      await download();
+      await openParty(tester);
+
+      await tester.tap(find.text('Ajouter des titres'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CheckboxListTile), findsNothing);
+      expect(find.textContaining('Aucun autre titre'), findsOneWidget);
+    });
+
+    testWidgets('searches the library tracks to add', (tester) async {
+      final id = await store.createPlaylist('Vide');
+      await download();
+      await store.record(
+        JobSucceeded(
+          PlannedDownload(
+            source: ericMananaPlaylist,
+            item: ericMananaPlaylist.items.first,
+            index: 1,
+          ),
+          '/m/eric.mp3',
+        ),
+        MediaFormat.mp3,
+        DateTime(2026, 10, 30, 10),
+      );
+      await pumpPlaylists(tester);
+      await tester.tap(find.text('Vide'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Ajouter des titres'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CheckboxListTile), findsNWidgets(2));
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(TextField),
+        ),
+        'hafatra',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CheckboxListTile), findsOneWidget);
+      await tester.tap(find.byType(CheckboxListTile));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ajouter 1 titre'));
+      await tester.pumpAndSettle();
+      expect((await store.playlistTracks(id)).single.path, '/m/hafatra.mp3');
+    });
+
+    testWidgets('adds files from a folder picked in the dialog', (
+      tester,
+    ) async {
+      final id = await store.createPlaylist('Vide');
+      tester.view.physicalSize = const Size(900, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pumpApp(
+        tester,
+        PlayerHubScreen(
+          store: store,
+          player: player,
+          changes: ValueNotifier(0),
+          onOpenPlayer: () {},
+          pickFolder: () async => (folder: '/home/me/Zik', label: 'Zik'),
+          listFolder: (_) async => const [
+            MediaFile(path: '/home/me/Zik/Mora.mp3', name: 'Mora.mp3'),
+            MediaFile(path: '/home/me/Zik/Clip.mp4', name: 'Clip.mp4'),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Listes ·'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Vide'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Ajouter des titres'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dossier'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Choisir un dossier…'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CheckboxListTile), findsNWidgets(2));
+      await tester.tap(find.text('Clip'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ajouter 1 titre'));
+      await tester.pumpAndSettle();
+
+      final added = (await store.playlistTracks(id)).single;
+      expect(added.path, '/home/me/Zik/Clip.mp4');
+      expect(added.format, MediaFormat.mp4);
     });
 
     testWidgets('removes a track', (tester) async {

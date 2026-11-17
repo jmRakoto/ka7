@@ -16,7 +16,11 @@ class PlaylistScreen extends StatefulWidget {
     required this.player,
     required this.playlist,
     this.listFolder,
+    this.pickFolder,
   });
+
+  /// Picks a folder to add files from; null where none can be picked.
+  final Future<({String folder, String label})?> Function()? pickFolder;
 
   /// The playable files of a folder list, read each time it opens.
   final Future<List<MediaFile>> Function(String folder)? listFolder;
@@ -66,6 +70,24 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   Future<void> _save(List<PlaylistTrack> tracks) async {
     setState(() => _tracks = tracks);
     await widget.store.setPlaylistTracks(_id, tracks);
+  }
+
+  /// Library files not yet in the list, ticked in a dialog, added at its end.
+  Future<void> _addTracks() async {
+    final present = <String>{
+      for (final track in _tracks ?? const []) track.path,
+    };
+    final library = await libraryTracks(widget.store);
+    if (!mounted) return;
+    final picked = await pickTracks(
+      context,
+      library: library,
+      present: present,
+      pickFolder: widget.pickFolder,
+      listFolder: widget.listFolder,
+    );
+    if (picked == null || picked.isEmpty) return;
+    await _save([...?_tracks, ...picked]);
   }
 
   void _play({int start = 0, bool shuffle = false}) {
@@ -156,7 +178,17 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 child: tracks.isEmpty
                     ? Padding(
                         padding: const EdgeInsets.all(24),
-                        child: EmptyState(l10n.playlistEmpty),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            EmptyState(l10n.playlistEmpty),
+                            FilledButton.icon(
+                              onPressed: _addTracks,
+                              icon: const Icon(Icons.playlist_add),
+                              label: Text(l10n.addTracks),
+                            ),
+                          ],
+                        ),
                       )
                     : ListenableBuilder(
                         listenable: widget.player,
@@ -178,6 +210,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                                   onPressed: () => _play(shuffle: true),
                                   icon: const Icon(Icons.shuffle),
                                   label: Text(l10n.shuffleAll),
+                                ),
+                                FilledButton.tonalIcon(
+                                  onPressed: _addTracks,
+                                  icon: const Icon(Icons.playlist_add),
+                                  label: Text(l10n.addTracks),
                                 ),
                               ],
                             ),

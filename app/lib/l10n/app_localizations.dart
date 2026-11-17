@@ -1763,7 +1763,7 @@ abstract class AppLocalizations {
   /// No description provided for @playlistEmpty.
   ///
   /// In fr, this message translates to:
-  /// **'Liste vide : ajoute des titres depuis la Bibliothèque, menu ⋮ « Ajouter à une liste… ».'**
+  /// **'Liste vide : ajoute des titres avec le bouton « Ajouter des titres » ou depuis la Bibliothèque, menu ⋮ « Ajouter à une liste… ».'**
   String get playlistEmpty;
 
   /// No description provided for @addedToPlaylist.
@@ -1771,6 +1771,48 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ajouté à « {name} »'**
   String addedToPlaylist(String name);
+
+  /// No description provided for @addTracks.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter des titres'**
+  String get addTracks;
+
+  /// No description provided for @addTracksTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter à la liste'**
+  String get addTracksTitle;
+
+  /// No description provided for @addTracksLibrary.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bibliothèque'**
+  String get addTracksLibrary;
+
+  /// No description provided for @addTracksFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossier'**
+  String get addTracksFolder;
+
+  /// No description provided for @addTracksChooseFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir un dossier…'**
+  String get addTracksChooseFolder;
+
+  /// No description provided for @addTracksNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun autre titre téléchargé à ajouter.'**
+  String get addTracksNone;
+
+  /// No description provided for @addTracksButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Ajouter} one{Ajouter {count} titre} other{Ajouter {count} titres}}'**
+  String addTracksButton(int count);
 
   /// No description provided for @removeFromPlaylist.
   ///

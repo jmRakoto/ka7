@@ -1058,11 +1058,41 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get playlistEmpty =>
-      'Liste vide : ajoute des titres depuis la Bibliothèque, menu ⋮ « Ajouter à une liste… ».';
+      'Liste vide : ajoute des titres avec le bouton « Ajouter des titres » ou depuis la Bibliothèque, menu ⋮ « Ajouter à une liste… ».';
 
   @override
   String addedToPlaylist(String name) {
     return 'Ajouté à « $name »';
+  }
+
+  @override
+  String get addTracks => 'Ajouter des titres';
+
+  @override
+  String get addTracksTitle => 'Ajouter à la liste';
+
+  @override
+  String get addTracksLibrary => 'Bibliothèque';
+
+  @override
+  String get addTracksFolder => 'Dossier';
+
+  @override
+  String get addTracksChooseFolder => 'Choisir un dossier…';
+
+  @override
+  String get addTracksNone => 'Aucun autre titre téléchargé à ajouter.';
+
+  @override
+  String addTracksButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ajouter $count titres',
+      one: 'Ajouter $count titre',
+      zero: 'Ajouter',
+    );
+    return '$_temp0';
   }
 
   @override

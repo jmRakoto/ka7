@@ -357,8 +357,20 @@
   "deletePlaylistTitle": "Delete “{name}”?",
   "deletePlaylistBody": "Only the playlist goes: the files stay.",
   "playlistsEmpty": "No playlists yet. Make one, then add tracks to it from the Library.",
-  "playlistEmpty": "Empty playlist: add tracks from the Library, ⋮ menu “Add to a playlist…”.",
+  "playlistEmpty": "Empty playlist: add tracks with the “Add tracks” button, or from the Library, ⋮ menu “Add to a playlist…”.",
   "addedToPlaylist": "Added to “{name}”",
+  "addTracks": "Add tracks",
+  "addTracksTitle": "Add to the playlist",
+  "addTracksLibrary": "Library",
+  "addTracksFolder": "Folder",
+  "addTracksChooseFolder": "Choose a folder…",
+  "addTracksNone": "No other downloaded track to add.",
+  "addTracksButton": "{count, plural, =0{Add} =1{Add 1 track} other{Add {count} tracks}}",
+  "@addTracksButton": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "removeFromPlaylist": "Remove from the playlist",
   "playlistActions": "Playlist actions",
   "listenOnline": "Listen before downloading",

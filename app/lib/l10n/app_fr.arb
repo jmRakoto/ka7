@@ -545,13 +545,25 @@
   },
   "deletePlaylistBody": "Seule la liste disparaît : les fichiers restent.",
   "playlistsEmpty": "Aucune liste pour l'instant. Crée-en une, puis ajoute-y des titres depuis la Bibliothèque.",
-  "playlistEmpty": "Liste vide : ajoute des titres depuis la Bibliothèque, menu ⋮ « Ajouter à une liste… ».",
+  "playlistEmpty": "Liste vide : ajoute des titres avec le bouton « Ajouter des titres » ou depuis la Bibliothèque, menu ⋮ « Ajouter à une liste… ».",
   "addedToPlaylist": "Ajouté à « {name} »",
   "@addedToPlaylist": {
     "placeholders": {
       "name": {
         "type": "String"
       }
+    }
+  },
+  "addTracks": "Ajouter des titres",
+  "addTracksTitle": "Ajouter à la liste",
+  "addTracksLibrary": "Bibliothèque",
+  "addTracksFolder": "Dossier",
+  "addTracksChooseFolder": "Choisir un dossier…",
+  "addTracksNone": "Aucun autre titre téléchargé à ajouter.",
+  "addTracksButton": "{count, plural, =0{Ajouter} one{Ajouter {count} titre} other{Ajouter {count} titres}}",
+  "@addTracksButton": {
+    "placeholders": {
+      "count": {"type": "int"}
     }
   },
   "removeFromPlaylist": "Retirer de la liste",

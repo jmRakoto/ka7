@@ -161,6 +161,7 @@ class _PlayerHubScreenState extends State<PlayerHubScreen> {
           player: widget.player,
           playlist: playlist,
           listFolder: widget.listFolder,
+          pickFolder: widget.pickFolder,
         ),
       ),
     );

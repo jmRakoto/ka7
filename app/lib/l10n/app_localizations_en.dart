@@ -1037,11 +1037,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playlistEmpty =>
-      'Empty playlist: add tracks from the Library, ⋮ menu “Add to a playlist…”.';
+      'Empty playlist: add tracks with the “Add tracks” button, or from the Library, ⋮ menu “Add to a playlist…”.';
 
   @override
   String addedToPlaylist(String name) {
     return 'Added to “$name”';
+  }
+
+  @override
+  String get addTracks => 'Add tracks';
+
+  @override
+  String get addTracksTitle => 'Add to the playlist';
+
+  @override
+  String get addTracksLibrary => 'Library';
+
+  @override
+  String get addTracksFolder => 'Folder';
+
+  @override
+  String get addTracksChooseFolder => 'Choose a folder…';
+
+  @override
+  String get addTracksNone => 'No other downloaded track to add.';
+
+  @override
+  String addTracksButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Add $count tracks',
+      one: 'Add 1 track',
+      zero: 'Add',
+    );
+    return '$_temp0';
   }
 
   @override
