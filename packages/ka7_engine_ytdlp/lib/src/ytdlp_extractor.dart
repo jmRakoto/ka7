@@ -81,9 +81,17 @@ final class YtDlpExtractor implements Extractor, ChannelPictures, StreamUrls {
       // Lists: a date from YouTube's « 1 year ago », for each video.
       '--extractor-args',
       'youtubetab:approximate_date',
-      if (entry case PlaylistEntry(isMix: true)) ...[
+      if (switch (entry) {
+            PlaylistEntry(isMix: true, :final readLimit) ||
+            VideoInPlaylistEntry(
+              isMix: true,
+              :final readLimit,
+            ) => readLimit ?? mixLimit(),
+            _ => null,
+          }
+          case final end?) ...[
         '--playlist-end',
-        '${mixLimit()}',
+        '$end',
       ],
       // Long videos only: a channel's root also lists its shorts and lives.
       switch (entry) {

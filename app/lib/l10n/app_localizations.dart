@@ -926,6 +926,18 @@ abstract class AppLocalizations {
   /// **'Aucun titre ne correspond.'**
   String get filterNoMatch;
 
+  /// No description provided for @loadMore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Charger la suite'**
+  String get loadMore;
+
+  /// No description provided for @loadingMore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chargement de la suite…'**
+  String get loadingMore;
+
   /// No description provided for @channelCount.
   ///
   /// In fr, this message translates to:

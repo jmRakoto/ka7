@@ -45,16 +45,27 @@ const searchLimit = 20;
 
 /// A playlist: every video in it.
 final class PlaylistEntry extends MediaEntry {
-  const PlaylistEntry(super.source, {required this.playlistId});
+  const PlaylistEntry(super.source, {required this.playlistId, this.readLimit});
 
   final String playlistId;
+
+  /// How many videos of a mix to read, when the user asked for more than the
+  /// setting (« load more »); null = the setting.
+  final int? readLimit;
 
   @override
   String get url => '$_base/playlist?list=$playlistId';
 
   /// A YouTube mix never ends: the preview caps it.
-  bool get isMix => playlistId.startsWith('RD');
+  bool get isMix => isMixId(playlistId);
+
+  /// The same playlist, read up to [limit] videos.
+  PlaylistEntry readingUpTo(int limit) =>
+      PlaylistEntry(source, playlistId: playlistId, readLimit: limit);
 }
+
+/// Whether [playlistId] is a YouTube mix (`RD…`): it never ends.
+bool isMixId(String playlistId) => playlistId.startsWith('RD');
 
 /// A video opened from a playlist: the preview asks which one to keep.
 final class VideoInPlaylistEntry extends MediaEntry {
@@ -62,10 +73,25 @@ final class VideoInPlaylistEntry extends MediaEntry {
     super.source, {
     required this.videoId,
     required this.playlistId,
+    this.readLimit,
   });
 
   final String videoId;
   final String playlistId;
+
+  /// See [PlaylistEntry.readLimit].
+  final int? readLimit;
+
+  /// A mix opened from one of its videos: it never ends either.
+  bool get isMix => isMixId(playlistId);
+
+  /// The same link, read up to [limit] videos.
+  VideoInPlaylistEntry readingUpTo(int limit) => VideoInPlaylistEntry(
+    source,
+    videoId: videoId,
+    playlistId: playlistId,
+    readLimit: limit,
+  );
 
   @override
   String get url => '$_base/watch?v=$videoId&list=$playlistId';

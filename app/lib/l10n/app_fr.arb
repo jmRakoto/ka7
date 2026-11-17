@@ -298,6 +298,8 @@
     }
   },
   "filterNoMatch": "Aucun titre ne correspond.",
+"loadMore": "Charger la suite",
+"loadingMore": "Chargement de la suite…",
   "channelCount": "{count, plural, one{Chaîne YouTube · {count} titre} other{Chaîne YouTube · {count} titres}}",
   "@channelCount": {
     "placeholders": {

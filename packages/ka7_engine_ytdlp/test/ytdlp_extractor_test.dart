@@ -83,6 +83,33 @@ void main() {
     expect(ytDlp.arguments, containsAllInOrder(['--playlist-end', '25']));
   });
 
+  test('caps a mix opened from one of its videos at the setting too', () async {
+    final ytDlp = FakeYtDlp(
+      stdout: File('test/fixtures/playlist_flat.json').readAsStringSync(),
+    );
+
+    await YtDlpExtractor(run: ytDlp.call, mixLimit: () => 25).probe(
+      entryOf(
+        'https://www.youtube.com/watch?v=f4fnM0A3sVo&list=RDf4fnM0A3sVo&start_radio=1',
+      ),
+    );
+
+    expect(ytDlp.arguments, containsAllInOrder(['--playlist-end', '25']));
+  });
+
+  test('reads a mix further when asked for more', () async {
+    final ytDlp = FakeYtDlp(
+      stdout: File('test/fixtures/playlist_flat.json').readAsStringSync(),
+    );
+
+    await YtDlpExtractor(
+      run: ytDlp.call,
+      mixLimit: () => 25,
+    ).probe(const PlaylistEntry('x', playlistId: 'RDabc', readLimit: 75));
+
+    expect(ytDlp.arguments, containsAllInOrder(['--playlist-end', '75']));
+  });
+
   test('asks for the approximate date of each video in a list', () async {
     final ytDlp = FakeYtDlp(
       stdout: File(

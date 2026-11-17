@@ -218,6 +218,8 @@
   "filterTitles": "Filter titles…",
   "filterCount": "{shown} of {total}",
   "filterNoMatch": "No title matches.",
+"loadMore": "Load more",
+"loadingMore": "Loading more…",
   "channelCount": "{count, plural, one{YouTube channel · {count} video} other{YouTube channel · {count} videos}}",
   "ageToday": "today",
   "ageDays": "{count, plural, one{{count} day ago} other{{count} days ago}}",

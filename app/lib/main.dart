@@ -105,7 +105,11 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
     picture: NetworkImage.new,
     engineSetup: _daily(store, binaries, (b) => b.updateYtDlp()),
     enginesFor: (status, settings) => (
-      extractor: YtDlpExtractor(run: Process.run, executable: status!.ytDlp!),
+      extractor: YtDlpExtractor(
+        run: Process.run,
+        executable: status!.ytDlp!,
+        mixLimit: () => settings.mixLimit,
+      ),
       downloader: YtDlpDownloader(
         start: Process.start,
         executable: status.ytDlp!,
@@ -155,12 +159,15 @@ Future<Ka7App> _mobile(Ka7Store store) async {
   };
   if (Platform.isAndroid) {
     final ytDlp = AndroidYtDlp();
-    // youtube_explode takes over when yt-dlp breaks (m4a and mp4 only).
-    final explode = ExplodeEngine(source: YoutubeExplodeSource());
-    final notifier = AndroidRunNotifier();
-    final mediaStore = AndroidMediaStore();
     // Loaded by Ka7App, handed over with the engines, before any download.
     AppSettings? destinations;
+    // youtube_explode takes over when yt-dlp breaks (m4a and mp4 only).
+    final explode = ExplodeEngine(
+      source: YoutubeExplodeSource(),
+      mixLimit: () => destinations?.mixLimit ?? defaultMixLimit(),
+    );
+    final notifier = AndroidRunNotifier();
+    final mediaStore = AndroidMediaStore();
     String folderOf(MediaFormat format) =>
         folders[format == MediaFormat.mp4 ? format : MediaFormat.mp3]!;
     return Ka7App(
@@ -176,7 +183,7 @@ Future<Ka7App> _mobile(Ka7Store store) async {
         destinations = settings;
         return (
           extractor: FallbackExtractor([
-            YtDlpExtractor(run: ytDlp.run),
+            YtDlpExtractor(run: ytDlp.run, mixLimit: () => settings.mixLimit),
             explode,
           ]),
           // Then moved to Music/Ka7 or Movies/Ka7, seen by every player.
@@ -240,12 +247,19 @@ Future<Ka7App> _mobile(Ka7Store store) async {
       defaultFolders: folders,
     );
   }
-  final engine = ExplodeEngine(source: YoutubeExplodeSource());
+  AppSettings? current;
+  final engine = ExplodeEngine(
+    source: YoutubeExplodeSource(),
+    mixLimit: () => current?.mixLimit ?? defaultMixLimit(),
+  );
   return Ka7App(
     thumbnail: _thumbnail,
     mediaBackend: MediaKitBackend.new,
     picture: NetworkImage.new,
-    enginesFor: (_, settings) => (extractor: engine, downloader: engine),
+    enginesFor: (_, settings) {
+      current = settings;
+      return (extractor: engine, downloader: engine);
+    },
     store: store,
     formats: const [MediaFormat.m4a, MediaFormat.mp4],
     defaultFolders: folders,

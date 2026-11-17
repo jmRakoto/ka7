@@ -113,6 +113,11 @@ class _PreviewScreenState extends State<PreviewScreen> {
   /// Entries the engine could not read.
   final Map<MediaEntry, ProbeFailure> _failures = {};
 
+  /// Mixes being read further, and those that gave nothing more.
+  final Set<MediaEntry> _loadingMore = {};
+  final Set<MediaEntry> _ended = {};
+  final Map<MediaEntry, ProbeFailure> _moreFailed = {};
+
   /// Ids of the videos the user keeps.
   final Set<String> _selected = {};
 
@@ -212,6 +217,56 @@ class _PreviewScreenState extends State<PreviewScreen> {
           },
         );
   }
+
+  /// How many more videos of a mix one « load more » asks for: the setting,
+  /// at least what is shown now.
+  static const _page = 50;
+
+  /// Reads a mix further: the same link, a longer list. What is new is ticked
+  /// like the first videos; what the user did stays.
+  Future<void> _loadMore(MediaEntry entry) async {
+    final before = _probes[entry];
+    if (before == null || _loadingMore.contains(entry)) return;
+    final MediaEntry longer = switch (entry) {
+      PlaylistEntry() => entry.readingUpTo(before.items.length + _page),
+      VideoInPlaylistEntry() => entry.readingUpTo(before.items.length + _page),
+      _ => entry,
+    };
+    setState(() {
+      _loadingMore.add(entry);
+      _moreFailed.remove(entry);
+    });
+    try {
+      final probe = await widget.extractor.probe(longer);
+      final present = await _presentIn(probe);
+      if (!mounted) return;
+      final known = before.items.map((item) => item.videoId).toSet();
+      setState(() {
+        _probes[entry] = probe;
+        _present.addAll(present);
+        final added = probe.items.where((i) => !known.contains(i.videoId));
+        if (added.isEmpty) _ended.add(entry);
+        if (!widget.pickByHand) {
+          _selected.addAll(_wanted(Probe(title: '', items: added.toList())));
+        }
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(
+        () => _moreFailed[entry] = error is ProbeFailure
+            ? error
+            : ProbeFailure(FailureReason.unknown, '$error'),
+      );
+    } finally {
+      if (mounted) setState(() => _loadingMore.remove(entry));
+    }
+  }
+
+  /// Whether [entry] is a mix, which never ends: more can be read.
+  bool _isMix(MediaEntry entry) => switch (entry) {
+    PlaylistEntry(:final isMix) || VideoInPlaylistEntry(:final isMix) => isMix,
+    _ => false,
+  };
 
   /// Videos of [probe] already in the archive, in the chosen format.
   Future<Set<String>> _presentIn(Probe probe) async {
@@ -402,6 +457,11 @@ class _PreviewScreenState extends State<PreviewScreen> {
               filter: _filters[entry] ?? '',
               onFilter: (text) => setState(() => _filters[entry] = text),
               probe: probe,
+              onLoadMore: _isMix(entry) && !_ended.contains(entry)
+                  ? () => _loadMore(entry)
+                  : null,
+              loadingMore: _loadingMore.contains(entry),
+              loadFailed: _moreFailed.containsKey(entry),
               // A search named like channels: those, to follow.
               channels: switch ((entry, widget.onFollow, widget.isFollowed)) {
                 (SearchEntry(:final query), _?, final isFollowed?) => [
@@ -496,7 +556,15 @@ class _ProbeGroup {
     this.onPlay,
     this.onPrefetch,
     this.video = false,
+    this.onLoadMore,
+    this.loadingMore = false,
+    this.loadFailed = false,
   });
+
+  /// Reads further down a mix (null: nothing more to read).
+  final VoidCallback? onLoadMore;
+  final bool loadingMore;
+  final bool loadFailed;
 
   /// The title came on screen.
   final void Function(ProbeItem item)? onPrefetch;
@@ -723,7 +791,71 @@ class _ProbeGroup {
               _ => l10n.itemDeleted,
             }),
           ),
+      if (onLoadMore case final more?)
+        // A new key per length: each page builds a new one, which reads the
+        // next as soon as it comes on screen (infinite scroll).
+        _LoadMore(
+          key: ValueKey(('more', id, probe.items.length)),
+          loading: loadingMore,
+          failed: loadFailed,
+          onLoad: more,
+        ),
     ];
+  }
+}
+
+/// End of a mix: reads further when it scrolls into view, or on tap (after a
+/// failure, to try again).
+class _LoadMore extends StatefulWidget {
+  const _LoadMore({
+    super.key,
+    required this.loading,
+    required this.failed,
+    required this.onLoad,
+  });
+
+  final bool loading;
+  final bool failed;
+  final VoidCallback onLoad;
+
+  @override
+  State<_LoadMore> createState() => _LoadMoreState();
+}
+
+class _LoadMoreState extends State<_LoadMore> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.failed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !widget.loading) widget.onLoad();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: widget.loading
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 12,
+                children: [
+                  const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  Text(l10n.loadingMore),
+                ],
+              )
+            : OutlinedButton(
+                onPressed: widget.onLoad,
+                child: Text(l10n.loadMore),
+              ),
+      ),
+    );
   }
 }
 

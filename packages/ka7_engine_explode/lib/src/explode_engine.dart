@@ -21,11 +21,25 @@ final class ExplodeEngine implements Extractor, Downloader {
 
   @override
   Future<Probe> probe(MediaEntry entry) async => switch (entry) {
-    VideoEntry(:final videoId) || VideoInPlaylistEntry(:final videoId) =>
-      _single(await source.video(videoId)),
-    PlaylistEntry(:final playlistId, :final isMix) => _list(
+    VideoEntry(:final videoId) => _single(await source.video(videoId)),
+    VideoInPlaylistEntry(
+      :final videoId,
+      :final playlistId,
+      :final isMix,
+      :final readLimit,
+    ) =>
+      isMix
+          ? _list(
+              playlistId,
+              await source.playlist(playlistId, limit: readLimit ?? mixLimit()),
+            )
+          : _single(await source.video(videoId)),
+    PlaylistEntry(:final playlistId, :final isMix, :final readLimit) => _list(
       playlistId,
-      await source.playlist(playlistId, limit: isMix ? mixLimit() : null),
+      await source.playlist(
+        playlistId,
+        limit: isMix ? readLimit ?? mixLimit() : null,
+      ),
     ),
     SearchEntry(:final query) => Probe(
       title: query,

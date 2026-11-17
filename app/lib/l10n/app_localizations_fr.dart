@@ -556,6 +556,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get filterNoMatch => 'Aucun titre ne correspond.';
 
   @override
+  String get loadMore => 'Charger la suite';
+
+  @override
+  String get loadingMore => 'Chargement de la suite…';
+
+  @override
   String channelCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

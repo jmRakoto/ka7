@@ -534,6 +534,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterNoMatch => 'No title matches.';
 
   @override
+  String get loadMore => 'Load more';
+
+  @override
+  String get loadingMore => 'Loading more…';
+
+  @override
   String channelCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
