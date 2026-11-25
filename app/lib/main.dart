@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi' show Abi;
 import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
@@ -42,6 +43,19 @@ String? get _appVersion =>
       '' => null,
       final version => version,
     };
+
+/// The latest Ka7, pointing at the file of the running package (APK of this
+/// processor, AppImage, .deb, .rpm, installer or zip) so that « Download
+/// the update » starts the download instead of opening the release page.
+Future<AppRelease?> _latestRelease() => fetchLatestRelease(
+  package: installedPackage(
+    os: Platform.operatingSystem,
+    executable: Platform.resolvedExecutable,
+    abi: Abi.current().toString(),
+    environment: Platform.environment,
+    exists: (path) => File(path).existsSync(),
+  ),
+);
 
 /// YouTube's own picture of a video, 320×180.
 ImageProvider _thumbnail(String videoId) =>
@@ -132,7 +146,7 @@ Future<Ka7App> _desktop(Ka7Store store, Directory support) async {
     listMediaFolder: listFolderMedia,
     acceptDrops: true,
     appVersion: _appVersion,
-    latestRelease: fetchLatestRelease,
+    latestRelease: _latestRelease,
     openUrl: open,
     pickLinksFile: _pickLinksFile,
     // Linux only (notify-send); Windows: nothing yet.
@@ -210,7 +224,7 @@ Future<Ka7App> _mobile(Ka7Store store) async {
       notifier: notifier,
       askNotifications: notifier.askPermission,
       appVersion: _appVersion,
-      latestRelease: fetchLatestRelease,
+      latestRelease: _latestRelease,
       openUrl: openUrlOnAndroid,
       // Downloaded to the app's own folder, then moved by MediaStore.
       shownFolder: (format) =>
